@@ -19,25 +19,23 @@ type SubscriberNameResponse struct {
 type W2AResponse struct {
 	XMLName          xml.Name `xml:"COMMAND"`
 	Text             string   `xml:",chardata"`
-	TYPE             string   `xml:"TYPE"`
-	TXID             string   `xml:"TXID"`
-	REFID            string   `xml:"REFID"`
-	RESULT           string   `xml:"RESULT"`
-	ERRORCODE        string   `xml:"ERRORCODE"`
-	ERRORDESCRIPTION string   `xml:"ERRORDESCRIPTION"`
-	MSISDN           string   `xml:"MSISDN"`
-	FLAG             string   `xml:"FLAG"`
-	CONTENT          string   `xml:"CONTENT"`
+	Type             string   `xml:"TYPE"`
+	TxnID             string   `xml:"TXNID"`
+	RefID            string   `xml:"REFID"`
+	Result           string   `xml:"RESULT"`
+	ErrorCode        string   `xml:"ERRORCODE"`
+	ErrorDescription string   `xml:"ERRORDESCRIPTION"`
+	Msisdn           string   `xml:"MSISDN"`
+	Flag            string   `xml:"FLAG"`
+	Content          string   `xml:"CONTENT"`
 }
-
-
 
 type A2WResponse struct {
 	XMLName     xml.Name `xml:"COMMAND"`
 	Text        string   `xml:",chardata"`
-	TYPE        string   `xml:"TYPE"`
-	REFERENCEID string   `xml:"REFERENCEID"`
-	TXNID                string   `xml:"TXNID"`
-	TXNSTATUS string `xml:"TXNSTATUS"`
-	MESSAGE string `xml:"MESSAGE"`
+	Type        string   `xml:"TYPE"`
+	ReferenceID string   `xml:"REFERENCEID"`
+	TxnID                string   `xml:"TXNID"`
+	TxnStatus string `xml:"TXNSTATUS"`
+	Message string `xml:"MESSAGE"`
 }

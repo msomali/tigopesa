@@ -1,3 +1,3 @@
-module github.com/techcraftt/tigo
+module github.com/techcraftt/tigosdk
 
 go 1.16

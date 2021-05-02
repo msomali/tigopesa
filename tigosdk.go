@@ -29,14 +29,16 @@ type Service interface {
 }
 
 type client struct {
-	HTTPClient *http.Client
-	NameCheckFunc ussd.NameCheckFunc
+	HTTPClient       *http.Client
+	NameCheckHandler ussd.NameCheckFunc
+	CallbackHandler  push.CallbackHandlerFunc
 }
 
-func NewTigoClient(httpClient *http.Client, nameCheckFunc ussd.NameCheckFunc) Service {
+func NewTigoClient(httpClient *http.Client, nameCheckHandler ussd.NameCheckFunc, callbackHandler push.CallbackHandlerFunc) Service {
 	return &client{
-		HTTPClient: httpClient,
-		NameCheckFunc: nameCheckFunc,
+		HTTPClient:       httpClient,
+		NameCheckHandler: nameCheckHandler,
+		CallbackHandler: callbackHandler,
 	}
 }
 

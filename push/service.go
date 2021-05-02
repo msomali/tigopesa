@@ -2,7 +2,6 @@ package push
 
 import (
 	"context"
-	"github.com/techcraftt/tigo/push/model"
 )
 
 type PushPay interface {
@@ -10,14 +9,14 @@ type PushPay interface {
 	GetToken(ctx context.Context) (string, error)
 
 	// BillPay initiate PushPay payment flow to deduct a specific amount from customer's Tigo pesa wallet.
-	BillPay(ctx context.Context, request model.BillPayRequest) (model.BillPayResponse, error)
+	BillPay(ctx context.Context, request BillPayRequest) (BillPayResponse, error)
 
 	// BillPayCallback handle all PushPay payment(s) status after customer purchase.
-	BillPayCallback(ctx context.Context, request model.BillPayCallbackRequest) (model.BillPayResponse, error)
+	BillPayCallback(ctx context.Context, request BillPayCallbackRequest) (BillPayResponse, error)
 
 	// RefundPayment initiate payment refund and will be processed only if the payment was successful.
-	RefundPayment(ctx context.Context, request model.RefundPaymentRequest) (model.RefundPaymentResponse, error)
+	RefundPayment(ctx context.Context, request RefundPaymentRequest) (RefundPaymentResponse, error)
 
 	// HealthCheck check if Tigo Pesa PushPay API is up and running.
-	HealthCheck(ctx context.Context, request model.HealthCheckResponse) (model.HealthCheckResponse, error)
+	HealthCheck(ctx context.Context, request HealthCheckResponse) (HealthCheckResponse, error)
 }

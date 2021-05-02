@@ -1,4 +1,4 @@
-package model
+package push
 
 var statusText = map[string]string{
 	// successful status

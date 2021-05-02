@@ -1,4 +1,4 @@
-package model
+package push
 
 type BillPayRequest struct {
 	CustomerMSISDN int64  `json:"CustomerMSISDN"`

@@ -1,4 +1,4 @@
-package model
+package push
 
 type GetTokenResponse struct {
 	AccessToken      string `json:"access_token,omitempty"`

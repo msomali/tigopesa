@@ -19,13 +19,12 @@ type NameCheckResponse struct {
 	Content   string
 }
 
-type NameCheckFunc func(context.Context,NameCheckRequest) (NameCheckResponse,error)
+type NameCheckFunc func(context.Context, NameCheckRequest) (NameCheckResponse, error)
 
 func (f NameCheckFunc) NameCheck(ctx context.Context, request NameCheckRequest) (resp NameCheckResponse, err error) {
-	return f(ctx,request)
+	return f(ctx, request)
 }
 
 type NameChecker interface {
 	NameCheck(ctx context.Context, request NameCheckRequest) (resp NameCheckResponse, err error)
 }
-

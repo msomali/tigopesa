@@ -30,16 +30,18 @@ type Service interface {
 }
 
 type client struct {
+	Conf             Configs
 	HTTPClient       *http.Client
 	NameCheckHandler ussd.NameCheckFunc
 	CallbackHandler  push.CallbackHandlerFunc
 }
 
-func NewTigoClient(httpClient *http.Client, nameCheckHandler ussd.NameCheckFunc, callbackHandler push.CallbackHandlerFunc) Service {
+func NewTigoClient(httpClient *http.Client, nameCheckHandler ussd.NameCheckFunc, callbackHandler push.CallbackHandlerFunc, conf Configs) Service {
 	return &client{
+		Conf:             conf,
 		HTTPClient:       httpClient,
 		NameCheckHandler: nameCheckHandler,
-		CallbackHandler: callbackHandler,
+		CallbackHandler:  callbackHandler,
 	}
 }
 

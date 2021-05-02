@@ -47,5 +47,3 @@
 //	test(e.CustomNameCheckFuncByUser)
 //}
 package ussd
-
-

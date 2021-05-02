@@ -6,7 +6,6 @@ type BillPayRequest struct {
 	Amount         int    `json:"Amount"`
 	Remarks        string `json:"Remarks,omitempty"`
 	ReferenceID    string `json:"ReferenceID"`
-
 }
 
 type BillPayCallbackRequest struct {

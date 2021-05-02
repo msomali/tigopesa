@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/xml"
 )
+
 // QuerySubscriberReq a request body sent to the gateway to get user details
 // it is in form of below xml
 // <?xml version="1.0" encoding="UTF-8"?>

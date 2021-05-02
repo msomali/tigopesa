@@ -18,7 +18,7 @@ func TestUnMarshalReq(t *testing.T) {
 `
 	var queryReq SubscriberNameRequest
 
-	queryResp:= SubscriberNameResponse{
+	queryResp := SubscriberNameResponse{
 		Type:      "yehes",
 		Result:    "hshsnsn",
 		ErrorCode: "msnsmsm",
@@ -46,7 +46,7 @@ func TestUnMarshalReq(t *testing.T) {
 			t.Error(err)
 		}
 		xmlstring = []byte(xml.Header + string(xmlstring))
-		fmt.Printf("%s\n",xmlstring)
+		fmt.Printf("%s\n", xmlstring)
 	})
 
 }

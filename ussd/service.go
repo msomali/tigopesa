@@ -14,8 +14,6 @@ import (
 //	}
 //)
 
-
-
 type Service interface {
 
 	// QuerySubscriberName is API to handle TigoPesa system Query

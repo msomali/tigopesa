@@ -25,12 +25,12 @@ type W2ARequest struct {
 	XMLName             xml.Name `xml:"COMMAND"`
 	Text                string   `xml:",chardata"`
 	TYPE                string   `xml:"TYPE"`
-	TxnID                string   `xml:"TXNID"`
-	Msisdn             string   `xml:"MSISDN"`
-	Amount              float64   `xml:"AMOUNT"`
-	CompanyName        string   `xml:"COMPANYNAME"`
+	TxnID               string   `xml:"TXNID"`
+	Msisdn              string   `xml:"MSISDN"`
+	Amount              float64  `xml:"AMOUNT"`
+	CompanyName         string   `xml:"COMPANYNAME"`
 	CustomerReferenceID string   `xml:"CUSTOMERREFERENCEID"`
-	SenderName         string   `xml:"SENDERNAME"`
+	SenderName          string   `xml:"SENDERNAME"`
 }
 
 type A2WRequest struct {
@@ -41,7 +41,7 @@ type A2WRequest struct {
 	Msisdn      string   `xml:"MSISDN"`
 	PIN         string   `xml:"PIN"`
 	Msisdn1     string   `xml:"MSISDN1"`
-	Amount      float64   `xml:"AMOUNT"`
+	Amount      float64  `xml:"AMOUNT"`
 	SenderName  string   `xml:"SENDERNAME"`
 	Language1   string   `xml:"LANGUAGE1"`
 	BrandID     string   `xml:"BRAND_ID"`

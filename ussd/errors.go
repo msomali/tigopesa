@@ -1,6 +1,5 @@
 package ussd
 
-
 type NameCheckErrorCode string
 
 const (

@@ -9,7 +9,7 @@ import (
 
 var _ Service = (*client)(nil)
 
-//Configs acontains details of TigoPesa integration
+//Configs contains details of TigoPesa integration
 //These are configurations supplied during the integration stage
 type Configs struct {
 	Username          string `json:"username"`

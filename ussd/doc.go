@@ -1,6 +1,8 @@
-// Package ussd How to use the NameCheckFunc
+// Package ussd
 //
-//
+//How to use the NameCheckFunc
+//This is an example struct that may attach business components like
+//Database that has all the names for example
 //type example struct {
 //	Name string
 //}

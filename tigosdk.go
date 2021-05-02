@@ -21,6 +21,7 @@ type Configs struct {
 	BillerCode        string `json:"biller_code"`
 	GetTokenURL       string `json:"get_token_url"`
 	BillURL           string `json:"biller_payment"`
+	A2WReqURL         string `json:"a2w_url"`
 }
 
 type Service interface {

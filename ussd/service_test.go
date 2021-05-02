@@ -16,9 +16,9 @@ func TestUnMarshalReq(t *testing.T) {
 <CUSTOMERREFFERENCEID>Partner_refernce_number</CUSTOMERREFFERENCEID>
 </COMMAND>
 `
-	var queryReq QuerySubscriberNameReq
+	var queryReq SubscriberNameRequest
 
-	queryResp:= QuerySubscriberNameResp{
+	queryResp:= SubscriberNameResponse{
 		Type:      "yehes",
 		Result:    "hshsnsn",
 		ErrorCode: "msnsmsm",

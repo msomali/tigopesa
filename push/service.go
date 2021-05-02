@@ -1,8 +1,8 @@
-package service
+package push
 
 import (
 	"context"
-	"github.com/techcraftt/tigo/service/model"
+	"github.com/techcraftt/tigo/push/model"
 )
 
 type PushPay interface {

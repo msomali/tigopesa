@@ -5,6 +5,28 @@ import (
 	"encoding/xml"
 )
 
+//type  ErrorCodeKey string
+//
+//const (
+//	SUCCESSFUL_TRANSACTION       ErrorCodeKey = "error000"
+//	SERVICE_NOT_AVAILABLE        ErrorCodeKey = "error001"
+//	INVALID_CUSTOMER_REF_NUMBER  ErrorCodeKey = "error010"
+//	CUSTOMER_REF_NUM_LOCKED      ErrorCodeKey = "error011"
+//	INVALID_AMOUNT               ErrorCodeKey = "error012"
+//	AMOUNT_INSUFFICIENT          ErrorCodeKey = "error013"
+//	AMOUNT_TOO_HIGH              ErrorCodeKey = "error014"
+//	AMOUNT_TOO_LOW               ErrorCodeKey = "error015"
+//	INVALID_PAYMENT              ErrorCodeKey = "error016"
+//	GENERAL_ERROR                ErrorCodeKey = "error100"
+//	RETRY_CONDITION_NO_RESPONSE  ErrorCodeKey = "error111"
+//)
+//
+//var ErrorCode = map[ErrorCodeKey]string{
+//	SUCCESSFUL_TRANSACTION:"Successful Transaction",
+//	SERVICE_NOT_AVAILABLE: "Service Not Available",
+//
+//}
+
 type XMLRequest struct {
 	XMLName             xml.Name `xml:"COMMAND"`
 	Text                string   `xml:",chardata"`

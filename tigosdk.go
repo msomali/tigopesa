@@ -1,4 +1,4 @@
-package tigo
+package tigosdk
 
 import (
 	"context"
@@ -8,6 +8,10 @@ import (
 )
 
 var _ Service = (*client)(nil)
+
+const (
+	SYNC_LOOKUP_RESPONSE = "SYNC_LOOKUP_RESPONSE"
+)
 
 //Configs contains details of TigoPesa integration
 //These are configurations supplied during the integration stage
@@ -46,7 +50,28 @@ func NewTigoClient(httpClient *http.Client, nameCheckHandler ussd.NameCheckFunc,
 }
 
 func (c client) QuerySubscriberName(ctx context.Context, req ussd.SubscriberNameRequest) (resp ussd.SubscriberNameResponse, err error) {
-	panic("implement me")
+	nameCheckReq := ussd.NameCheckRequest{
+		Msisdn:              req.Msisdn,
+		CompanyName:         req.CompanyName,
+		CustomerReferenceID: req.CustomerReferenceID,
+	}
+	re, err := c.NameCheckHandler(context.TODO(), nameCheckReq)
+
+	if err != nil {
+		return resp,err
+	}
+
+	resp = ussd.SubscriberNameResponse{
+		Type:      SYNC_LOOKUP_RESPONSE,
+		Result:    re.Result,
+		ErrorCode: re.ErrorCode,
+		ErrorDesc: re.ErrorDesc,
+		Msisdn:    re.Msisdn,
+		Flag:      re.Flag,
+		Content:   re.Content,
+	}
+
+	return resp, nil
 }
 
 func (c client) WalletToAccount(ctx context.Context, req ussd.W2ARequest) (resp ussd.W2AResponse, err error) {

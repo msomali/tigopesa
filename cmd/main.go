@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"github.com/techcraftt/tigosdk"
 	"github.com/techcraftt/tigosdk/push"
@@ -14,6 +15,52 @@ import (
 	"time"
 )
 import "github.com/gorilla/mux"
+
+type User struct {
+	Name string `json:"name"`
+	RefID string `json:"ref_id"`
+	Status int `json:"status"`
+}
+
+var errNotFound = errors.New("not found")
+
+func checkUser(refid string)(User,error){
+	users := []User{
+		{
+			Name:   "Pius Alfred Shop",
+			RefID:  "12345678",
+			Status: 0,
+		},
+		{
+			Name:   "St. Jane School",
+			RefID:  "23456789",
+			Status: 1,
+		},
+		{
+			Name:   "Uhuru Stadium",
+			RefID:  "34567890",
+			Status: 2,
+		},
+		{
+			Name:   "Jamesson Club",
+			RefID:  "22473478",
+			Status: 2,
+		},
+	}
+
+	for _, user := range users {
+		if user.RefID == refid{
+
+			if user.Status > 0{
+				return user, fmt.Errorf("%s",user.Status)
+			}
+			return user,nil
+		}
+
+
+	}
+	return User{}, errNotFound
+}
 
 func MakeHandler(svc tigosdk.Service) http.Handler {
 
@@ -169,13 +216,43 @@ func main() {
 	}
 
 	namechecker := func(ctx context.Context, request ussd.NameCheckRequest) (ussd.NameCheckResponse, error) {
+
+		user, err := checkUser(request.CustomerReferenceID)
+
+		if err != nil && err != errNotFound{
+
+			resp := ussd.NameCheckResponse{
+				Result:    "TF",
+				ErrorCode: "error020",
+				ErrorDesc: "Transaction Failed: User Suspended",
+				Msisdn:    request.Msisdn,
+				Flag:      "N",
+				Content:   fmt.Sprintf("user name %s", user.Name),
+			}
+
+			return resp, nil
+		}
+
+		if err != nil && err == errNotFound{
+			resp := ussd.NameCheckResponse{
+				Result:    "TF",
+				ErrorCode: "error010",
+				ErrorDesc: "Not found",
+				Msisdn:    request.Msisdn,
+				Flag:      "N",
+				Content:   "User is not known",
+			}
+
+			return resp, nil
+		}
+
 		resp := ussd.NameCheckResponse{
 			Result:    "TS",
 			ErrorCode: "error000",
-			ErrorDesc: "Transaction Successfully So no Err",
-			Msisdn:    "255712915790",
+			ErrorDesc: "Transaction Successfully",
+			Msisdn:    request.Msisdn,
 			Flag:      "Y",
-			Content:   "this is content",
+			Content:   "transaction successful, user known and valid",
 		}
 		return resp, nil
 	}

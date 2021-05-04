@@ -11,6 +11,7 @@ var _ Service = (*client)(nil)
 
 const (
 	SYNC_LOOKUP_RESPONSE = "SYNC_LOOKUP_RESPONSE"
+	SYNC_BILLPAY_RESPONSE = "SYNC_BILLPAY_RESPONSE"
 )
 
 //Configs contains details of TigoPesa integration
@@ -75,7 +76,19 @@ func (c client) QuerySubscriberName(ctx context.Context, req ussd.SubscriberName
 }
 
 func (c client) WalletToAccount(ctx context.Context, req ussd.W2ARequest) (resp ussd.W2AResponse, err error) {
-	panic("implement me")
+	resp = ussd.W2AResponse{
+		Type:             SYNC_BILLPAY_RESPONSE,
+		TxnID:            req.TxnID,
+		RefID:            "dummyrefno12345",
+		Result:           "TS",
+		ErrorCode:        "error000",
+		ErrorDescription: "Transaction Successful",
+		Msisdn:           req.Msisdn,
+		Flag:             "Y",
+		Content:          "THE BILLPAY RESPONSE",
+	}
+
+	return
 }
 
 func (c client) AccountToWallet(ctx context.Context, req ussd.A2WRequest) (resp ussd.A2WResponse, err error) {

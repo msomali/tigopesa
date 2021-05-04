@@ -37,7 +37,38 @@ type App struct {
 	svc tigosdk.Service
 }
 
-func (app App) transactionHandler(writer http.ResponseWriter, request *http.Request) {
+func (app App) transactionHandler(w http.ResponseWriter, request *http.Request) {
+
+	var req ussd.W2ARequest
+	xmlBody, err := ioutil.ReadAll(request.Body)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = xml.Unmarshal(xmlBody, &req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	resp, err2 := app.svc.WalletToAccount(context.TODO(), req)
+	if err2 != nil {
+		return
+	}
+
+	x, err := xml.MarshalIndent(resp, "", "  ")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/xml")
+	_, err = w.Write(x)
+	if err != nil {
+		return
+	}
 
 }
 

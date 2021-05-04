@@ -24,42 +24,35 @@ type User struct {
 
 var errNotFound = errors.New("not found")
 
-func checkUser(refid string)(User,error){
-	users := []User{
-		{
+func checkUser(refid string)(User,bool){
+	fmt.Printf("checking %s\n",refid)
+
+	usersMap := map[string]User{
+		"12345678": {
 			Name:   "Pius Alfred Shop",
 			RefID:  "12345678",
 			Status: 0,
 		},
-		{
+		"23456789":{
 			Name:   "St. Jane School",
 			RefID:  "23456789",
 			Status: 1,
 		},
-		{
+		"34567890":{
 			Name:   "Uhuru Stadium",
 			RefID:  "34567890",
 			Status: 2,
 		},
-		{
+		"22473478":{
 			Name:   "Jamesson Club",
 			RefID:  "22473478",
 			Status: 2,
 		},
 	}
 
-	for _, user := range users {
-		if user.RefID == refid{
+	user, found := usersMap[refid]
 
-			if user.Status > 0{
-				return user, fmt.Errorf("%s",user.Status)
-			}
-			return user,nil
-		}
-
-
-	}
-	return User{}, errNotFound
+	return user, found
 }
 
 func MakeHandler(svc tigosdk.Service) http.Handler {
@@ -217,23 +210,9 @@ func main() {
 
 	namechecker := func(ctx context.Context, request ussd.NameCheckRequest) (ussd.NameCheckResponse, error) {
 
-		user, err := checkUser(request.CustomerReferenceID)
+		user, found := checkUser(request.CustomerReferenceID)
 
-		if err != nil && err != errNotFound{
-
-			resp := ussd.NameCheckResponse{
-				Result:    "TF",
-				ErrorCode: "error020",
-				ErrorDesc: "Transaction Failed: User Suspended",
-				Msisdn:    request.Msisdn,
-				Flag:      "N",
-				Content:   fmt.Sprintf("user name %s", user.Name),
-			}
-
-			return resp, nil
-		}
-
-		if err != nil && err == errNotFound{
+		if !found{
 			resp := ussd.NameCheckResponse{
 				Result:    "TF",
 				ErrorCode: "error010",
@@ -244,17 +223,45 @@ func main() {
 			}
 
 			return resp, nil
+		}else {
+			if user.Status == 1{
+
+				resp := ussd.NameCheckResponse{
+					Result:    "TF",
+					ErrorCode: "error020",
+					ErrorDesc: "Transaction Failed: User Suspended",
+					Msisdn:    request.Msisdn,
+					Flag:      "N",
+					Content:   fmt.Sprintf("user name %s", user.Name),
+				}
+
+				return resp, nil
+			}
+
+			if user.Status ==2{
+				resp := ussd.NameCheckResponse{
+					Result:    "TF",
+					ErrorCode: "error030",
+					ErrorDesc: "Transaction Failed: Format not known",
+					Msisdn:    request.Msisdn,
+					Flag:      "N",
+					Content:   fmt.Sprintf("user name %s", user.Name),
+				}
+
+				return resp, nil
+			}
+
+			resp := ussd.NameCheckResponse{
+				Result:    "TS",
+				ErrorCode: "error000",
+				ErrorDesc: "Transaction Successfully",
+				Msisdn:    request.Msisdn,
+				Flag:      "Y",
+				Content:   "transaction successful, user known and valid",
+			}
+			return resp, nil
 		}
 
-		resp := ussd.NameCheckResponse{
-			Result:    "TS",
-			ErrorCode: "error000",
-			ErrorDesc: "Transaction Successfully",
-			Msisdn:    request.Msisdn,
-			Flag:      "Y",
-			Content:   "transaction successful, user known and valid",
-		}
-		return resp, nil
 	}
 
 	callbacker := func(ctx context.Context, request push.BillPayCallbackRequest) {

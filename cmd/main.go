@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"encoding/xml"
@@ -144,58 +143,15 @@ func (app App) disburseHandler(w http.ResponseWriter, request *http.Request) {
 		BrandID:     app.conf.BrandID,
 	}
 
-
-	xmlstring, err := xml.MarshalIndent(req, "", "    ")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	xmlstring = []byte(xml.Header + string(xmlstring))
-
-	r, err := http.NewRequest("POST", app.conf.A2WReqURL, bytes.NewBuffer(xmlstring)) // URL-encoded payload
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	
-	r.Header.Add("Content-Type", "application/xml")
-	
-	client := http.Client{
-		Timeout: time.Minute,
-	}
-
-	res, err := client.Do(r)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	//log.Println(res.Status)
-	defer res.Body.Close()
-	xmlBody, err := ioutil.ReadAll(res.Body)
+	resp, err := app.svc.AccountToWallet(context.TODO(),req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	var xmlResponse ussd.A2WResponse
+	w.Header().Set("Content-Type", "application/json")
 
-	err = xml.Unmarshal(xmlBody, &xmlResponse)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	x, err := xml.MarshalIndent(xmlResponse, "", "  ")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/xml")
-	w.Write(x)
-
-
-
+	json.NewEncoder(w).Encode(resp)
 }
 
 func main() {

@@ -29,11 +29,11 @@ type W2AResponse struct {
 }
 
 type A2WResponse struct {
-	XMLName     xml.Name `xml:"COMMAND"`
-	Text        string   `xml:",chardata"`
-	Type        string   `xml:"TYPE"`
-	ReferenceID string   `xml:"REFERENCEID"`
-	TxnID       string   `xml:"TXNID"`
-	TxnStatus   string   `xml:"TXNSTATUS"`
-	Message     string   `xml:"MESSAGE"`
+	XMLName     xml.Name `xml:"COMMAND" json:"-"`
+	Text        string   `xml:",chardata" json:"-"`
+	Type        string   `xml:"TYPE" json:"type"`
+	ReferenceID string   `xml:"REFERENCEID" json:"reference_id"`
+	TxnID       string   `xml:"TXNID" json:"txnid"`
+	TxnStatus   string   `xml:"TXNSTATUS" json:"txn_status"`
+	Message     string   `xml:"MESSAGE" json:"message"`
 }

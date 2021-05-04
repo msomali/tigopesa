@@ -1,9 +1,12 @@
 package tigosdk
 
 import (
+	"bytes"
 	"context"
+	"encoding/xml"
 	"github.com/techcraftt/tigosdk/push"
 	"github.com/techcraftt/tigosdk/ussd"
+	"io/ioutil"
 	"net/http"
 )
 
@@ -92,7 +95,39 @@ func (c client) WalletToAccount(ctx context.Context, req ussd.W2ARequest) (resp 
 }
 
 func (c client) AccountToWallet(ctx context.Context, req ussd.A2WRequest) (resp ussd.A2WResponse, err error) {
-	panic("implement me")
+	xmlstring, err := xml.MarshalIndent(req, "", "    ")
+	if err != nil {
+		return
+	}
+	xmlstring = []byte(xml.Header + string(xmlstring))
+
+	r, err := http.NewRequest(http.MethodPost, c.Conf.A2WReqURL, bytes.NewBuffer(xmlstring)) // URL-encoded payload
+	if err != nil {
+		return
+	}
+
+	r.Header.Add("Content-Type", "application/xml")
+
+
+	res, err := c.HTTPClient.Do(r)
+	if err != nil {
+		return
+	}
+	//log.Println(res.Status)
+	defer res.Body.Close()
+	xmlBody, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+
+		return
+	}
+
+	err = xml.Unmarshal(xmlBody, &resp)
+	if err != nil {
+		return
+	}
+
+	return
+
 }
 
 func (c client) GetToken(ctx context.Context) (string, error) {

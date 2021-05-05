@@ -10,9 +10,6 @@ type Service interface {
 	// BillPay initiate Service payment flow to deduct a specific amount from customer's Tigo pesa wallet.
 	BillPay(context.Context, BillPayRequest) (*BillPayResponse, error)
 
-	// BillPayCallback handle all Service payment(s) status after customer purchase.
-	BillPayCallback(context.Context, BillPayCallbackRequest) (*BillPayResponse, error)
-
 	// RefundPayment initiate payment refund and will be processed only if the payment was successful.
 	RefundPayment(context.Context, RefundPaymentRequest) (*RefundPaymentResponse, error)
 
@@ -35,7 +32,7 @@ func NewFromConfig(config tigosdk.Config) *Push {
 func (p *Push) BillPay(ctx context.Context, billPaymentReq BillPayRequest) (*BillPayResponse, error) {
 	var billPayResp = &BillPayResponse{}
 
-	req, err := p.client.NewRequest(http.MethodPost, "BillerPayment/BillerPay", billPaymentReq)
+	req, err := p.client.NewRequest(http.MethodPost, "BillerPayment/BillerPay", tigosdk.JSONRequest, billPaymentReq)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +51,7 @@ func (p *Push) BillPayCallback(ctx context.Context, billPayCallbackReq BillPayCa
 func (p *Push) RefundPayment(ctx context.Context, refundPaymentReq RefundPaymentRequest) (*RefundPaymentResponse, error) {
 	var refundPaymentResp = &RefundPaymentResponse{}
 
-	req, err := p.client.NewRequest(http.MethodPost, "Reverse/ReverseTransaction", refundPaymentReq)
+	req, err := p.client.NewRequest(http.MethodPost, "Reverse/ReverseTransaction", tigosdk.JSONRequest, refundPaymentReq)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +66,7 @@ func (p *Push) RefundPayment(ctx context.Context, refundPaymentReq RefundPayment
 func (p *Push) HealthCheck(ctx context.Context, healthCheckReq HealthCheckRequest) (*HealthCheckResponse, error) {
 	var healthCheckResp = &HealthCheckResponse{}
 
-	req, err := p.client.NewRequest(http.MethodPost, "Heartbeat/Heartbeat", healthCheckReq)
+	req, err := p.client.NewRequest(http.MethodPost, "Heartbeat/Heartbeat", tigosdk.JSONRequest, healthCheckReq)
 	if err != nil {
 		return nil, err
 	}

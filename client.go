@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"github.com/techcraftt/tigosdk/push"
@@ -14,7 +15,12 @@ import (
 	"time"
 )
 
-var baseURl = ""
+type RequestType string
+
+var (
+	JSONRequest RequestType = "json"
+	XMLRequest  RequestType = "xml"
+)
 
 type Client struct {
 	username           string
@@ -51,18 +57,28 @@ func (c *Client) SetHTTPClient(client *http.Client) {
 	c.client = client
 }
 
-func (c *Client) NewRequest(method, url string, payload interface{}) (*http.Request, error) {
+func (c *Client) NewRequest(method, url string, requestType RequestType, payload interface{}) (*http.Request, error) {
 	var (
 		buf    io.Reader
 		ctx, _ = context.WithTimeout(context.Background(), 60*time.Second)
 	)
 
 	if payload != nil {
-		b, err := json.Marshal(&payload)
-		if err != nil {
-			return nil, err
+		switch requestType {
+		case JSONRequest:
+			b, err := json.Marshal(&payload)
+			if err != nil {
+				return nil, err
+			}
+			buf = bytes.NewBuffer(b)
+
+		case XMLRequest:
+			b, err := xml.Marshal(&payload)
+			if err != nil {
+				return nil, err
+			}
+			buf = bytes.NewBuffer(b)
 		}
-		buf = bytes.NewBuffer(b)
 	}
 
 	return http.NewRequestWithContext(ctx, method, url, buf)
@@ -102,11 +118,15 @@ func (c *Client) Send(ctx context.Context, req *http.Request, v interface{}) err
 		return errors.New("v interface can not be empty")
 	}
 
+	// sending json request by default
 	if req.Header.Get("content-Type") == "" {
 		req.Header.Set("Accept", "application/json")
 		req.Header.Set("Cache-Control", "no-cache")
 		req.Header.Set("username", c.username)
 		req.Header.Set("password", c.password)
+	} else {
+		req.Header.Set("Content-Type", "text/xml")
+		req.Header.Set("Connection", "keep-alive")
 	}
 
 	resp, err := c.client.Do(req)
@@ -115,8 +135,15 @@ func (c *Client) Send(ctx context.Context, req *http.Request, v interface{}) err
 	}
 	defer resp.Body.Close()
 
-	if err := json.NewDecoder(resp.Body).Decode(v); err != nil {
-		return err
+	switch req.Header.Get("Content-Type") {
+	case "application/json":
+		if err := json.NewDecoder(resp.Body).Decode(v); err != nil {
+			return err
+		}
+	case "text/xml":
+		if err := xml.NewDecoder(resp.Body).Decode(v); err != nil {
+			return err
+		}
 	}
 
 	return nil

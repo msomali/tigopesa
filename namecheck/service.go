@@ -29,7 +29,7 @@ type XMLRequest struct {
 	CustomerReferenceID string   `xml:"CUSTOMERREFERENCEID"`
 }
 
-type XMLResponse struct {
+type NamecheckResponse struct {
 	XMLName   xml.Name `xml:"COMMAND"`
 	Text      string   `xml:",chardata"`
 	Type      string   `xml:"TYPE"`
@@ -56,6 +56,6 @@ type Service interface {
 	// QuerySubscriberName is API to handle TigoPesa system Query
 	// of the Customer’s Name from Partner (Third-party) – Synchronous protocol
 	// req is the input from TigoPesa
-	QuerySubscriberName(ctx context.Context, req XMLRequest) (resp XMLResponse, err error)
+	QuerySubscriberName(ctx context.Context, req XMLRequest) (resp NamecheckResponse, err error)
 
 }

@@ -89,7 +89,7 @@ type App struct {
 
 func (app App) transactionHandler(w http.ResponseWriter, request *http.Request) {
 
-	var req ussd.W2ARequest
+	var req ussd.WalletToAccountRequest
 	xmlBody, err := ioutil.ReadAll(request.Body)
 
 	if err != nil {
@@ -170,7 +170,7 @@ func (app App) disburseHandler(w http.ResponseWriter, request *http.Request) {
 
 	refid := fmt.Sprintf("%s", strconv.FormatInt(time.Now().UnixNano(), 10))
 
-	req := ussd.A2WRequest{
+	req := ussd.AccountToWalletRequest{
 
 		Type:        "REQMFCI",
 		ReferenceID: refid,
@@ -208,7 +208,7 @@ func main() {
 		A2WReqURL:         "",
 	}
 
-	namechecker := func(ctx context.Context, request ussd.NameCheckRequest) (ussd.NameCheckResponse, error) {
+	namechecker := func(ctx context.Context, request ussd.SubscriberNameRequest) (ussd.NameCheckResponse, error) {
 
 		user, found := checkUser(request.CustomerReferenceID)
 

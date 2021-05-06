@@ -4,11 +4,11 @@ import (
 	"context"
 )
 
-type NameCheckRequest struct {
-	Msisdn              string
-	CompanyName         string
-	CustomerReferenceID string
-}
+//type SubscriberNameRequest struct {
+//	Msisdn              string
+//	CompanyName         string
+//	CustomerReferenceID string
+//}
 
 type NameCheckResponse struct {
 	Result    string
@@ -19,12 +19,12 @@ type NameCheckResponse struct {
 	Content   string
 }
 
-type NameCheckFunc func(context.Context, NameCheckRequest) (NameCheckResponse, error)
+type NameCheckFunc func(context.Context, SubscriberNameRequest) (NameCheckResponse, error)
 
-func (f NameCheckFunc) NameCheck(ctx context.Context, request NameCheckRequest) (resp NameCheckResponse, err error) {
+func (f NameCheckFunc) NameCheck(ctx context.Context, request SubscriberNameRequest) (resp NameCheckResponse, err error) {
 	return f(ctx, request)
 }
 
 type NameChecker interface {
-	NameCheck(ctx context.Context, request NameCheckRequest) (resp NameCheckResponse, err error)
+	NameCheck(ctx context.Context, request SubscriberNameRequest) (resp NameCheckResponse, err error)
 }

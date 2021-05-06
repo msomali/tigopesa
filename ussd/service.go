@@ -4,6 +4,12 @@ import (
 	"context"
 )
 
+type Client struct {
+
+}
+
+
+
 //type TxnStatus map[string]string
 //
 //var (
@@ -14,6 +20,10 @@ import (
 //	}
 //)
 
+type NameCheckHandleFunc func(context.Context, SubscriberNameRequest) (SubscriberNameResponse, error)
+
+type WalletToAccountFunc func(ctx context.Context, request WalletToAccountRequest)(WalletToAccountResponse, error)
+
 type Service interface {
 
 	// QuerySubscriberName is API to handle TigoPesa system Query
@@ -21,7 +31,7 @@ type Service interface {
 	// req is the input from TigoPesa
 	QuerySubscriberName(ctx context.Context, req SubscriberNameRequest) (resp SubscriberNameResponse, err error)
 
-	WalletToAccount(ctx context.Context, req W2ARequest) (resp W2AResponse, err error)
+	WalletToAccount(ctx context.Context, req WalletToAccountRequest) (resp WalletToAccountResponse, err error)
 
-	AccountToWallet(ctx context.Context, req A2WRequest) (resp A2WResponse, err error)
+	AccountToWallet(ctx context.Context, req AccountToWalletRequest) (resp AccountToWalletResponse, err error)
 }

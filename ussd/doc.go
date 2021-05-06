@@ -7,7 +7,7 @@
 //	Name string
 //}
 //
-//func (e example) CustomNameCheckFuncByUser(ctx context.Context, request NameCheckRequest) (resp NameCheckResponse, err error)  {
+//func (e example) CustomNameCheckFuncByUser(ctx context.Context, request SubscriberNameRequest) (resp NameCheckResponse, err error)  {
 //	fmt.Printf("request received is: %v\n",request)
 //
 //	resp = NameCheckResponse{
@@ -26,7 +26,7 @@
 //
 //func test(handler NameCheckFunc)  {
 //
-//	req := NameCheckRequest{
+//	req := SubscriberNameRequest{
 //		Msisdn:              "071299lloouw",
 //		CompanyName:         "startup",
 //		CustomerReferenceID: "thereferenceid",

@@ -11,7 +11,7 @@ type SubscriberNameRequest struct {
 	CustomerReferenceID string   `xml:"CUSTOMERREFERENCEID"`
 }
 
-// W2ARequest Input to the Partner Application from the Payment Gateway – SYNC_BILL
+// WalletToAccountRequest Input to the Partner Application from the Payment Gateway – SYNC_BILL
 // PAY_API Request
 // TYPE The Request Type of Transaction, the value will be constant in all request
 // it will be SYNC_BILLPAY_REQUEST
@@ -21,7 +21,7 @@ type SubscriberNameRequest struct {
 // COMPANYNAME biller code or Business Number
 // CUSTOMERREFERENCEID BillPay reference number normally generated/shared by partner application to validate payments
 // SENDERNAME Name of Sender or Payer (50)
-type W2ARequest struct {
+type WalletToAccountRequest struct {
 	XMLName             xml.Name `xml:"COMMAND"`
 	Text                string   `xml:",chardata"`
 	TYPE                string   `xml:"TYPE"`
@@ -33,7 +33,7 @@ type W2ARequest struct {
 	SenderName          string   `xml:"SENDERNAME"`
 }
 
-type A2WRequest struct {
+type AccountToWalletRequest struct {
 	XMLName     xml.Name `xml:"COMMAND"`
 	Text        string   `xml:",chardata"`
 	Type        string   `xml:"TYPE"`

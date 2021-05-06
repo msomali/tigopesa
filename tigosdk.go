@@ -54,7 +54,7 @@ func NewTigoClient(httpClient *http.Client, nameCheckHandler ussd.NameCheckFunc,
 }
 
 func (c client) QuerySubscriberName(ctx context.Context, req ussd.SubscriberNameRequest) (resp ussd.SubscriberNameResponse, err error) {
-	nameCheckReq := ussd.NameCheckRequest{
+	nameCheckReq := ussd.SubscriberNameRequest{
 		Msisdn:              req.Msisdn,
 		CompanyName:         req.CompanyName,
 		CustomerReferenceID: req.CustomerReferenceID,
@@ -78,8 +78,8 @@ func (c client) QuerySubscriberName(ctx context.Context, req ussd.SubscriberName
 	return resp, nil
 }
 
-func (c client) WalletToAccount(ctx context.Context, req ussd.W2ARequest) (resp ussd.W2AResponse, err error) {
-	resp = ussd.W2AResponse{
+func (c client) WalletToAccount(ctx context.Context, req ussd.WalletToAccountRequest) (resp ussd.WalletToAccountResponse, err error) {
+	resp = ussd.WalletToAccountResponse{
 		Type:             SYNC_BILLPAY_RESPONSE,
 		TxnID:            req.TxnID,
 		RefID:            "dummyrefno12345",
@@ -94,7 +94,7 @@ func (c client) WalletToAccount(ctx context.Context, req ussd.W2ARequest) (resp 
 	return
 }
 
-func (c client) AccountToWallet(ctx context.Context, req ussd.A2WRequest) (resp ussd.A2WResponse, err error) {
+func (c client) AccountToWallet(ctx context.Context, req ussd.AccountToWalletRequest) (resp ussd.AccountToWalletResponse, err error) {
 	xmlstring, err := xml.MarshalIndent(req, "", "    ")
 	if err != nil {
 		return

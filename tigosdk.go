@@ -79,6 +79,8 @@ func (c client) QuerySubscriberName(ctx context.Context, req ussd.SubscriberName
 }
 
 func (c client) WalletToAccount(ctx context.Context, req ussd.WalletToAccountRequest) (resp ussd.WalletToAccountResponse, err error) {
+
+
 	resp = ussd.WalletToAccountResponse{
 		Type:             SYNC_BILLPAY_RESPONSE,
 		TxnID:            req.TxnID,
@@ -95,13 +97,13 @@ func (c client) WalletToAccount(ctx context.Context, req ussd.WalletToAccountReq
 }
 
 func (c client) AccountToWallet(ctx context.Context, req ussd.AccountToWalletRequest) (resp ussd.AccountToWalletResponse, err error) {
-	xmlstring, err := xml.MarshalIndent(req, "", "    ")
+	xmlStr, err := xml.MarshalIndent(req, "", "    ")
 	if err != nil {
 		return
 	}
-	xmlstring = []byte(xml.Header + string(xmlstring))
+	xmlStr = []byte(xml.Header + string(xmlStr))
 
-	r, err := http.NewRequest(http.MethodPost, c.Conf.A2WReqURL, bytes.NewBuffer(xmlstring)) // URL-encoded payload
+	r, err := http.NewRequest(http.MethodPost, c.Conf.A2WReqURL, bytes.NewBuffer(xmlStr)) // URL-encoded payload
 	if err != nil {
 		return
 	}

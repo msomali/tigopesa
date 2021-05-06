@@ -4,11 +4,6 @@ import (
 	"context"
 )
 
-type Client struct {
-
-}
-
-
 
 //type TxnStatus map[string]string
 //

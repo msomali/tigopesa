@@ -14,6 +14,20 @@ const (
 	defaultTimeout  = time.Minute
 )
 
+type NameCheckHandleFunc func(context.Context, SubscriberNameRequest) SubscriberNameResponse
+
+type WalletToAccountFunc func(ctx context.Context, request WalletToAccountRequest) WalletToAccountResponse
+
+type Service interface {
+
+	QuerySubscriberName(ctx context.Context, request *http.Request) (resp SubscriberNameResponse, err error)
+
+	WalletToAccount(ctx context.Context, request *http.Request) (resp WalletToAccountResponse, err error)
+
+	AccountToWallet(ctx context.Context, req AccountToWalletRequest) (resp AccountToWalletResponse, err error)
+}
+
+
 var _ Service = (*Client)(nil)
 
 type Client struct {

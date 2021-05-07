@@ -6,7 +6,7 @@ var statusText = map[string]string{
 	"RefundTransaction-20-0000-S": "Reverse Transaction Success",
 
 	// failure status
-	"DebitMandate-10-1000-E":      "Internal Service Error",
+	"DebitMandate-10-1000-E":      "Internal USSDClient Error",
 	"DebitMandate-10-2001-E":      "User name or password empty",
 	"DebitMandate-10-2002-E":      "CustomerMSISDN not passed",
 	"DebitMandate-10-2003-E":      "Password not passed",

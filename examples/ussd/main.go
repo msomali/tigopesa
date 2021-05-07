@@ -38,7 +38,7 @@ const (
 )
 
 type App struct {
-	Service ussd.Client
+	USSDClient ussd.Client
 }
 
 func (app *App) disburseHandler(writer http.ResponseWriter, request *http.Request) {
@@ -57,16 +57,16 @@ func (app *App) disburseHandler(writer http.ResponseWriter, request *http.Reques
 
 		Type:        "REQMFCI",
 		ReferenceID: refid,
-		Msisdn:      app.Service.Conf.AccountMSISDN,
-		PIN:         app.Service.Conf.Password,
+		Msisdn:      app.USSDClient.Conf.AccountMSISDN,
+		PIN:         app.USSDClient.Conf.Password,
 		Msisdn1:     info.Msisdn,
 		Amount:      info.Amount,
-		SenderName:  app.Service.Conf.AccountName,
+		SenderName:  app.USSDClient.Conf.AccountName,
 		Language1:   "EN",
-		BrandID:     app.Service.Conf.BrandID,
+		BrandID:     app.USSDClient.Conf.BrandID,
 	}
 
-	resp, err := app.Service.AccountToWallet(context.TODO(), req)
+	resp, err := app.USSDClient.AccountToWallet(context.TODO(), req)
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusBadRequest)
 		return
@@ -80,7 +80,7 @@ func (app *App) disburseHandler(writer http.ResponseWriter, request *http.Reques
 
 func (app *App) namesHandler(writer http.ResponseWriter, request *http.Request) {
 
-	resp, err := app.Service.QuerySubscriberName(context.TODO(), request)
+	resp, err := app.USSDClient.QuerySubscriberName(context.TODO(), request)
 	if err != nil {
 		return
 	}
@@ -95,7 +95,7 @@ func (app *App) namesHandler(writer http.ResponseWriter, request *http.Request) 
 
 func (app *App) transactionHandler(writer http.ResponseWriter, request *http.Request) {
 
-	resp, err := app.Service.WalletToAccount(context.TODO(), request)
+	resp, err := app.USSDClient.WalletToAccount(context.TODO(), request)
 
 	if err != nil {
 		return
@@ -123,9 +123,9 @@ func MakeHandler(client ussd.Client) http.Handler {
 
 	router := mux.NewRouter()
 
-	router.HandleFunc(app.Service.Conf.NameCheckRequestURL, app.namesHandler).Methods(http.MethodPost, http.MethodGet)
+	router.HandleFunc(app.USSDClient.Conf.NameCheckRequestURL, app.namesHandler).Methods(http.MethodPost, http.MethodGet)
 
-	router.HandleFunc(app.Service.Conf.WalletToAccountRequestURL, app.transactionHandler).Methods(http.MethodPost, http.MethodGet)
+	router.HandleFunc(app.USSDClient.Conf.WalletToAccountRequestURL, app.transactionHandler).Methods(http.MethodPost, http.MethodGet)
 
 	router.HandleFunc("/api/tigopesa/disburse", app.disburseHandler).Methods(http.MethodPost)
 

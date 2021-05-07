@@ -14,7 +14,7 @@ type SubscriberNameResponse struct {
 	Content   string   `xml:"CONTENT"`
 }
 
-type W2AResponse struct {
+type WalletToAccountResponse struct {
 	XMLName          xml.Name `xml:"COMMAND"`
 	Text             string   `xml:",chardata"`
 	Type             string   `xml:"TYPE"`
@@ -28,7 +28,7 @@ type W2AResponse struct {
 	Content          string   `xml:"CONTENT"`
 }
 
-type A2WResponse struct {
+type AccountToWalletResponse struct {
 	XMLName     xml.Name `xml:"COMMAND" json:"-"`
 	Text        string   `xml:",chardata" json:"-"`
 	Type        string   `xml:"TYPE" json:"type"`

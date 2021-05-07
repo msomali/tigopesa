@@ -60,7 +60,7 @@ func (c Client) QuerySubscriberName(ctx context.Context, request *http.Request) 
 	if err != nil {
 		return response,err
 	}
-	response, err = c.NameHandleFunc(ctx, req)
+	response = c.NameHandleFunc(ctx, req)
 	return
 }
 
@@ -81,7 +81,7 @@ func (c Client) WalletToAccount(ctx context.Context, request *http.Request) (res
 	if err != nil {
 		return response,err
 	}
-	response, err =c.W2AHandleFunc(ctx, req)
+	response =c.W2AHandleFunc(ctx, req)
 	return
 }
 
@@ -96,7 +96,7 @@ func (c Client) AccountToWallet(ctx context.Context, request AccountToWalletRequ
 	xmlStr = []byte(xml.Header + string(xmlStr))
 
 	// Create a HTTP Post Request to be sent to Tigo gateway
-	req, err := http.NewRequest(http.MethodPost, c.Conf.A2WReqURL, bytes.NewBuffer(xmlStr)) // URL-encoded payload
+	req, err := http.NewRequest(http.MethodPost, c.Conf.AccountToWalletRequestURL, bytes.NewBuffer(xmlStr)) // URL-encoded payload
 	if err != nil {
 		return
 	}

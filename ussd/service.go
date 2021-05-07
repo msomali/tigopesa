@@ -16,9 +16,9 @@ import (
 //	}
 //)
 
-type NameCheckHandleFunc func(context.Context, SubscriberNameRequest) (SubscriberNameResponse, error)
+type NameCheckHandleFunc func(context.Context, SubscriberNameRequest) SubscriberNameResponse
 
-type WalletToAccountFunc func(ctx context.Context, request WalletToAccountRequest)(WalletToAccountResponse, error)
+type WalletToAccountFunc func(ctx context.Context, request WalletToAccountRequest) WalletToAccountResponse
 
 type Service interface {
 

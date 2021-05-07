@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -12,12 +13,18 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 )
 
 var (
 	internalError = errors.New("internal server error")
 )
+
+type disburseInfo struct {
+	Msisdn string `json:"msisdn"`
+	Amount float64 `json:"amount"`
+}
 
 const (
 	TIGO_USERNAME            = "TIGO_USERNAME"
@@ -39,6 +46,39 @@ type App struct {
 }
 
 func (app *App) disburseHandler(writer http.ResponseWriter, request *http.Request) {
+		var info disburseInfo
+	//	// Try to decode the request body into the struct. If there is an error,
+		// respond to the client with the error message and a 400 status code.
+		err := json.NewDecoder(request.Body).Decode(&info)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		refid := fmt.Sprintf("%s", strconv.FormatInt(time.Now().UnixNano(), 10))
+
+		req := ussd.AccountToWalletRequest{
+
+			Type:        "REQMFCI",
+			ReferenceID: refid,
+			Msisdn:      app.Service.Conf.AccountMSISDN,
+			PIN:         app.Service.Conf.Password,
+			Msisdn1:     info.Msisdn,
+			Amount:      info.Amount,
+			SenderName:  app.Service.Conf.AccountName,
+			Language1:   "EN",
+			BrandID:     app.Service.Conf.BrandID,
+		}
+
+		resp, err := app.Service.AccountToWallet(context.TODO(),req)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		writer.Header().Set("Content-Type", "application/json")
+
+		json.NewEncoder(writer).Encode(resp)
 
 }
 
@@ -59,6 +99,18 @@ func (app *App) namesHandler(writer http.ResponseWriter, request *http.Request) 
 
 func (app *App) transactionHandler(writer http.ResponseWriter, request *http.Request) {
 
+	resp, err := app.Service.WalletToAccount(context.TODO(),request)
+
+	if err != nil {
+		return
+	}
+	x, err := xml.MarshalIndent(resp, "", "  ")
+	if err != nil {
+		http.Error(writer, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	writer.Header().Set("Content-Type", "application/xml")
+	writer.Write(x)
 }
 
 //func (app *App)w2aHandler(ctx context.Context, request ussd.WalletToAccountRequest) (ussd.WalletToAccountResponse, error) {
@@ -85,9 +137,9 @@ func MakeHandler(client ussd.Client) http.Handler {
 
 	router := mux.NewRouter()
 
-	router.HandleFunc(app.Service.Conf.NameCheckURL, app.namesHandler).Methods(http.MethodPost, http.MethodGet)
+	router.HandleFunc(app.Service.Conf.NameCheckRequestURL, app.namesHandler).Methods(http.MethodPost, http.MethodGet)
 
-	router.HandleFunc(app.Service.Conf.W2AURL, app.transactionHandler).Methods(http.MethodPost, http.MethodGet)
+	router.HandleFunc(app.Service.Conf.WalletToAccountRequestURL, app.transactionHandler).Methods(http.MethodPost, http.MethodGet)
 
 	router.HandleFunc("/api/tigopesa/disburse", app.disburseHandler).Methods(http.MethodPost)
 
@@ -99,18 +151,18 @@ func loadFromEnv() (conf tigosdk.Configs, err error) {
 
 	err = env.Load("tigo.env")
 	conf = tigosdk.Configs{
-		Username:          os.Getenv(TIGO_USERNAME),
-		Password:          os.Getenv(TIGO_PASSWORD),
-		PasswordGrantType: os.Getenv(TIGO_PASSWORD_GRANT_TYPE),
-		AccountName:       os.Getenv(TIGO_ACCOUNT_NAME),
-		AccountMSISDN:     os.Getenv(TIGO_ACCOUNT_MSISDN),
-		BrandID:           os.Getenv(TIGO_BRAND_ID),
-		BillerCode:        os.Getenv(TIGO_BILLER_CODE),
-		GetTokenURL:       os.Getenv(TIGO_GET_TOKEN_URL),
-		BillURL:           os.Getenv(TIGO_BILL_URL),
-		A2WReqURL:         os.Getenv(TIGO_A2W_URL),
-		W2AURL: os.Getenv(TIGO_W2A_URL),
-		NameCheckURL: os.Getenv(TIGO_NAMECHECK_URL),
+		Username:                  os.Getenv(TIGO_USERNAME),
+		Password:                  os.Getenv(TIGO_PASSWORD),
+		PasswordGrantType:         os.Getenv(TIGO_PASSWORD_GRANT_TYPE),
+		AccountName:               os.Getenv(TIGO_ACCOUNT_NAME),
+		AccountMSISDN:             os.Getenv(TIGO_ACCOUNT_MSISDN),
+		BrandID:                   os.Getenv(TIGO_BRAND_ID),
+		BillerCode:                os.Getenv(TIGO_BILLER_CODE),
+		GetTokenRequestURL:        os.Getenv(TIGO_GET_TOKEN_URL),
+		PushPayBillRequestURL:     os.Getenv(TIGO_BILL_URL),
+		AccountToWalletRequestURL: os.Getenv(TIGO_A2W_URL),
+		WalletToAccountRequestURL: os.Getenv(TIGO_W2A_URL),
+		NameCheckRequestURL:       os.Getenv(TIGO_NAMECHECK_URL),
 	}
 
 	return
@@ -171,27 +223,27 @@ type checker struct {
 	Users map[string]User
 }
 
-func (c *checker)w2aFunc(ctx context.Context, request ussd.WalletToAccountRequest) (ussd.WalletToAccountResponse, error) {
-	return ussd.WalletToAccountResponse{
-		XMLName:          xml.Name{},
-		Text:             "",
-		Type:             "",
-		TxnID:            "",
-		RefID:            "",
-		Result:           "",
-		ErrorCode:        "",
-		ErrorDescription: "",
-		Msisdn:           "",
-		Flag:             "",
-		Content:          "",
-	},nil
+func (c *checker)w2aFunc(ctx context.Context, request ussd.WalletToAccountRequest) ussd.WalletToAccountResponse {
+	resp := ussd.WalletToAccountResponse{
+		Type:             tigosdk.SYNC_BILLPAY_RESPONSE,
+		TxnID:            request.TxnID,
+		RefID:            "dummyrefno12345",
+		Result:           "TS",
+		ErrorCode:        "error000",
+		ErrorDescription: "Transaction Successful",
+		Msisdn:           request.Msisdn,
+		Flag:             "Y",
+		Content:          "THE BILLPAY RESPONSE",
+	}
+	return resp
 }
 
-func (c *checker)nameFunc(ctx context.Context, request ussd.SubscriberNameRequest) (ussd.SubscriberNameResponse, error) {
+func (c *checker)nameFunc(ctx context.Context, request ussd.SubscriberNameRequest) ussd.SubscriberNameResponse {
 	
 	user, found := c.checkUser(request.CustomerReferenceID)
 	if !found{
 		resp := ussd.SubscriberNameResponse{
+			Type:      tigosdk.SYNC_LOOKUP_RESPONSE,
 			Result:    "TF",
 			ErrorCode: "error010",
 			ErrorDesc: "Not found",
@@ -200,11 +252,12 @@ func (c *checker)nameFunc(ctx context.Context, request ussd.SubscriberNameReques
 			Content:   "User is not known",
 		}
 
-		return resp, nil
+		return resp
 	}else {
 		if user.Status == 1{
 
 			resp := ussd.SubscriberNameResponse{
+				Type:      tigosdk.SYNC_LOOKUP_RESPONSE,
 				Result:    "TF",
 				ErrorCode: "error020",
 				ErrorDesc: "Transaction Failed: User Suspended",
@@ -213,11 +266,12 @@ func (c *checker)nameFunc(ctx context.Context, request ussd.SubscriberNameReques
 				Content:   fmt.Sprintf("%s", user.Name),
 			}
 
-			return resp, nil
+			return resp
 		}
 
 		if user.Status ==2{
 			resp := ussd.SubscriberNameResponse{
+				Type:      tigosdk.SYNC_LOOKUP_RESPONSE,
 				Result:    "TF",
 				ErrorCode: "error030",
 				ErrorDesc: "Transaction Failed: Format not known",
@@ -226,10 +280,11 @@ func (c *checker)nameFunc(ctx context.Context, request ussd.SubscriberNameReques
 				Content:   fmt.Sprintf("%s", user.Name),
 			}
 
-			return resp, nil
+			return resp
 		}
 
 		resp := ussd.SubscriberNameResponse{
+			Type:      tigosdk.SYNC_LOOKUP_RESPONSE,
 			Result:    "TS",
 			ErrorCode: "error000",
 			ErrorDesc: "Transaction Successfully",
@@ -237,7 +292,7 @@ func (c *checker)nameFunc(ctx context.Context, request ussd.SubscriberNameReques
 			Flag:      "Y",
 			Content:   fmt.Sprintf("%s", user.Name),
 		}
-		return resp, nil
+		return resp
 	}
 
 }

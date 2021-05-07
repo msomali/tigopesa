@@ -30,6 +30,8 @@ type Configs struct {
 	GetTokenURL       string `json:"get_token_url"`
 	BillURL           string `json:"biller_payment"`
 	A2WReqURL         string `json:"a2w_url"`
+	W2AURL            string `json:"w_2_aurl"`
+	NameCheckURL      string `json:"name_check_url"`
 }
 
 type Service interface {

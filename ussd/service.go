@@ -22,17 +22,9 @@ type WalletToAccountFunc func(ctx context.Context, request WalletToAccountReques
 
 type Service interface {
 
-	// QuerySubscriberName is API to handle TigoPesa system Query
-	// of the Customer’s Name from Partner (Third-party) – Synchronous protocol
-	// req is the input from TigoPesa
-	QuerySubscriberName(ctx context.Context, req SubscriberNameRequest) (resp SubscriberNameResponse, err error)
+	QuerySubscriberName(ctx context.Context, request *http.Request) (resp SubscriberNameResponse, err error)
 
-	WalletToAccount(ctx context.Context, req WalletToAccountRequest) (resp WalletToAccountResponse, err error)
-
-	QuerySubscriberNameL(ctx context.Context, request *http.Request) (resp SubscriberNameResponse, err error)
-
-	WalletToAccountN(ctx context.Context, request *http.Request) (resp WalletToAccountResponse, err error)
-
+	WalletToAccount(ctx context.Context, request *http.Request) (resp WalletToAccountResponse, err error)
 
 	AccountToWallet(ctx context.Context, req AccountToWalletRequest) (resp AccountToWalletResponse, err error)
 }

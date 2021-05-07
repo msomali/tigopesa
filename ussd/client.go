@@ -43,12 +43,12 @@ func NewClient(configs tigosdk.Configs, client *http.Client, nameHandler NameChe
 	}
 }
 
-func (c Client) QuerySubscriberName(ctx context.Context, request SubscriberNameRequest) (response SubscriberNameResponse, err error) {
-	response, err = c.NameHandleFunc(ctx, request)
-	return
-}
+//func (c Client) QuerySubscriberName(ctx context.Context, request SubscriberNameRequest) (response SubscriberNameResponse, err error) {
+//	response, err = c.NameHandleFunc(ctx, request)
+//	return
+//}
 
-func (c Client) QuerySubscriberNameL(ctx context.Context, request *http.Request) (response SubscriberNameResponse, err error) {
+func (c Client) QuerySubscriberName(ctx context.Context, request *http.Request) (response SubscriberNameResponse, err error) {
 	var req SubscriberNameRequest
 	xmlBody, err := ioutil.ReadAll(request.Body)
 	if err != nil {
@@ -64,12 +64,12 @@ func (c Client) QuerySubscriberNameL(ctx context.Context, request *http.Request)
 	return
 }
 
-func (c Client) WalletToAccount(ctx context.Context, request WalletToAccountRequest) (response WalletToAccountResponse, err error) {
-	response, err =c.W2AHandleFunc(ctx, request)
-	return
-}
+//func (c Client) WalletToAccount(ctx context.Context, request WalletToAccountRequest) (response WalletToAccountResponse, err error) {
+//	response, err =c.W2AHandleFunc(ctx, request)
+//	return
+//}
 
-func (c Client) WalletToAccountN(ctx context.Context, request *http.Request) (response WalletToAccountResponse, err error) {
+func (c Client) WalletToAccount(ctx context.Context, request *http.Request) (response WalletToAccountResponse, err error) {
 	var req WalletToAccountRequest
 	xmlBody, err := ioutil.ReadAll(request.Body)
 	if err != nil {

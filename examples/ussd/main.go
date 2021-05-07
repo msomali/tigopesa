@@ -17,12 +17,8 @@ import (
 	"time"
 )
 
-var (
-	internalError = errors.New("internal server error")
-)
-
 type disburseInfo struct {
-	Msisdn string `json:"msisdn"`
+	Msisdn string  `json:"msisdn"`
 	Amount float64 `json:"amount"`
 }
 
@@ -37,7 +33,7 @@ const (
 	TIGO_GET_TOKEN_URL       = "TIGO_GET_TOKEN_URL"
 	TIGO_BILL_URL            = "TIGO_BILL_URL"
 	TIGO_A2W_URL             = "TIGO_A2W_URL"
-	TIGO_NAMECHECK_URL      =  "TIGO_NAMECHECK_URL"
+	TIGO_NAMECHECK_URL       = "TIGO_NAMECHECK_URL"
 	TIGO_W2A_URL             = "TIGO_W2A_URL"
 )
 
@@ -46,39 +42,39 @@ type App struct {
 }
 
 func (app *App) disburseHandler(writer http.ResponseWriter, request *http.Request) {
-		var info disburseInfo
+	var info disburseInfo
 	//	// Try to decode the request body into the struct. If there is an error,
-		// respond to the client with the error message and a 400 status code.
-		err := json.NewDecoder(request.Body).Decode(&info)
-		if err != nil {
-			http.Error(writer, err.Error(), http.StatusBadRequest)
-			return
-		}
+	// respond to the client with the error message and a 400 status code.
+	err := json.NewDecoder(request.Body).Decode(&info)
+	if err != nil {
+		http.Error(writer, err.Error(), http.StatusBadRequest)
+		return
+	}
 
-		refid := fmt.Sprintf("%s", strconv.FormatInt(time.Now().UnixNano(), 10))
+	refid := fmt.Sprintf("%s", strconv.FormatInt(time.Now().UnixNano(), 10))
 
-		req := ussd.AccountToWalletRequest{
+	req := ussd.AccountToWalletRequest{
 
-			Type:        "REQMFCI",
-			ReferenceID: refid,
-			Msisdn:      app.Service.Conf.AccountMSISDN,
-			PIN:         app.Service.Conf.Password,
-			Msisdn1:     info.Msisdn,
-			Amount:      info.Amount,
-			SenderName:  app.Service.Conf.AccountName,
-			Language1:   "EN",
-			BrandID:     app.Service.Conf.BrandID,
-		}
+		Type:        "REQMFCI",
+		ReferenceID: refid,
+		Msisdn:      app.Service.Conf.AccountMSISDN,
+		PIN:         app.Service.Conf.Password,
+		Msisdn1:     info.Msisdn,
+		Amount:      info.Amount,
+		SenderName:  app.Service.Conf.AccountName,
+		Language1:   "EN",
+		BrandID:     app.Service.Conf.BrandID,
+	}
 
-		resp, err := app.Service.AccountToWallet(context.TODO(),req)
-		if err != nil {
-			http.Error(writer, err.Error(), http.StatusBadRequest)
-			return
-		}
+	resp, err := app.Service.AccountToWallet(context.TODO(), req)
+	if err != nil {
+		http.Error(writer, err.Error(), http.StatusBadRequest)
+		return
+	}
 
-		writer.Header().Set("Content-Type", "application/json")
+	writer.Header().Set("Content-Type", "application/json")
 
-		json.NewEncoder(writer).Encode(resp)
+	json.NewEncoder(writer).Encode(resp)
 
 }
 
@@ -86,7 +82,7 @@ func (app *App) namesHandler(writer http.ResponseWriter, request *http.Request) 
 
 	resp, err := app.Service.QuerySubscriberName(context.TODO(), request)
 	if err != nil {
-		return 
+		return
 	}
 	x, err := xml.MarshalIndent(resp, "", "  ")
 	if err != nil {
@@ -99,7 +95,7 @@ func (app *App) namesHandler(writer http.ResponseWriter, request *http.Request) 
 
 func (app *App) transactionHandler(writer http.ResponseWriter, request *http.Request) {
 
-	resp, err := app.Service.WalletToAccount(context.TODO(),request)
+	resp, err := app.Service.WalletToAccount(context.TODO(), request)
 
 	if err != nil {
 		return
@@ -113,23 +109,13 @@ func (app *App) transactionHandler(writer http.ResponseWriter, request *http.Req
 	writer.Write(x)
 }
 
-//func (app *App)w2aHandler(ctx context.Context, request ussd.WalletToAccountRequest) (ussd.WalletToAccountResponse, error) {
-//
-//}
-//
-//func (app *App) nameHandler(ctx context.Context, request ussd.SubscriberNameRequest) (ussd.SubscriberNameResponse, error) {
-//
-//}
-
-
 type User struct {
-	Name string `json:"name"`
-	RefID string `json:"ref_id"`
-	Status int `json:"status"`
+	Name   string `json:"name"`
+	RefID  string `json:"ref_id"`
+	Status int    `json:"status"`
 }
 
 var errNotFound = errors.New("not found")
-
 
 func MakeHandler(client ussd.Client) http.Handler {
 
@@ -145,7 +131,6 @@ func MakeHandler(client ussd.Client) http.Handler {
 
 	return router
 }
-
 
 func loadFromEnv() (conf tigosdk.Configs, err error) {
 
@@ -180,17 +165,17 @@ func main() {
 			RefID:  "12345678",
 			Status: 0,
 		},
-		"23456789":{
+		"23456789": {
 			Name:   "St. Jane School",
 			RefID:  "23456789",
 			Status: 1,
 		},
-		"34567890":{
+		"34567890": {
 			Name:   "Uhuru Stadium",
 			RefID:  "34567890",
 			Status: 2,
 		},
-		"22473478":{
+		"22473478": {
 			Name:   "Jamesson Club",
 			RefID:  "22473478",
 			Status: 2,
@@ -200,7 +185,6 @@ func main() {
 	check := checker{usersMap}
 
 	c := ussd.NewClient(conf, nil, check.nameFunc, check.w2aFunc)
-
 
 	handler := MakeHandler(*c)
 
@@ -223,25 +207,73 @@ type checker struct {
 	Users map[string]User
 }
 
-func (c *checker)w2aFunc(ctx context.Context, request ussd.WalletToAccountRequest) ussd.WalletToAccountResponse {
+func (c *checker) w2aFunc(ctx context.Context, request ussd.WalletToAccountRequest) ussd.WalletToAccountResponse {
+
+	user, found := c.checkUser(request.CustomerReferenceID)
+	refid := fmt.Sprintf("%s", strconv.FormatInt(time.Now().UnixNano(), 10))
+
+	if ! found{
+		resp := ussd.WalletToAccountResponse{
+
+			Type:             tigosdk.SYNC_BILLPAY_RESPONSE,
+			TxnID:            request.TxnID,
+			RefID:            refid,
+			Result:           "TF",
+			ErrorCode:        "error010",
+			ErrorDescription: "User Not Found",
+			Msisdn:           request.Msisdn,
+			Flag:             "N",
+			Content:          request.SenderName,
+		}
+
+		return resp
+	}else{
+		if user.Status ==1 {
+			resp := ussd.WalletToAccountResponse{
+				Type:             tigosdk.SYNC_BILLPAY_RESPONSE,
+				TxnID:            request.TxnID,
+				RefID:            refid,
+				Result:           "TF",
+				ErrorCode:        "error010",
+				ErrorDescription: "Invalid Customer ref Number",
+				Msisdn:           request.Msisdn,
+				Flag:             "N",
+				Content:          request.SenderName,
+			}
+			return resp
+		}else if user.Status ==2{
+			resp := ussd.WalletToAccountResponse{
+				Type:             tigosdk.SYNC_BILLPAY_RESPONSE,
+				TxnID:            request.TxnID,
+				RefID:            refid,
+				Result:           "TF",
+				ErrorCode:        "error011",
+				ErrorDescription: "Customer Locked",
+				Msisdn:           request.Msisdn,
+				Flag:             "N",
+				Content:          request.SenderName,
+			}
+			return resp
+		}
+	}
 	resp := ussd.WalletToAccountResponse{
 		Type:             tigosdk.SYNC_BILLPAY_RESPONSE,
 		TxnID:            request.TxnID,
-		RefID:            "dummyrefno12345",
+		RefID:            refid,
 		Result:           "TS",
 		ErrorCode:        "error000",
 		ErrorDescription: "Transaction Successful",
 		Msisdn:           request.Msisdn,
 		Flag:             "Y",
-		Content:          "THE BILLPAY RESPONSE",
+		Content:          request.SenderName,
 	}
 	return resp
 }
 
-func (c *checker)nameFunc(ctx context.Context, request ussd.SubscriberNameRequest) ussd.SubscriberNameResponse {
-	
+func (c *checker) nameFunc(ctx context.Context, request ussd.SubscriberNameRequest) ussd.SubscriberNameResponse {
+
 	user, found := c.checkUser(request.CustomerReferenceID)
-	if !found{
+	if !found {
 		resp := ussd.SubscriberNameResponse{
 			Type:      tigosdk.SYNC_LOOKUP_RESPONSE,
 			Result:    "TF",
@@ -253,8 +285,8 @@ func (c *checker)nameFunc(ctx context.Context, request ussd.SubscriberNameReques
 		}
 
 		return resp
-	}else {
-		if user.Status == 1{
+	} else {
+		if user.Status == 1 {
 
 			resp := ussd.SubscriberNameResponse{
 				Type:      tigosdk.SYNC_LOOKUP_RESPONSE,
@@ -269,7 +301,7 @@ func (c *checker)nameFunc(ctx context.Context, request ussd.SubscriberNameReques
 			return resp
 		}
 
-		if user.Status ==2{
+		if user.Status == 2 {
 			resp := ussd.SubscriberNameResponse{
 				Type:      tigosdk.SYNC_LOOKUP_RESPONSE,
 				Result:    "TF",
@@ -297,9 +329,9 @@ func (c *checker)nameFunc(ctx context.Context, request ussd.SubscriberNameReques
 
 }
 
-func (c *checker)checkUser(refid string)(User,bool){
-	fmt.Printf("checking %s\n",refid)
-	
+func (c *checker) checkUser(refid string) (User, bool) {
+	fmt.Printf("checking %s\n", refid)
+
 	user, found := c.Users[refid]
 
 	return user, found

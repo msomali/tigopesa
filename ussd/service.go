@@ -2,6 +2,7 @@ package ussd
 
 import (
 	"context"
+	"net/http"
 )
 
 
@@ -27,6 +28,11 @@ type Service interface {
 	QuerySubscriberName(ctx context.Context, req SubscriberNameRequest) (resp SubscriberNameResponse, err error)
 
 	WalletToAccount(ctx context.Context, req WalletToAccountRequest) (resp WalletToAccountResponse, err error)
+
+	QuerySubscriberNameL(ctx context.Context, request *http.Request) (resp SubscriberNameResponse, err error)
+
+	WalletToAccountN(ctx context.Context, request *http.Request) (resp WalletToAccountResponse, err error)
+
 
 	AccountToWallet(ctx context.Context, req AccountToWalletRequest) (resp AccountToWalletResponse, err error)
 }

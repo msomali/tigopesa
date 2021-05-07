@@ -14,55 +14,79 @@ const (
 	defaultTimeout  = time.Minute
 )
 
-var _ Service = (*client)(nil)
+var _ Service = (*Client)(nil)
 
-type client struct {
-	Conf tigosdk.Configs
-	HTTPClient *http.Client
-	NameCheckHandler NameCheckHandleFunc
-	WalletToAccountHandler WalletToAccountFunc
+type Client struct {
+	Conf           tigosdk.Configs
+	HTTPClient     *http.Client
+	NameHandleFunc NameCheckHandleFunc
+	W2AHandleFunc  WalletToAccountFunc
 }
 
 
+func NewClient(configs tigosdk.Configs, client *http.Client, nameHandler NameCheckHandleFunc, w2aHandler WalletToAccountFunc) *Client{
 
-func NewClient(configs tigosdk.Configs, httpC *http.Client,nameCheckHandler NameCheckHandleFunc, w2aHandler WalletToAccountFunc) Service{
-	return &client{
-		Conf:                   configs,
-		HTTPClient:             httpC,
-		NameCheckHandler:       nameCheckHandler,
-		WalletToAccountHandler: w2aHandler,
+	//check if http client was provided if not use the default
+	if client == nil{
+		return &Client{
+			Conf:           configs,
+			HTTPClient:     http.DefaultClient,
+			NameHandleFunc: nameHandler,
+			W2AHandleFunc:  w2aHandler,
+		}
+	}
+	return &Client{
+		Conf:           configs,
+		HTTPClient:     client,
+		NameHandleFunc: nameHandler,
+		W2AHandleFunc:  w2aHandler,
 	}
 }
 
-func (c client) QuerySubscriberName(ctx context.Context, request SubscriberNameRequest) (response SubscriberNameResponse, err error) {
-
-	response, err = c.NameCheckHandler(ctx, request)
+func (c Client) QuerySubscriberName(ctx context.Context, request SubscriberNameRequest) (response SubscriberNameResponse, err error) {
+	response, err = c.NameHandleFunc(ctx, request)
 	return
 }
 
-func (c client) QuerySubscriberNameL(ctx context.Context, request *http.Request) (response SubscriberNameResponse, err error) {
+func (c Client) QuerySubscriberNameL(ctx context.Context, request *http.Request) (response SubscriberNameResponse, err error) {
 	var req SubscriberNameRequest
 	xmlBody, err := ioutil.ReadAll(request.Body)
 	if err != nil {
 		return response,err
 	}
 	// Try to decode the request body into the struct. If there is an error,
-	// respond to the client with the error message and a 400 status code.
+	// respond to the Client with the error message and a 400 status code.
 	err = xml.Unmarshal(xmlBody, &req)
 	if err != nil {
 		return response,err
 	}
-	response, err = c.NameCheckHandler(ctx, req)
+	response, err = c.NameHandleFunc(ctx, req)
 	return
 }
 
-func (c client) WalletToAccount(ctx context.Context, request WalletToAccountRequest) (response WalletToAccountResponse, err error) {
-	response, err =c.WalletToAccountHandler(ctx, request)
+func (c Client) WalletToAccount(ctx context.Context, request WalletToAccountRequest) (response WalletToAccountResponse, err error) {
+	response, err =c.W2AHandleFunc(ctx, request)
+	return
+}
+
+func (c Client) WalletToAccountN(ctx context.Context, request *http.Request) (response WalletToAccountResponse, err error) {
+	var req WalletToAccountRequest
+	xmlBody, err := ioutil.ReadAll(request.Body)
+	if err != nil {
+		return response,err
+	}
+	// Try to decode the request body into the struct. If there is an error,
+	// respond to the Client with the error message and a 400 status code.
+	err = xml.Unmarshal(xmlBody, &req)
+	if err != nil {
+		return response,err
+	}
+	response, err =c.W2AHandleFunc(ctx, req)
 	return
 }
 
 // AccountToWallet this is the implementation of disbursement
-func (c client) AccountToWallet(ctx context.Context, request AccountToWalletRequest) (response AccountToWalletResponse, err error) {
+func (c Client) AccountToWallet(ctx context.Context, request AccountToWalletRequest) (response AccountToWalletResponse, err error) {
 
 	// Marshal the request body into application/xml
 	xmlStr, err := xml.MarshalIndent(request, "", "    ")

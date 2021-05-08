@@ -12,6 +12,8 @@ import (
 
 const (
 	defaultTimeout  = time.Minute
+	SYNC_LOOKUP_RESPONSE  = "SYNC_LOOKUP_RESPONSE"
+	SYNC_BILLPAY_RESPONSE = "SYNC_BILLPAY_RESPONSE"
 )
 
 type NameCheckHandleFunc func(context.Context, SubscriberNameRequest) SubscriberNameResponse
@@ -57,7 +59,7 @@ func NewClient(configs tigosdk.Configs, client *http.Client, nameHandler NameChe
 	}
 }
 
-func (c Client) QuerySubscriberName(ctx context.Context, request *http.Request) (response SubscriberNameResponse, err error) {
+func (c *Client) QuerySubscriberName(ctx context.Context, request *http.Request) (response SubscriberNameResponse, err error) {
 	var req SubscriberNameRequest
 	xmlBody, err := ioutil.ReadAll(request.Body)
 	if err != nil {
@@ -73,7 +75,39 @@ func (c Client) QuerySubscriberName(ctx context.Context, request *http.Request) 
 	return
 }
 
-func (c Client) WalletToAccount(ctx context.Context, request *http.Request) (response WalletToAccountResponse, err error) {
+
+// WalletToAccountHandler is expected to replace WalletToAccount
+// This is very experimental ATM
+func (c *Client) WalletToAccountHandler(writer http.ResponseWriter,request *http.Request){
+
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+	defer cancel()
+
+	var req WalletToAccountRequest
+	xmlBody, err := ioutil.ReadAll(request.Body)
+	if err != nil {
+		http.Error(writer, err.Error(), http.StatusInternalServerError)
+	}
+	// Try to decode the request body into the struct. If there is an error,
+	// respond to the Client with the error message and a 400 status code.
+	err = xml.Unmarshal(xmlBody, &req)
+	if err != nil {
+		http.Error(writer, err.Error(), http.StatusInternalServerError)
+	}
+
+	response := c.W2AHandleFunc(ctx, req)
+
+	xmlResponse, err := xml.MarshalIndent(response, "", "  ")
+	if err != nil {
+		http.Error(writer, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	writer.Header().Set("Content-Type", "application/xml")
+	_, _ = writer.Write(xmlResponse)
+
+}
+
+func (c *Client) WalletToAccount(ctx context.Context, request *http.Request) (response WalletToAccountResponse, err error) {
 	var req WalletToAccountRequest
 	xmlBody, err := ioutil.ReadAll(request.Body)
 	if err != nil {
@@ -90,7 +124,7 @@ func (c Client) WalletToAccount(ctx context.Context, request *http.Request) (res
 }
 
 // AccountToWallet this is the implementation of disbursement
-func (c Client) AccountToWallet(ctx context.Context, request AccountToWalletRequest) (response AccountToWalletResponse, err error) {
+func (c *Client) AccountToWallet(ctx context.Context, request AccountToWalletRequest) (response AccountToWalletResponse, err error) {
 
 	// Marshal the request body into application/xml
 	xmlStr, err := xml.MarshalIndent(request, "", "    ")

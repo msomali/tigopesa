@@ -125,7 +125,7 @@ func MakeHandler(client ussd.Client) http.Handler {
 
 	router.HandleFunc(app.USSDClient.Conf.NameCheckRequestURL, app.namesHandler).Methods(http.MethodPost, http.MethodGet)
 
-	router.HandleFunc(app.USSDClient.Conf.WalletToAccountRequestURL, app.transactionHandler).Methods(http.MethodPost, http.MethodGet)
+	router.HandleFunc(app.USSDClient.Conf.WalletToAccountRequestURL, app.USSDClient.WalletToAccountHandler).Methods(http.MethodPost, http.MethodGet)
 
 	router.HandleFunc("/api/tigopesa/disburse", app.disburseHandler).Methods(http.MethodPost)
 

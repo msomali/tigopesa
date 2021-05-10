@@ -19,6 +19,7 @@ TIGO_BILL_URL            = "TIGO_BILL_URL"
 TIGO_A2W_URL             = "TIGO_A2W_URL"
 TIGO_NAMECHECK_URL       = "TIGO_NAMECHECK_URL"
 TIGO_W2A_URL             = "TIGO_W2A_URL"
+TIGO_DISBURSEMENT_PIN    = "TIGO_DISBURSEMENT_PIN"
 ```
 then run these commands
 

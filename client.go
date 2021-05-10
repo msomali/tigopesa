@@ -114,7 +114,7 @@ func (c *Client) NewRequest(method, url string, requestType RequestType, payload
 			buf = bytes.NewBuffer(b)
 
 		case XMLRequest:
-			b, err := xml.Marshal(&payload)
+			b, err := xml.MarshalIndent(&payload, "", "  ")
 			if err != nil {
 				return nil, err
 			}

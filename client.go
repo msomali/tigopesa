@@ -7,7 +7,6 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"github.com/techcraftt/tigosdk/push"
 	"io"
 	"net/http"
 	"net/url"
@@ -22,28 +21,36 @@ var (
 	XMLRequest  RequestType = "xml"
 )
 
+//Config contains details of TigoPesa integration.
+//These are configurations supplied during the integration stage.
+type Config struct {
+	Username                  string `json:"username"`
+	Password                  string `json:"password"`
+	PasswordGrantType         string `json:"grant_type"`
+	AccountName               string `json:"account_name"`
+	AccountMSISDN             string `json:"account_msisdn"`
+	BrandID                   string `json:"brand_id"`
+	BillerCode                string `json:"biller_code"`
+	GetTokenRequestURL        string `json:"token_url"`
+	PushPayBillRequestURL     string `json:"bill_url"`
+	AccountToWalletRequestURL string `json:"a2w_url"`
+	WalletToAccountRequestURL string `json:"w2a_url"`
+	NameCheckRequestURL       string `json:"name_url"`
+}
+
 type Client struct {
-	username           string
-	password           string
+	Config
 	authToken          string
 	authTokenExpiresAt time.Time
-	accountName        string
-	accountMSISDN      string
-	brandID            string
-	billerCode         string
 	client             *http.Client
 	apiBaseURL         string
 }
 
 func NewClient(config Config) *Client {
+
 	client := &Client{
-		username:      config.Username,
-		password:      config.Password,
-		accountName:   config.AccountName,
-		accountMSISDN: config.AccountMSISDN,
-		brandID:       config.BrandID,
-		client:        http.DefaultClient,
-		billerCode:    config.BillerCode,
+		Config: config,
+		client: http.DefaultClient,
 	}
 
 	if _, err := client.getAuthToken(); err != nil {
@@ -84,33 +91,39 @@ func (c *Client) NewRequest(method, url string, requestType RequestType, payload
 	return http.NewRequestWithContext(ctx, method, url, buf)
 }
 
-func (c *Client) getAuthToken() (*push.GetTokenResponse, error) {
+func (c *Client) getAuthToken() (string, error) {
 	var form = url.Values{}
-	form.Set("username", c.username)
-	form.Set("password", c.password)
+	form.Set("username", c.Username)
+	form.Set("password", c.Password)
 	form.Set("grant_type", "password")
 
-	var getTokenResponse = &push.GetTokenResponse{}
+	var getTokenResponse = map[string]interface{}{}
 
 	ctx, _ := context.WithTimeout(context.Background(), 60*time.Second)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.apiBaseURL+"/token", strings.NewReader(form.Encode()))
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Add("Cache-Control", "no-cache")
 
-	if err := c.Send(ctx, req, getTokenResponse); err != nil {
-		return nil, err
+	if err := c.Send(ctx, req, &getTokenResponse); err != nil {
+		return "", err
 	}
 
-	if getTokenResponse.AccessToken != "" {
-		c.authToken = getTokenResponse.AccessToken
-		c.authTokenExpiresAt = time.Now().Add(time.Duration(getTokenResponse.ExpiresIn) * time.Second)
+	// check if response contains error.
+	if _, ok := getTokenResponse["error"]; ok {
+		return "", errors.New(fmt.Sprintf("%v: %v", getTokenResponse["error"], getTokenResponse["error_description"]))
 	}
 
-	return getTokenResponse, nil
+	if token, ok := getTokenResponse["access_token"]; ok {
+		c.authToken = token.(string)
+		expiresIn := getTokenResponse["expires_in"].(float64)
+		c.authTokenExpiresAt = time.Now().Add(time.Duration(int64(expiresIn)) * time.Second)
+	}
+
+	return c.authToken, nil
 }
 
 func (c *Client) Send(ctx context.Context, req *http.Request, v interface{}) error {
@@ -122,8 +135,8 @@ func (c *Client) Send(ctx context.Context, req *http.Request, v interface{}) err
 	if req.Header.Get("content-Type") == "" {
 		req.Header.Set("Accept", "application/json")
 		req.Header.Set("Cache-Control", "no-cache")
-		req.Header.Set("username", c.username)
-		req.Header.Set("password", c.password)
+		req.Header.Set("username", c.Username)
+		req.Header.Set("password", c.Password)
 	} else {
 		req.Header.Set("Content-Type", "text/xml")
 		req.Header.Set("Connection", "keep-alive")

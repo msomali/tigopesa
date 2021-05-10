@@ -7,9 +7,11 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"github.com/henvic/httpretty"
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 )
@@ -43,14 +45,32 @@ type Client struct {
 	authToken          string
 	authTokenExpiresAt time.Time
 	client             *http.Client
+	logger             *httpretty.Logger
 	apiBaseURL         string
 }
 
+// NewClient initiate new tigosdk client used by other services.
+// Default all pretty formatted requests (in and out) and responses
+// will be logged to os.Sterr to use custom logger use SetLogger.
 func NewClient(config Config) *Client {
+	logger := &httpretty.Logger{
+		Time:           true,
+		TLS:            true,
+		RequestHeader:  true,
+		RequestBody:    true,
+		ResponseHeader: true,
+		ResponseBody:   true,
+		Colors:         true,
+		Formatters:     []httpretty.Formatter{&httpretty.JSONFormatter{}},
+	}
+	logger.SetOutput(os.Stderr)
 
 	client := &Client{
 		Config: config,
-		client: http.DefaultClient,
+		client: &http.Client{
+			Transport: logger.RoundTripper(http.DefaultTransport),
+		},
+		logger: logger,
 	}
 
 	if _, err := client.getAuthToken(); err != nil {
@@ -62,6 +82,11 @@ func NewClient(config Config) *Client {
 
 func (c *Client) SetHTTPClient(client *http.Client) {
 	c.client = client
+}
+
+// SetLogger set custom logs destination.
+func (c *Client) SetLogger(logger io.Writer) {
+	c.logger.SetOutput(logger)
 }
 
 func (c *Client) NewRequest(method, url string, requestType RequestType, payload interface{}) (*http.Request, error) {

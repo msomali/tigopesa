@@ -27,6 +27,7 @@ var TxnStatus = map[string]string{
 
 
 
+
 const (
 	NAMECHECK_SUCCESS        = "error000"
 	NAMECHECK_NOT_REGISTERED = "error010"

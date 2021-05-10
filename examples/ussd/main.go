@@ -52,7 +52,7 @@ func (app *App) disburseHandler(writer http.ResponseWriter, request *http.Reques
 		return
 	}
 
-	refid := fmt.Sprintf("%s", strconv.FormatInt(time.Now().UnixNano(), 10))
+	refid := fmt.Sprintf("PayCraftREF%s", strconv.FormatInt(time.Now().UnixNano(), 10))
 
 	req := ussd.AccountToWalletRequest{
 
@@ -67,11 +67,16 @@ func (app *App) disburseHandler(writer http.ResponseWriter, request *http.Reques
 		BrandID:     app.USSDClient.Conf.BrandID,
 	}
 
+	logger := log.New(os.Stdout,"disburse",1)
+	logger.Printf("disburse request %v\n",req)
+
 	resp, err := app.USSDClient.AccountToWallet(context.TODO(), req)
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	logger.Printf("disburse response %v\n",resp)
 
 	writer.Header().Set("Content-Type", "application/json")
 

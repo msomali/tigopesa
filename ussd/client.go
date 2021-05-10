@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/xml"
+	"fmt"
 	"github.com/techcraftt/tigosdk"
 	"io/ioutil"
 	"net/http"
@@ -133,6 +134,8 @@ func (c *Client) AccountToWallet(ctx context.Context, request AccountToWalletReq
 	}
 	xmlStr = []byte(xml.Header + string(xmlStr))
 
+	fmt.Printf("request is: %s\n",xmlStr)
+
 	// Create a HTTP Post Request to be sent to Tigo gateway
 	req, err := http.NewRequest(http.MethodPost, c.Conf.AccountToWalletRequestURL, bytes.NewBuffer(xmlStr)) // URL-encoded payload
 	if err != nil {
@@ -157,6 +160,8 @@ func (c *Client) AccountToWallet(ctx context.Context, request AccountToWalletReq
 
 		return
 	}
+
+	fmt.Printf("response is %s\n", string(xmlBody))
 
 	err = xml.Unmarshal(xmlBody, &response)
 	if err != nil {

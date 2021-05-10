@@ -32,7 +32,7 @@ func NewFromConfig(config tigosdk.Config) *Push {
 func (p *Push) BillPay(ctx context.Context, billPaymentReq BillPayRequest) (*BillPayResponse, error) {
 	var billPayResp = &BillPayResponse{}
 
-	req, err := p.client.NewRequest(http.MethodPost, "BillerPayment/BillerPay", tigosdk.JSONRequest, billPaymentReq)
+	req, err := p.client.NewRequest(http.MethodPost, p.client.PushPayBillRequestURL, tigosdk.JSONRequest, billPaymentReq)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func (p *Push) BillPayCallback(ctx context.Context, billPayCallbackReq BillPayCa
 func (p *Push) RefundPayment(ctx context.Context, refundPaymentReq RefundPaymentRequest) (*RefundPaymentResponse, error) {
 	var refundPaymentResp = &RefundPaymentResponse{}
 
-	req, err := p.client.NewRequest(http.MethodPost, "Reverse/ReverseTransaction", tigosdk.JSONRequest, refundPaymentReq)
+	req, err := p.client.NewRequest(http.MethodPost, p.client.PushPayReverseTransactionURL, tigosdk.JSONRequest, refundPaymentReq)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +66,7 @@ func (p *Push) RefundPayment(ctx context.Context, refundPaymentReq RefundPayment
 func (p *Push) HealthCheck(ctx context.Context, healthCheckReq HealthCheckRequest) (*HealthCheckResponse, error) {
 	var healthCheckResp = &HealthCheckResponse{}
 
-	req, err := p.client.NewRequest(http.MethodPost, "Heartbeat/Heartbeat", tigosdk.JSONRequest, healthCheckReq)
+	req, err := p.client.NewRequest(http.MethodPost, p.client.PushPayHealthCheckURL, tigosdk.JSONRequest, healthCheckReq)
 	if err != nil {
 		return nil, err
 	}

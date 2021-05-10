@@ -138,10 +138,10 @@ func MakeHandler(client ussd.Client) http.Handler {
 	return router
 }
 
-func loadFromEnv() (conf tigosdk.Configs, err error) {
+func loadFromEnv() (conf tigosdk.Config, err error) {
 
 	err = env.Load("tigo.env")
-	conf = tigosdk.Configs{
+	conf = tigosdk.Config{
 		Username:                  os.Getenv(TIGO_USERNAME),
 		Password:                  os.Getenv(TIGO_PASSWORD),
 		PasswordGrantType:         os.Getenv(TIGO_PASSWORD_GRANT_TYPE),
@@ -221,7 +221,7 @@ func (c *checker) w2aFunc(ctx context.Context, request ussd.WalletToAccountReque
 	if ! found{
 		resp := ussd.WalletToAccountResponse{
 
-			Type:             tigosdk.SYNC_BILLPAY_RESPONSE,
+			Type:             tigosdk.SyncBillPayResponse,
 			TxnID:            request.TxnID,
 			RefID:            refid,
 			Result:           "TF",
@@ -236,7 +236,7 @@ func (c *checker) w2aFunc(ctx context.Context, request ussd.WalletToAccountReque
 	}else{
 		if user.Status ==1 {
 			resp := ussd.WalletToAccountResponse{
-				Type:             tigosdk.SYNC_BILLPAY_RESPONSE,
+				Type:             tigosdk.SyncBillPayResponse,
 				TxnID:            request.TxnID,
 				RefID:            refid,
 				Result:           "TF",
@@ -249,7 +249,7 @@ func (c *checker) w2aFunc(ctx context.Context, request ussd.WalletToAccountReque
 			return resp
 		}else if user.Status ==2{
 			resp := ussd.WalletToAccountResponse{
-				Type:             tigosdk.SYNC_BILLPAY_RESPONSE,
+				Type:             tigosdk.SyncBillPayResponse,
 				TxnID:            request.TxnID,
 				RefID:            refid,
 				Result:           "TF",
@@ -263,7 +263,7 @@ func (c *checker) w2aFunc(ctx context.Context, request ussd.WalletToAccountReque
 		}
 	}
 	resp := ussd.WalletToAccountResponse{
-		Type:             tigosdk.SYNC_BILLPAY_RESPONSE,
+		Type:             tigosdk.SyncBillPayResponse,
 		TxnID:            request.TxnID,
 		RefID:            refid,
 		Result:           "TS",
@@ -281,7 +281,7 @@ func (c *checker) nameFunc(ctx context.Context, request ussd.SubscriberNameReque
 	user, found := c.checkUser(request.CustomerReferenceID)
 	if !found {
 		resp := ussd.SubscriberNameResponse{
-			Type:      tigosdk.SYNC_LOOKUP_RESPONSE,
+			Type:      tigosdk.SyncLookupResponse,
 			Result:    "TF",
 			ErrorCode: "error010",
 			ErrorDesc: "Not found",
@@ -295,7 +295,7 @@ func (c *checker) nameFunc(ctx context.Context, request ussd.SubscriberNameReque
 		if user.Status == 1 {
 
 			resp := ussd.SubscriberNameResponse{
-				Type:      tigosdk.SYNC_LOOKUP_RESPONSE,
+				Type:      tigosdk.SyncLookupResponse,
 				Result:    "TF",
 				ErrorCode: "error020",
 				ErrorDesc: "Transaction Failed: User Suspended",
@@ -309,7 +309,7 @@ func (c *checker) nameFunc(ctx context.Context, request ussd.SubscriberNameReque
 
 		if user.Status == 2 {
 			resp := ussd.SubscriberNameResponse{
-				Type:      tigosdk.SYNC_LOOKUP_RESPONSE,
+				Type:      tigosdk.SyncLookupResponse,
 				Result:    "TF",
 				ErrorCode: "error030",
 				ErrorDesc: "Transaction Failed: Format not known",
@@ -322,7 +322,7 @@ func (c *checker) nameFunc(ctx context.Context, request ussd.SubscriberNameReque
 		}
 
 		resp := ussd.SubscriberNameResponse{
-			Type:      tigosdk.SYNC_LOOKUP_RESPONSE,
+			Type:      tigosdk.SyncLookupResponse,
 			Result:    "TS",
 			ErrorCode: "error000",
 			ErrorDesc: "Transaction Successfully",

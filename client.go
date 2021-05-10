@@ -16,38 +16,47 @@ import (
 	"time"
 )
 
-type RequestType string
+const (
+	SyncLookupResponse  = "SYNC_LOOKUP_RESPONSE"
+	SyncBillPayResponse = "SYNC_BILLPAY_RESPONSE"
+)
 
 var (
 	JSONRequest RequestType = "json"
 	XMLRequest  RequestType = "xml"
 )
 
-//Config contains details of TigoPesa integration.
-//These are configurations supplied during the integration stage.
-type Config struct {
-	Username                  string `json:"username"`
-	Password                  string `json:"password"`
-	PasswordGrantType         string `json:"grant_type"`
-	AccountName               string `json:"account_name"`
-	AccountMSISDN             string `json:"account_msisdn"`
-	BrandID                   string `json:"brand_id"`
-	BillerCode                string `json:"biller_code"`
-	GetTokenRequestURL        string `json:"token_url"`
-	PushPayBillRequestURL     string `json:"bill_url"`
-	AccountToWalletRequestURL string `json:"a2w_url"`
-	WalletToAccountRequestURL string `json:"w2a_url"`
-	NameCheckRequestURL       string `json:"name_url"`
-}
+type (
+	RequestType string
 
-type Client struct {
-	Config
-	authToken          string
-	authTokenExpiresAt time.Time
-	client             *http.Client
-	logger             *httpretty.Logger
-	apiBaseURL         string
-}
+	//Config contains details of TigoPesa integration.
+	//These are configurations supplied during the integration stage.
+	Config struct {
+		Username                     string
+		Password                     string
+		PasswordGrantType            string
+		AccountName                  string
+		AccountMSISDN                string
+		BrandID                      string
+		BillerCode                   string
+		ApiBaseURL                   string
+		GetTokenRequestURL           string
+		PushPayBillRequestURL        string
+		PushPayReverseTransactionURL string
+		PushPayHealthCheckURL        string
+		AccountToWalletRequestURL    string
+		WalletToAccountRequestURL    string
+		NameCheckRequestURL          string
+	}
+
+	Client struct {
+		Config
+		authToken          string
+		authTokenExpiresAt time.Time
+		client             *http.Client
+		logger             *httpretty.Logger
+	}
+)
 
 // NewClient initiate new tigosdk client used by other services.
 // Default all pretty formatted requests (in and out) and responses
@@ -113,7 +122,7 @@ func (c *Client) NewRequest(method, url string, requestType RequestType, payload
 		}
 	}
 
-	return http.NewRequestWithContext(ctx, method, url, buf)
+	return http.NewRequestWithContext(ctx, method, c.ApiBaseURL+url, buf)
 }
 
 func (c *Client) getAuthToken() (string, error) {
@@ -125,7 +134,7 @@ func (c *Client) getAuthToken() (string, error) {
 	var getTokenResponse = map[string]interface{}{}
 
 	ctx, _ := context.WithTimeout(context.Background(), 60*time.Second)
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.apiBaseURL+"/token", strings.NewReader(form.Encode()))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.ApiBaseURL+c.GetTokenRequestURL, strings.NewReader(form.Encode()))
 	if err != nil {
 		return "", err
 	}

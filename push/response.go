@@ -1,13 +1,5 @@
 package push
 
-type GetTokenResponse struct {
-	AccessToken      string `json:"access_token,omitempty"`
-	TokenType        string `json:"token_type,omitempty"`
-	ExpiresIn        int64  `json:"expires_in,omitempty"`
-	Error            string `json:"error,omitempty"`
-	ErrorDescription string `json:"error_description,omitempty"`
-}
-
 type BillPayResponse struct {
 	ResponseCode        string `json:"ResponseCode"`
 	ResponseStatus      bool   `json:"ResponseStatus"`

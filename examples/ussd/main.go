@@ -52,7 +52,7 @@ func (app *App) disburseHandler(writer http.ResponseWriter, request *http.Reques
 		return
 	}
 
-	refid := fmt.Sprintf("PayCraftREF%s", strconv.FormatInt(time.Now().UnixNano(), 10))
+	refid := fmt.Sprintf("PCT%s", strconv.FormatInt(time.Now().UnixNano(), 10))
 
 	req := ussd.AccountToWalletRequest{
 

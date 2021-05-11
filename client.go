@@ -7,9 +7,9 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"github.com/henvic/httpretty"
 	"io"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"os"
 	"strings"
@@ -54,7 +54,7 @@ type (
 		authToken          string
 		authTokenExpiresAt time.Time
 		client             *http.Client
-		logger             *httpretty.Logger
+		logger             io.Writer
 	}
 )
 
@@ -62,24 +62,10 @@ type (
 // Default all pretty formatted requests (in and out) and responses
 // will be logged to os.Sterr to use custom logger use SetLogger.
 func NewClient(config Config) *Client {
-	logger := &httpretty.Logger{
-		Time:           true,
-		TLS:            true,
-		RequestHeader:  true,
-		RequestBody:    true,
-		ResponseHeader: true,
-		ResponseBody:   true,
-		Colors:         true,
-		Formatters:     []httpretty.Formatter{&httpretty.JSONFormatter{}},
-	}
-	logger.SetOutput(os.Stderr)
-
 	client := &Client{
 		Config: config,
-		client: &http.Client{
-			Transport: logger.RoundTripper(http.DefaultTransport),
-		},
-		logger: logger,
+		client: http.DefaultClient,
+		logger: os.Stderr,
 	}
 
 	if _, err := client.getAuthToken(); err != nil {
@@ -94,8 +80,8 @@ func (c *Client) SetHTTPClient(client *http.Client) {
 }
 
 // SetLogger set custom logs destination.
-func (c *Client) SetLogger(logger io.Writer) {
-	c.logger.SetOutput(logger)
+func (c *Client) SetLogger(out io.Writer) {
+	c.logger = out
 }
 
 func (c *Client) NewRequest(method, url string, requestType RequestType, payload interface{}) (*http.Request, error) {
@@ -177,6 +163,8 @@ func (c *Client) Send(ctx context.Context, req *http.Request, v interface{}) err
 	}
 
 	resp, err := c.client.Do(req)
+	c.log(req, resp)
+
 	if err != nil {
 		return err
 	}
@@ -208,4 +196,21 @@ func (c *Client) SendWithAuth(ctx context.Context, req *http.Request, v interfac
 	}
 
 	return c.Send(ctx, req, v)
+}
+
+// log will dump request and response to the logger.
+func (c *Client) log(req *http.Request, resp *http.Response) {
+	if c.logger != nil && os.Getenv("DEBUG") == "true" {
+		var reqDump, respDump []byte
+
+		if req != nil {
+			reqDump, _ = httputil.DumpRequestOut(req, true)
+		}
+
+		if resp != nil {
+			respDump, _ = httputil.DumpResponse(resp, true)
+		}
+
+		c.logger.Write([]byte(fmt.Sprintf("Request: %s\nResponse: %s\n", string(reqDump), string(respDump))))
+	}
 }

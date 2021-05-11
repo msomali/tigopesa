@@ -34,14 +34,14 @@ type Service interface {
 var _ Service = (*Client)(nil)
 
 type Client struct {
-	Conf           tigosdk.Configs
+	Conf           tigosdk.Config
 	HTTPClient     *http.Client
 	NameHandleFunc NameCheckHandleFunc
 	W2AHandleFunc  WalletToAccountFunc
 }
 
 
-func NewClient(configs tigosdk.Configs, client *http.Client, nameHandler NameCheckHandleFunc, w2aHandler WalletToAccountFunc) *Client{
+func NewClient(configs tigosdk.Config, client *http.Client, nameHandler NameCheckHandleFunc, w2aHandler WalletToAccountFunc) *Client{
 
 	//check if http client was provided if not use the default
 	if client == nil{

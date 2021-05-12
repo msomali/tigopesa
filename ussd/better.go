@@ -44,7 +44,7 @@ type BetterClient struct {
 	HttpClient             *http.Client
 	NameCheckHandler       func(ctx context.Context, request SubscriberNameRequest) (SubscriberNameResponse, error)
 	WalletToAccountHandler func(ctx context.Context, request WalletToAccountRequest) (WalletToAccountResponse, error)
-	Logger                 io.Writer // for logging purposes
+	logger                 io.Writer // for logging purposes
 }
 
 //var defaultNameChecker = func(ctx context.Context, request SubscriberNameRequest) (SubscriberNameResponse, error){
@@ -66,13 +66,19 @@ type BetterClient struct {
 //	HttpClient:             nil,
 //	NameCheckHandler:       defaultNameChecker,
 //	WalletToAccountHandler: nil,
-//	Logger:                 nil,
+//	logger:                 nil,
 //}
 
-func NewClientWithLogging(configs tigosdk.Config, logger io.Writer, nameKeeper NameChecker, accountant WalletToAccountHandler) *BetterClient {
+func NewClient(configs tigosdk.Config, client *http.Client, out io.Writer,
+	nameKeeper NameChecker, accountant WalletToAccountHandler) *BetterClient{
+
+
+
+}
+func NewClientWithLogging(configs tigosdk.Config, out io.Writer, nameKeeper NameChecker, accountant WalletToAccountHandler) *BetterClient {
 	httpClient := &http.Client{
 		Transport:     loggingTransport{
-			logger: logger,
+			logger: out,
 			next:   http.DefaultTransport,
 		},
 		Timeout:       defaultTimeout,
@@ -83,8 +89,17 @@ func NewClientWithLogging(configs tigosdk.Config, logger io.Writer, nameKeeper N
 		HttpClient:             httpClient,
 		NameCheckHandler:       nameKeeper,
 		WalletToAccountHandler: accountant,
-		Logger:                 os.Stdout,
+		logger:                 os.Stdout,
 	}
+}
+
+func (client *BetterClient) SetHTTPClient(httpClient *http.Client) {
+	client.HttpClient = httpClient
+}
+
+// SetLogger set custom logs destination.
+func (client *BetterClient) SetLogger(out io.Writer) {
+	client.logger = out
 }
 
 var _ BetterService = (*BetterClient)(nil)

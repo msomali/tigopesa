@@ -34,10 +34,10 @@ type Service interface {
 var _ Service = (*Client)(nil)
 
 type Client struct {
-	Conf           tigosdk.Config
-	HTTPClient     *http.Client
-	NameHandleFunc NameCheckHandleFunc
-	W2AHandleFunc  WalletToAccountFunc
+	Conf                      tigosdk.Config
+	HTTPClient                *http.Client
+	NameHandleFunc            NameCheckHandleFunc
+	WalletToAccountReqHandler WalletToAccountFunc
 }
 
 
@@ -46,17 +46,17 @@ func NewClient(configs tigosdk.Config, client *http.Client, nameHandler NameChec
 	//check if http client was provided if not use the default
 	if client == nil{
 		return &Client{
-			Conf:           configs,
-			HTTPClient:     http.DefaultClient,
-			NameHandleFunc: nameHandler,
-			W2AHandleFunc:  w2aHandler,
+			Conf:                      configs,
+			HTTPClient:                http.DefaultClient,
+			NameHandleFunc:            nameHandler,
+			WalletToAccountReqHandler: w2aHandler,
 		}
 	}
 	return &Client{
-		Conf:           configs,
-		HTTPClient:     client,
-		NameHandleFunc: nameHandler,
-		W2AHandleFunc:  w2aHandler,
+		Conf:                      configs,
+		HTTPClient:                client,
+		NameHandleFunc:            nameHandler,
+		WalletToAccountReqHandler: w2aHandler,
 	}
 }
 
@@ -79,6 +79,13 @@ func (c *Client) QuerySubscriberName(ctx context.Context, request *http.Request)
 
 // WalletToAccountHandler is expected to replace WalletToAccount
 // This is very experimental ATM
+// Why experimental? because the response is handled internally by the library which is a bad practice
+// the ideal should have been
+// 1. library receive http.Request from tigo unmarshal it to consumable struct
+// 2. pass the request to the WalletToAccountReqHandler that check the req and
+// return a struct that should be sent back to tigo. but before then it is properly
+// marshalled to xml format and request headers are set properly before being sent to back
+// synchronously to tigo.
 func (c *Client) WalletToAccountHandler(writer http.ResponseWriter,request *http.Request){
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
@@ -96,7 +103,7 @@ func (c *Client) WalletToAccountHandler(writer http.ResponseWriter,request *http
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
 
-	response := c.W2AHandleFunc(ctx, req)
+	response := c.WalletToAccountReqHandler(ctx, req)
 
 	xmlResponse, err := xml.MarshalIndent(response, "", "  ")
 	if err != nil {
@@ -120,7 +127,7 @@ func (c *Client) WalletToAccount(ctx context.Context, request *http.Request) (re
 	if err != nil {
 		return response,err
 	}
-	response =c.W2AHandleFunc(ctx, req)
+	response =c.WalletToAccountReqHandler(ctx, req)
 	return
 }
 

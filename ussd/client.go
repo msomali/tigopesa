@@ -21,6 +21,7 @@ type NameCheckHandleFunc func(context.Context, SubscriberNameRequest) Subscriber
 
 type WalletToAccountFunc func(ctx context.Context, request WalletToAccountRequest) WalletToAccountResponse
 
+
 type Service interface {
 
 	QuerySubscriberName(ctx context.Context, request *http.Request) (resp SubscriberNameResponse, err error)
@@ -36,7 +37,7 @@ var _ Service = (*Client)(nil)
 type Client struct {
 	Conf                      tigosdk.Config
 	HTTPClient                *http.Client
-	NameHandleFunc            NameCheckHandleFunc
+	NameCheckReqHandler       NameCheckHandleFunc
 	WalletToAccountReqHandler WalletToAccountFunc
 }
 
@@ -48,18 +49,24 @@ func NewClient(configs tigosdk.Config, client *http.Client, nameHandler NameChec
 		return &Client{
 			Conf:                      configs,
 			HTTPClient:                http.DefaultClient,
-			NameHandleFunc:            nameHandler,
+			NameCheckReqHandler:       nameHandler,
 			WalletToAccountReqHandler: w2aHandler,
 		}
 	}
 	return &Client{
 		Conf:                      configs,
 		HTTPClient:                client,
-		NameHandleFunc:            nameHandler,
+		NameCheckReqHandler:       nameHandler,
 		WalletToAccountReqHandler: w2aHandler,
 	}
 }
 
+
+// QuerySubscriberName handles the namecheck requests from Tigo, unmarshal the xml
+// into SubscriberNameRequest that is then passed to an injected NameCheckHandleFunc
+// that has the logic on what to do with the request and knows what should be the
+// SubscriberNameResponse for each request. So NameCheckHandleFunc computes and return
+// a proper response which is then marshalled to XML format and sent as a response to tigo
 func (c *Client) QuerySubscriberName(ctx context.Context, request *http.Request) (response SubscriberNameResponse, err error) {
 	var req SubscriberNameRequest
 	xmlBody, err := ioutil.ReadAll(request.Body)
@@ -72,7 +79,7 @@ func (c *Client) QuerySubscriberName(ctx context.Context, request *http.Request)
 	if err != nil {
 		return response,err
 	}
-	response = c.NameHandleFunc(ctx, req)
+	response = c.NameCheckReqHandler(ctx, req)
 	return
 }
 

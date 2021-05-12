@@ -80,10 +80,48 @@ func (l loggingTransport) RoundTrip(request *http.Request) (response *http.Respo
 }
 
 
-func NewClient(configs tigosdk.Config, client *http.Client, out io.Writer,
+func NewBetterClient(configs tigosdk.Config, client *http.Client, out io.Writer,
 	nameKeeper NameCheckHandler, accountant WalletToAccountHandler) *BetterClient {
 
+	c := &BetterClient{
+		Config:                 configs,
+		NameCheckHandler:       nameKeeper,
+		WalletToAccountHandler: accountant,
+	}
+
+	if client == nil{
+
+		// No *http.Client is set and neither is logger (io.Writer) in our case
+		// So the http.DefaultClient will then be set  to be used
+		if out == nil{
+			c.SetHTTPClient(http.DefaultClient)
+		}
+
+		// here the http.Client is not set but the logger (io.Writer) is set
+		// so a a new http.Client will be spun with a modified Transport that
+		// enables logging of both requests and responses
+		httpClient := &http.Client{
+			Transport: loggingTransport{
+				logger: out,
+				next:   http.DefaultTransport,
+			},
+			Timeout: defaultTimeout,
+		}
+		c.SetLogger(out)
+		c.SetHTTPClient(httpClient)
+	}
+
+	if client != nil{
+		if out != nil{
+			c.SetLogger(out)
+		}
+		c.SetHTTPClient(client)
+	}
+
+	return c
 }
+
+
 func NewClientWithLogging(configs tigosdk.Config, out io.Writer, nameKeeper NameCheckHandler, accountant WalletToAccountHandler) *BetterClient {
 	httpClient := &http.Client{
 		Transport: loggingTransport{

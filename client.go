@@ -39,6 +39,7 @@ type (
 		AccountMSISDN                string
 		BrandID                      string
 		BillerCode                   string
+		BillerMSISDN                 int64
 		ApiBaseURL                   string
 		GetTokenRequestURL           string
 		PushPayBillRequestURL        string
@@ -62,7 +63,7 @@ type (
 // NewClient initiate new tigosdk client used by other services.
 // Default all pretty formatted requests (in and out) and responses
 // will be logged to os.Sterr to use custom logger use SetLogger.
-func NewClient(config Config) *Client {
+func NewClient(config Config) (*Client, error) {
 	client := &Client{
 		Config: config,
 		client: http.DefaultClient,
@@ -70,10 +71,10 @@ func NewClient(config Config) *Client {
 	}
 
 	if _, err := client.getAuthToken(); err != nil {
-		return nil
+		return nil, err
 	}
 
-	return client
+	return client, nil
 }
 
 func (c *Client) SetHTTPClient(client *http.Client) {
@@ -94,14 +95,14 @@ func (c *Client) NewRequest(method, url string, requestType RequestType, payload
 	if payload != nil {
 		switch requestType {
 		case JSONRequest:
-			b, err := json.Marshal(&payload)
+			b, err := json.Marshal(payload)
 			if err != nil {
 				return nil, err
 			}
 			buf = bytes.NewBuffer(b)
 
 		case XMLRequest:
-			b, err := xml.MarshalIndent(&payload, "", "  ")
+			b, err := xml.MarshalIndent(payload, "", "  ")
 			if err != nil {
 				return nil, err
 			}

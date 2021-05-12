@@ -3,6 +3,7 @@ package push
 import (
 	"context"
 	"github.com/techcraftt/tigosdk"
+	"log"
 	"net/http"
 )
 
@@ -17,61 +18,67 @@ type Service interface {
 	HealthCheck(context.Context, HealthCheckRequest) (*HealthCheckResponse, error)
 }
 
-type Push struct {
-	client *tigosdk.Client
+type client struct {
+	*tigosdk.Client
 }
 
-func New(client *tigosdk.Client) *Push {
-	return &Push{client: client}
+func NewClient(c *tigosdk.Client) Service {
+	return &client{c}
 }
 
-func NewFromConfig(config tigosdk.Config) *Push {
-	return &Push{client: tigosdk.NewClient(config)}
+func NewClientFromConfig(config tigosdk.Config) Service {
+	c, err := tigosdk.NewClient(config)
+	if err != nil {
+		log.Fatalln("failed to get authorization token error: ", err.Error())
+	}
+
+	return &client{c}
 }
 
-func (p *Push) BillPay(ctx context.Context, billPaymentReq BillPayRequest) (*BillPayResponse, error) {
+func (c *client) BillPay(ctx context.Context, billPaymentReq BillPayRequest) (*BillPayResponse, error) {
 	var billPayResp = &BillPayResponse{}
 
-	req, err := p.client.NewRequest(http.MethodPost, p.client.PushPayBillRequestURL, tigosdk.JSONRequest, billPaymentReq)
+	req, err := c.NewRequest(http.MethodPost, c.PushPayBillRequestURL, tigosdk.JSONRequest, &billPaymentReq)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := p.client.SendWithAuth(ctx, req, billPayResp); err != nil {
+	if err := c.SendWithAuth(ctx, req, billPayResp); err != nil {
 		return nil, err
 	}
+
 	return billPayResp, nil
 }
 
-func (p *Push) BillPayCallback(ctx context.Context, billPayCallbackReq BillPayCallbackRequest) (*BillPayResponse, error) {
+func (c *client) BillPayCallback(ctx context.Context, billPayResp BillPayResponse) error {
 	//todo : change implementation to support http handler
-	return nil, nil
+	return nil
 }
 
-func (p *Push) RefundPayment(ctx context.Context, refundPaymentReq RefundPaymentRequest) (*RefundPaymentResponse, error) {
+func (c *client) RefundPayment(ctx context.Context, refundPaymentReq RefundPaymentRequest) (*RefundPaymentResponse, error) {
 	var refundPaymentResp = &RefundPaymentResponse{}
 
-	req, err := p.client.NewRequest(http.MethodPost, p.client.PushPayReverseTransactionURL, tigosdk.JSONRequest, refundPaymentReq)
+	req, err := c.NewRequest(http.MethodPost, c.PushPayReverseTransactionURL, tigosdk.JSONRequest, refundPaymentReq)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := p.client.Send(ctx, req, refundPaymentResp); err != nil {
+	if err := c.Send(ctx, req, refundPaymentResp); err != nil {
 		return nil, err
 	}
 
 	return refundPaymentResp, nil
 }
 
-func (p *Push) HealthCheck(ctx context.Context, healthCheckReq HealthCheckRequest) (*HealthCheckResponse, error) {
+func (c *client) HealthCheck(ctx context.Context, healthCheckReq HealthCheckRequest) (*HealthCheckResponse, error) {
 	var healthCheckResp = &HealthCheckResponse{}
 
-	req, err := p.client.NewRequest(http.MethodPost, p.client.PushPayHealthCheckURL, tigosdk.JSONRequest, healthCheckReq)
+	req, err := c.NewRequest(http.MethodPost, c.PushPayHealthCheckURL, tigosdk.JSONRequest, healthCheckReq)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := p.client.Send(ctx, req, healthCheckResp); err != nil {
+	if err := c.Send(ctx, req, healthCheckResp); err != nil {
 		return nil, err
 	}
 

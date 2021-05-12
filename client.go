@@ -45,6 +45,7 @@ type (
 		PushPayReverseTransactionURL string
 		PushPayHealthCheckURL        string
 		AccountToWalletRequestURL    string
+		AccountToWalletRequestPIN    string
 		WalletToAccountRequestURL    string
 		NameCheckRequestURL          string
 	}

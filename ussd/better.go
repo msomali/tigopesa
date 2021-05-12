@@ -13,15 +13,55 @@ import (
 	"os"
 )
 
+type (
+	// RequestType represent a request Type that needs to be handled
+	// At the moment there are only two types of requests that are expected
+	// one is the name-check request and the other is the W2A request
+	// this is an experimental API still not implemented
+	// Expected implementation, though it may change may involve something like
+	// HandleRequest(ctx context.Context, requestType RequestType) http.HandlerFunc {
+	//   return func(writer http.ResponseWriter, request *http.Request) {
+	//      switch requestType {
+	//      case SubscriberName:
+	//      // implementation logic
+	//
+	//      case WalletToAccount
+	//      //implementation logic
+	//
+	//      default:
+	//         http.Error(writer, "unknown request type", http.StatusInternalServerError)
+	//      }
+	//   }
+	// }
+	RequestType int
+
+	NameCheckHandler       func(ctx context.Context, request SubscriberNameRequest) (SubscriberNameResponse, error)
+	WalletToAccountHandler func(ctx context.Context, request WalletToAccountRequest) (WalletToAccountResponse, error)
+
+	BetterClient struct {
+		tigosdk.Config
+		HttpClient             *http.Client
+		NameCheckHandler       NameCheckHandler
+		WalletToAccountHandler WalletToAccountHandler
+		logger                 io.Writer // for logging purposes
+	}
+
+	loggingTransport struct {
+		logger io.Writer
+		next   http.RoundTripper
+	}
+)
+
+const (
+	SubscriberName RequestType = iota
+	WalletToAccount
+)
+
+// loggingTransport implements http.RoundTripper
 var _ http.RoundTripper = (*loggingTransport)(nil)
 
-type NameChecker  func(ctx context.Context, request SubscriberNameRequest) (SubscriberNameResponse, error)
-type WalletToAccountHandler func(ctx context.Context, request WalletToAccountRequest) (WalletToAccountResponse, error)
-
-type loggingTransport struct {
-	logger io.Writer
-	next http.RoundTripper
-}
+// BetterClient implements BetterService
+var _ BetterService = (*BetterClient)(nil)
 
 func (l loggingTransport) RoundTrip(request *http.Request) (response *http.Response, err error) {
 	defer func() {
@@ -39,49 +79,18 @@ func (l loggingTransport) RoundTrip(request *http.Request) (response *http.Respo
 	return
 }
 
-type BetterClient struct {
-	tigosdk.Config
-	HttpClient             *http.Client
-	NameCheckHandler       func(ctx context.Context, request SubscriberNameRequest) (SubscriberNameResponse, error)
-	WalletToAccountHandler func(ctx context.Context, request WalletToAccountRequest) (WalletToAccountResponse, error)
-	logger                 io.Writer // for logging purposes
-}
-
-//var defaultNameChecker = func(ctx context.Context, request SubscriberNameRequest) (SubscriberNameResponse, error){
-//	return SubscriberNameResponse{
-//		XMLName:   xml.Name{},
-//		Text:      "",
-//		Type:      "",
-//		Result:    "",
-//		ErrorCode: "",
-//		ErrorDesc: "",
-//		Msisdn:    "",
-//		Flag:      "",
-//		Content:   "",
-//	},nil
-//}
-//
-//var defaultClient = &BetterClient{
-//	Config:                 tigosdk.Config{},
-//	HttpClient:             nil,
-//	NameCheckHandler:       defaultNameChecker,
-//	WalletToAccountHandler: nil,
-//	logger:                 nil,
-//}
 
 func NewClient(configs tigosdk.Config, client *http.Client, out io.Writer,
-	nameKeeper NameChecker, accountant WalletToAccountHandler) *BetterClient{
-
-
+	nameKeeper NameCheckHandler, accountant WalletToAccountHandler) *BetterClient {
 
 }
-func NewClientWithLogging(configs tigosdk.Config, out io.Writer, nameKeeper NameChecker, accountant WalletToAccountHandler) *BetterClient {
+func NewClientWithLogging(configs tigosdk.Config, out io.Writer, nameKeeper NameCheckHandler, accountant WalletToAccountHandler) *BetterClient {
 	httpClient := &http.Client{
-		Transport:     loggingTransport{
+		Transport: loggingTransport{
 			logger: out,
 			next:   http.DefaultTransport,
 		},
-		Timeout:       defaultTimeout,
+		Timeout: defaultTimeout,
 	}
 
 	return &BetterClient{
@@ -102,13 +111,10 @@ func (client *BetterClient) SetLogger(out io.Writer) {
 	client.logger = out
 }
 
-var _ BetterService = (*BetterClient)(nil)
-
 type BetterService interface {
-
 	QuerySubscriberNameX(writer http.ResponseWriter, request *http.Request)
 
-	WalletToAccountX(writer http.ResponseWriter,request *http.Request)
+	WalletToAccountX(writer http.ResponseWriter, request *http.Request)
 
 	AccountToWalletX(ctx context.Context, req AccountToWalletRequest) (resp AccountToWalletResponse, err error)
 }
@@ -140,6 +146,13 @@ func (client BetterClient) QuerySubscriberNameX(writer http.ResponseWriter, requ
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	//todo: inject logger
+	if client.logger != nil && os.Getenv("DEBUG") == "true" {
+		reqDump, _ := httputil.DumpRequestOut(request, true)
+		_, _ = client.logger.Write([]byte(fmt.Sprintf("Request: %s\nResponse: %s\n", string(reqDump), string(xmlResponse))))
+	}
+
 	writer.Header().Set("Content-Type", "application/xml")
 	_, _ = writer.Write(xmlResponse)
 
@@ -172,6 +185,13 @@ func (client BetterClient) WalletToAccountX(writer http.ResponseWriter, request 
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	//todo: inject logger
+	if client.logger != nil && os.Getenv("DEBUG") == "true" {
+		reqDump, _ := httputil.DumpRequestOut(request, true)
+		_, _ = client.logger.Write([]byte(fmt.Sprintf("Request: %s\nResponse: %s\n", string(reqDump), string(xmlResponse))))
+	}
+
 	writer.Header().Set("Content-Type", "application/xml")
 	_, _ = writer.Write(xmlResponse)
 

@@ -46,6 +46,7 @@ func NewClientFromConfig(config tigosdk.Config) Service {
 func (c *client) BillPay(ctx context.Context, billPaymentReq BillPayRequest) (*BillPayResponse, error) {
 	var billPayResp = &BillPayResponse{}
 
+	billPaymentReq.BillerMSISDN = c.BillerMSISDN
 	req, err := c.NewRequest(http.MethodPost, c.PushPayBillRequestURL, tigosdk.JSONRequest, &billPaymentReq)
 	if err != nil {
 		return nil, err

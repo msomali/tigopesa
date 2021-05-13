@@ -175,8 +175,9 @@ func (c *Client) Send(ctx context.Context, req *http.Request, v interface{}) err
 		req.Header.Set("password", c.Password)
 	}
 
+	c.logRequest(req)
 	resp, err := c.client.Do(req)
-	c.log(req, resp, bodyBytes)
+	c.logResponse(resp)
 
 	if err != nil {
 		return err
@@ -215,20 +216,26 @@ func (c *Client) SendWithAuth(ctx context.Context, req *http.Request, v interfac
 	return c.Send(ctx, req, v)
 }
 
-// log will dump request and response to the logger.
-func (c *Client) log(req *http.Request, resp *http.Response, reqBody []byte) {
+func (c *Client) logRequest(req *http.Request) {
 	if c.logger != nil && os.Getenv("DEBUG") == "true" {
-		var reqDump, respDump []byte
+		var reqDump []byte
 
 		if req != nil {
-			req.Body = ioutil.NopCloser(bytes.NewBuffer(reqBody))
 			reqDump, _ = httputil.DumpRequest(req, true)
 		}
+
+		c.logger.Write([]byte(fmt.Sprintf("Request: %s\n \n", string(reqDump))))
+	}
+}
+
+func (c *Client) logResponse(resp *http.Response) {
+	if c.logger != nil && os.Getenv("DEBUG") == "true" {
+		var respDump []byte
 
 		if resp != nil {
 			respDump, _ = httputil.DumpResponse(resp, true)
 		}
 
-		c.logger.Write([]byte(fmt.Sprintf("Request: %s\n \n Response: %s\n\n", string(reqDump), string(respDump))))
+		c.logger.Write([]byte(fmt.Sprintf("Response: %s\n \n", string(respDump))))
 	}
 }

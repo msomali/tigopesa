@@ -175,11 +175,15 @@ func (c *Client) Send(ctx context.Context, req *http.Request, v interface{}) err
 	switch req.Header.Get("Content-Type") {
 	case "application/json":
 		if err := json.NewDecoder(resp.Body).Decode(v); err != nil {
-			return err
+			if err != io.EOF {
+				return err
+			}
 		}
 	case "text/xml":
 		if err := xml.NewDecoder(resp.Body).Decode(v); err != nil {
-			return err
+			if err != io.EOF {
+				return err
+			}
 		}
 	}
 
@@ -206,7 +210,7 @@ func (c *Client) log(req *http.Request, resp *http.Response) {
 		var reqDump, respDump []byte
 
 		if req != nil {
-			reqDump, _ = httputil.DumpRequestOut(req, true)
+			reqDump, _ = httputil.DumpRequest(req, true)
 		}
 
 		if resp != nil {

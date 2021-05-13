@@ -29,7 +29,7 @@ type (
 	pushpayInitiatorRequest struct {
 		CustomerMSSID int64  `json:"customer"`
 		Amount        int    `json:"amount"`
-		Remarks       string `json:"remarks"`
+		Remarks       string `json:"remarks, omitempty"`
 	}
 
 	app struct {
@@ -46,6 +46,7 @@ func main() {
 
 	a := &app{
 		pushpay: push.NewClientFromConfig(config),
+		transaction: map[string]push.BillPayRequest{},
 	}
 
 	r := mux.NewRouter()

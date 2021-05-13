@@ -7,9 +7,17 @@ import (
 	"net/http"
 )
 
+// BillPayGetter provide interface for verification of callback request.
+type BillPayGetter interface {
+	GetBillPay(ctx context.Context, referenceID string) BillPayRequest
+}
+
 type Service interface {
 	// BillPay initiate Service payment flow to deduct a specific amount from customer's Tigo pesa wallet.
 	BillPay(context.Context, BillPayRequest) (*BillPayResponse, error)
+
+	// BillPayCallback ...
+	//BillPayCallback(context.Context, *http.Request, http.ResponseWriter, BillPayGetter) BillPayResponse
 
 	// RefundPayment initiate payment refund and will be processed only if the payment was successful.
 	RefundPayment(context.Context, RefundPaymentRequest) (*RefundPaymentResponse, error)

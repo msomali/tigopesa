@@ -11,9 +11,11 @@ TIGO_BASE_URL=""
 DEBUG=true
 ```
 
-## NOTE
-- all URL must be prefixed with / except for BASE URL.
-- BASE URL format <ip_addr>:<port>
+
+### NOTE
+- all TIGO_*_URL must be prefixed with / except for TIGO_BASE_URL.
+- TIGO_BASE_URL format <ip_addr:port>.
+- callback url is **/tigopesa/pushpay/callback**.
 
 then run these commands
 
@@ -21,3 +23,11 @@ then run these commands
 go build -o push && ./push
 ```
 
+ initiate pushpay by sending request to localhost:8090/tigopesa/pushpay
+```json
+{
+  "customer": 255xxxxxxxxx,
+  "amount": 13000,
+  "remarks":"tigo push pay"
+}
+```

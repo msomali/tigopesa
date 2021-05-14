@@ -8,14 +8,8 @@ import (
 	"github.com/techcraftt/tigosdk"
 	"io/ioutil"
 	"net/http"
-	"time"
 )
 
-const (
-	defaultTimeout        = time.Minute
-	SYNC_LOOKUP_RESPONSE  = "SYNC_LOOKUP_RESPONSE"
-	SYNC_BILLPAY_RESPONSE = "SYNC_BILLPAY_RESPONSE"
-)
 
 type NameCheckHandleFunc func(context.Context, SubscriberNameRequest) SubscriberNameResponse
 

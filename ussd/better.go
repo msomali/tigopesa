@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"os"
+	"time"
 )
 
 type (
@@ -19,7 +20,7 @@ type (
 	// one is the name-check request and the other is the W2A request
 	// this is an experimental API still not implemented
 	// Expected implementation, though it may change may involve something like
-	// HandleRequest(ctx context.Context, requestType RequestType) http.HandlerFunc {
+	// func HandleRequest(ctx context.Context, requestType RequestType) http.HandlerFunc {
 	//   return func(writer http.ResponseWriter, request *http.Request) {
 	//      switch requestType {
 	//      case SubscriberName:
@@ -50,11 +51,29 @@ type (
 		logger io.Writer
 		next   http.RoundTripper
 	}
+
+	// Config contains configurations that are only needed by BetterClient
+	// a USSD client. This is different from tigosdk.Config which contains
+	// other configurations that are not needed by the USSD BetterClient but
+	// are needed by the pushpay client. This will make it easier for those
+	// that needs a single client implementation, they wont necessary need to
+	// import code they dont want to use.
+	Config struct {
+		NameCheckRequestEndpoint  string `json:"name_request_endpoint"`
+		AccountToWalletRequestPIN string `json:"request_pin"`
+		AccountToWalletRequestURL string `json:"request_url"`
+	}
 )
 
 const (
 	SubscriberName RequestType = iota
 	WalletToAccount
+
+	//
+	defaultTimeout        = time.Minute
+	SYNC_LOOKUP_RESPONSE  = "SYNC_LOOKUP_RESPONSE"
+	SYNC_BILLPAY_RESPONSE = "SYNC_BILLPAY_RESPONSE"
+	REQMFCI               = "REQMFCI"
 )
 
 // loggingTransport implements http.RoundTripper
@@ -79,7 +98,6 @@ func (l loggingTransport) RoundTrip(request *http.Request) (response *http.Respo
 	return
 }
 
-
 func NewBetterClient(configs tigosdk.Config, client *http.Client, out io.Writer,
 	nameKeeper NameCheckHandler, accountant WalletToAccountHandler) *BetterClient {
 
@@ -89,11 +107,11 @@ func NewBetterClient(configs tigosdk.Config, client *http.Client, out io.Writer,
 		WalletToAccountHandler: accountant,
 	}
 
-	if client == nil{
+	if client == nil {
 
 		// No *http.Client is set and neither is logger (io.Writer) in our case
 		// So the http.DefaultClient will then be set  to be used
-		if out == nil{
+		if out == nil {
 			c.SetHTTPClient(http.DefaultClient)
 		}
 
@@ -111,8 +129,8 @@ func NewBetterClient(configs tigosdk.Config, client *http.Client, out io.Writer,
 		c.SetHTTPClient(httpClient)
 	}
 
-	if client != nil{
-		if out != nil{
+	if client != nil {
+		if out != nil {
 			c.SetLogger(out)
 		}
 		c.SetHTTPClient(client)
@@ -120,7 +138,6 @@ func NewBetterClient(configs tigosdk.Config, client *http.Client, out io.Writer,
 
 	return c
 }
-
 
 func NewClientWithLogging(configs tigosdk.Config, out io.Writer, nameKeeper NameCheckHandler, accountant WalletToAccountHandler) *BetterClient {
 	httpClient := &http.Client{

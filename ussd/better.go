@@ -38,15 +38,14 @@ type (
 	NameCheckHandler       func(ctx context.Context, request SubscriberNameRequest) (SubscriberNameResponse, error)
 	WalletToAccountHandler func(ctx context.Context, request WalletToAccountRequest) (WalletToAccountResponse, error)
 
-
-	// BetterClient is a ussd client that assembles together necessary parts
+	// Client is a ussd client that assembles together necessary parts
 	// needed in performing 3 operations
 	// 1. handling of NameCheckRequest, 2. Handling of Collection (WalletToAccount)
 	// requests and 3. Making disbursement requests
 	// it contains Config to store all needed credentials and vars obtained during
 	// integration stage. NameCheckHandler an injected func to handle all namecheck
 	// requests and a CollectionHandler to handle all WalletToAccount requests
-	BetterClient struct {
+	Client struct {
 		Config
 		httpClient        *http.Client
 		NameCheckHandler  NameCheckHandler
@@ -62,9 +61,9 @@ type (
 		next   http.RoundTripper
 	}
 
-	// Config contains configurations that are only needed by BetterClient
+	// Config contains configurations that are only needed by Client
 	// a USSD client. This is different from tigosdk.Config which contains
-	// other configurations that are not needed by the USSD BetterClient but
+	// other configurations that are not needed by the USSD Client but
 	// are needed by the pushpay client. This will make it easier for those
 	// that needs a single client implementation, they wont necessary need to
 	// import code they dont want to use.
@@ -79,6 +78,16 @@ type (
 		AccountToWalletRequestPIN string `json:"disbursement_request_pin"`
 		WalletToAccountRequestURL string `json:"collection_request_url"`
 		NameCheckRequestURL       string `json:"namecheck_request_url"`
+	}
+
+
+
+	Service interface {
+		SubscriberNameHandler(writer http.ResponseWriter, request *http.Request)
+
+		WalletToAccountHandler(writer http.ResponseWriter, request *http.Request)
+
+		AccountToWalletHandler(ctx context.Context, req AccountToWalletRequest) (resp AccountToWalletResponse, err error)
 	}
 )
 
@@ -104,11 +113,11 @@ var (
 	// loggingTransport implements http.RoundTripper
 	_ http.RoundTripper = (*loggingTransport)(nil)
 
-	// BetterClient implements BetterService
-	_ BetterService = (*BetterClient)(nil)
+	// Client implements Service
+	_ Service = (*Client)(nil)
 
 	// defaultLoggerTransport is a modified http.Transport that is responsible
-	// for logging all requests and responses  that a HTTPClient owned by BetterClient
+	// for logging all requests and responses  that a HTTPClient owned by Client
 	// sent and receives
 	defaultLoggerTransport = loggingTransport{
 		logger: defaultWriter,
@@ -150,8 +159,8 @@ func (l loggingTransport) RoundTrip(request *http.Request) (response *http.Respo
 }
 
 func MakeClient(conf Config, collector WalletToAccountHandler, namesHandler NameCheckHandler,
-	options ...func(client *BetterClient)) *BetterClient {
-	client := &BetterClient{
+	options ...func(client *Client)) *Client {
+	client := &Client{
 		Config:            conf,
 		httpClient:        defaultHttpClient,
 		NameCheckHandler:  namesHandler,
@@ -167,11 +176,11 @@ func MakeClient(conf Config, collector WalletToAccountHandler, namesHandler Name
 	return client
 }
 
-// WithContext set the context to be used by BetterClient in its ops
+// WithContext set the context to be used by Client in its ops
 // this unset the default value which is context.TODO()
 // This context value is mostly used by Handlers
-func WithContext(ctx context.Context) func(client *BetterClient) {
-	return func(client *BetterClient) {
+func WithContext(ctx context.Context) func(client *Client) {
+	return func(client *Client) {
 		client.ctx = ctx
 	}
 }
@@ -180,8 +189,8 @@ func WithContext(ctx context.Context) func(client *BetterClient) {
 // Tigo Gateway and back in case of Disbursement or to set the max time for
 // handlers NameCheckHandler and CollectionHandler while handling requests from tigo
 // the default value is 1 minute
-func WithTimeout(timeout time.Duration) func(client *BetterClient) {
-	return func(client *BetterClient) {
+func WithTimeout(timeout time.Duration) func(client *Client) {
+	return func(client *Client) {
 		client.timeout = timeout
 	}
 }
@@ -190,8 +199,8 @@ func WithTimeout(timeout time.Duration) func(client *BetterClient) {
 // that will be used for debugging use cases. A default value is os.Stderr
 // it can be replaced by any io.Writer unless its nil which in that case
 // it will be ignored
-func WithLogger(out io.Writer) func(client *BetterClient) {
-	return func(client *BetterClient) {
+func WithLogger(out io.Writer) func(client *Client) {
+	return func(client *Client) {
 		if out == nil {
 			return
 		}
@@ -204,13 +213,13 @@ func WithLogger(out io.Writer) func(client *BetterClient) {
 // i.e WithHTTPClient(nil), it will be ignored and the client wont be replaced
 // Note: the new client Transport will be modified. It will be wrapped by another
 // middleware that enables client to
-func WithHTTPClient(c *http.Client) func(client *BetterClient) {
+func WithHTTPClient(c *http.Client) func(client *Client) {
 
 	// TODO check if its really necessary to set the default timeout to 1 minute
 	//if c.Timeout == 0 {
 	//	c.Timeout = defaultTimeout
 	//}
-	return func(client *BetterClient) {
+	return func(client *Client) {
 		if c == nil {
 			return
 		}
@@ -231,9 +240,9 @@ func WithHTTPClient(c *http.Client) func(client *BetterClient) {
 }
 
 //func NewBetterClient(configs Config, client *http.Client, out io.Writer,
-//	nameKeeper NameCheckHandler, accountant CollectionHandler) *BetterClient {
+//	nameKeeper NameCheckHandler, accountant CollectionHandler) *Client {
 //
-//	c := &BetterClient{
+//	c := &Client{
 //		Config:                 configs,
 //		NameCheckHandler:       nameKeeper,
 //		CollectionHandler: accountant,
@@ -271,7 +280,7 @@ func WithHTTPClient(c *http.Client) func(client *BetterClient) {
 //	return c
 //}
 
-//func NewClientWithLogging(configs Config, out io.Writer, nameKeeper NameCheckHandler, accountant CollectionHandler) *BetterClient {
+//func NewClientWithLogging(configs Config, out io.Writer, nameKeeper NameCheckHandler, accountant CollectionHandler) *Client {
 //	httpClient := &http.Client{
 //		Transport: loggingTransport{
 //			logger: out,
@@ -280,7 +289,7 @@ func WithHTTPClient(c *http.Client) func(client *BetterClient) {
 //		Timeout: defaultTimeout,
 //	}
 //
-//	return &BetterClient{
+//	return &Client{
 //		Config:                 configs,
 //		httpClient:             httpClient,
 //		NameCheckHandler:       nameKeeper,
@@ -289,24 +298,17 @@ func WithHTTPClient(c *http.Client) func(client *BetterClient) {
 //	}
 //}
 
-//func (client *BetterClient) setHttpClient(httpClient *http.Client) {
+//func (client *Client) setHttpClient(httpClient *http.Client) {
 //	client.httpClient = httpClient
 //}
 //
 //// setLogger set custom logs destination.
-//func (client *BetterClient) setLogger(out io.Writer) {
+//func (client *Client) setLogger(out io.Writer) {
 //	client.logger = out
 //}
 
-type BetterService interface {
-	QuerySubscriberNameX(writer http.ResponseWriter, request *http.Request)
 
-	WalletToAccountX(writer http.ResponseWriter, request *http.Request)
-
-	AccountToWalletX(ctx context.Context, req AccountToWalletRequest) (resp AccountToWalletResponse, err error)
-}
-
-func (client BetterClient) QuerySubscriberNameX(writer http.ResponseWriter, request *http.Request) {
+func (client Client) SubscriberNameHandler(writer http.ResponseWriter, request *http.Request) {
 	ctx, cancel := context.WithTimeout(client.ctx, defaultTimeout)
 	defer cancel()
 
@@ -345,7 +347,7 @@ func (client BetterClient) QuerySubscriberNameX(writer http.ResponseWriter, requ
 
 }
 
-func (client BetterClient) WalletToAccountX(writer http.ResponseWriter, request *http.Request) {
+func (client Client) WalletToAccountHandler(writer http.ResponseWriter, request *http.Request) {
 	ctx, cancel := context.WithTimeout(client.ctx, defaultTimeout)
 	defer cancel()
 
@@ -384,7 +386,7 @@ func (client BetterClient) WalletToAccountX(writer http.ResponseWriter, request 
 
 }
 
-func (client BetterClient) AccountToWalletX(ctx context.Context, request AccountToWalletRequest) (response AccountToWalletResponse, err error) {
+func (client Client) AccountToWalletHandler(ctx context.Context, request AccountToWalletRequest) (response AccountToWalletResponse, err error) {
 	// Marshal the request body into application/xml
 	xmlStr, err := xml.MarshalIndent(request, "", "    ")
 	if err != nil {

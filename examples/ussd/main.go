@@ -33,7 +33,7 @@ const (
 )
 
 type App struct {
-	USSDClient *ussd.BetterClient
+	USSDClient *ussd.Client
 }
 
 func (app *App) disburseHandler(writer http.ResponseWriter, request *http.Request) {
@@ -64,7 +64,7 @@ func (app *App) disburseHandler(writer http.ResponseWriter, request *http.Reques
 	//logger := log.New(os.Stdout,"disburse",1)
 	//logger.Printf("disburse request %v\n",req)
 
-	resp, err := app.USSDClient.AccountToWalletX(context.TODO(), req)
+	resp, err := app.USSDClient.AccountToWalletHandler(context.TODO(), req)
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusBadRequest)
 		return
@@ -85,15 +85,15 @@ type User struct {
 	Status int    `json:"status"`
 }
 
-func MakeHandler(client *ussd.BetterClient) http.Handler {
+func MakeHandler(client *ussd.Client) http.Handler {
 
 	app := App{client}
 
 	router := mux.NewRouter()
 
-	router.HandleFunc("/api/tigopesa/names", app.USSDClient.QuerySubscriberNameX).Methods(http.MethodPost, http.MethodGet)
+	router.HandleFunc("/api/tigopesa/names", app.USSDClient.SubscriberNameHandler).Methods(http.MethodPost, http.MethodGet)
 
-	router.HandleFunc("/api/tigopesa/collect", app.USSDClient.WalletToAccountX).Methods(http.MethodPost, http.MethodGet)
+	router.HandleFunc("/api/tigopesa/collect", app.USSDClient.WalletToAccountHandler).Methods(http.MethodPost, http.MethodGet)
 
 	router.HandleFunc("/api/tigopesa/disburse", app.disburseHandler).Methods(http.MethodPost)
 

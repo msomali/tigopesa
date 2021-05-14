@@ -91,11 +91,11 @@ func MakeHandler(client *ussd.Client) http.Handler {
 
 	router := mux.NewRouter()
 
-	router.HandleFunc("/api/tigopesa/names", app.USSDClient.SubscriberNameHandler).Methods(http.MethodPost, http.MethodGet)
+	router.HandleFunc(app.USSDClient.NameCheckRequestURL, app.USSDClient.SubscriberNameHandler).Methods(http.MethodPost, http.MethodGet)
 
-	router.HandleFunc("/api/tigopesa/collect", app.USSDClient.WalletToAccountHandler).Methods(http.MethodPost, http.MethodGet)
+	router.HandleFunc(app.USSDClient.WalletToAccountRequestURL, app.USSDClient.WalletToAccountHandler).Methods(http.MethodPost, http.MethodGet)
 
-	router.HandleFunc("/api/tigopesa/disburse", app.disburseHandler).Methods(http.MethodPost)
+	router.HandleFunc(app.USSDClient.AccountToWalletRequestURL, app.disburseHandler).Methods(http.MethodPost)
 
 	return router
 }

@@ -40,12 +40,12 @@ type (
 
 	BetterClient struct {
 		Config
-		httpClient             *http.Client
-		NameCheckHandler       NameCheckHandler
-		WalletToAccountHandler WalletToAccountHandler
-		ctx                    context.Context
-		timeout                time.Duration
-		logger                 io.Writer // for logging purposes
+		httpClient        *http.Client
+		NameCheckHandler  NameCheckHandler
+		CollectionHandler WalletToAccountHandler
+		ctx               context.Context
+		timeout           time.Duration
+		logger            io.Writer // for logging purposes
 	}
 
 	loggingTransport struct {
@@ -89,7 +89,10 @@ const (
 var (
 
 	defaultCtx = context.TODO()
+
 	defaultWriter = os.Stderr
+
+
 	// loggingTransport implements http.RoundTripper
 	_ http.RoundTripper = (*loggingTransport)(nil)
 
@@ -100,7 +103,7 @@ var (
 	// for logging all requests and responses  that a HTTPClient owned by BetterClient
 	// sent and receives
 	defaultLoggerTransport = loggingTransport{
-		logger: os.Stderr,
+		logger: defaultWriter,
 		next:   http.DefaultTransport,
 	}
 
@@ -130,13 +133,13 @@ func (l loggingTransport) RoundTrip(request *http.Request) (response *http.Respo
 
 func MakeClient(conf Config, collector WalletToAccountHandler, namesHandler NameCheckHandler, options ...func(client *BetterClient)) *BetterClient {
 	client := &BetterClient{
-		Config:                 conf,
-		httpClient:             defaultHttpClient,
-		NameCheckHandler:       namesHandler,
-		WalletToAccountHandler: collector,
-		ctx:                    defaultCtx,
-		timeout:                defaultTimeout,
-		logger:                 defaultWriter,
+		Config:            conf,
+		httpClient:        defaultHttpClient,
+		NameCheckHandler:  namesHandler,
+		CollectionHandler: collector,
+		ctx:               defaultCtx,
+		timeout:           defaultTimeout,
+		logger:            defaultWriter,
 	}
 	for _, option := range options {
 		option(client)
@@ -173,89 +176,108 @@ func WithLogger(out io.Writer) func(client *BetterClient) {
 		if out == nil {
 			return
 		}
-		client.setLogger(out)
+		client.logger = out
 	}
 }
 
 // WithHTTPClient when called unset the present http.Client and replace it
 // with c. In case user tries to pass a nil value referencing the client
 // i.e WithHTTPClient(nil), it will be ignored and the client wont be replaced
+// Note: the new client Transport will be modified. It will be wrapped by another
+// middleware that enables client to
 func WithHTTPClient(c *http.Client) func(client *BetterClient) {
+
+	// TODO check if its really necessary to set the default timeout to 1 minute
+	//if c.Timeout == 0 {
+	//	c.Timeout = defaultTimeout
+	//}
 	return func(client *BetterClient) {
 		if c == nil {
 			return
 		}
-		client.setHttpClient(c)
-	}
-}
 
-func NewBetterClient(configs Config, client *http.Client, out io.Writer,
-	nameKeeper NameCheckHandler, accountant WalletToAccountHandler) *BetterClient {
-
-	c := &BetterClient{
-		Config:                 configs,
-		NameCheckHandler:       nameKeeper,
-		WalletToAccountHandler: accountant,
-	}
-
-	if client == nil {
-
-		// No *http.Client is set and neither is logger (io.Writer) in our case
-		// So the http.DefaultClient will then be set  to be used
-		if out == nil {
-			c.setHttpClient(http.DefaultClient)
+		lt := loggingTransport{
+			logger: client.logger,
+			next:   c.Transport,
 		}
 
-		// here the http.Client is not set but the logger (io.Writer) is set
-		// so a a new http.Client will be spun with a modified Transport that
-		// enables logging of both requests and responses
-		httpClient := &http.Client{
-			Transport: loggingTransport{
-				logger: out,
-				next:   http.DefaultTransport,
-			},
-			Timeout: defaultTimeout,
+		hc := &http.Client{
+			Transport:     lt,
+			CheckRedirect: c.CheckRedirect,
+			Jar:           c.Jar,
+			Timeout:       c.Timeout,
 		}
-		c.setLogger(out)
-		c.setHttpClient(httpClient)
-	}
-
-	if client != nil {
-		if out != nil {
-			c.setLogger(out)
-		}
-		c.setHttpClient(client)
-	}
-
-	return c
-}
-
-func NewClientWithLogging(configs Config, out io.Writer, nameKeeper NameCheckHandler, accountant WalletToAccountHandler) *BetterClient {
-	httpClient := &http.Client{
-		Transport: loggingTransport{
-			logger: out,
-			next:   http.DefaultTransport,
-		},
-		Timeout: defaultTimeout,
-	}
-
-	return &BetterClient{
-		Config:                 configs,
-		httpClient:             httpClient,
-		NameCheckHandler:       nameKeeper,
-		WalletToAccountHandler: accountant,
-		logger:                 os.Stdout,
+		client.httpClient = hc
 	}
 }
 
-func (client *BetterClient) setHttpClient(httpClient *http.Client) {
-	client.httpClient = httpClient
-}
+//func NewBetterClient(configs Config, client *http.Client, out io.Writer,
+//	nameKeeper NameCheckHandler, accountant CollectionHandler) *BetterClient {
+//
+//	c := &BetterClient{
+//		Config:                 configs,
+//		NameCheckHandler:       nameKeeper,
+//		CollectionHandler: accountant,
+//	}
+//
+//	if client == nil {
+//
+//		// No *http.Client is set and neither is logger (io.Writer) in our case
+//		// So the http.DefaultClient will then be set  to be used
+//		if out == nil {
+//			c.setHttpClient(http.DefaultClient)
+//		}
+//
+//		// here the http.Client is not set but the logger (io.Writer) is set
+//		// so a a new http.Client will be spun with a modified Transport that
+//		// enables logging of both requests and responses
+//		httpClient := &http.Client{
+//			Transport: loggingTransport{
+//				logger: out,
+//				next:   http.DefaultTransport,
+//			},
+//			Timeout: defaultTimeout,
+//		}
+//		c.setLogger(out)
+//		c.setHttpClient(httpClient)
+//	}
+//
+//	if client != nil {
+//		if out != nil {
+//			c.setLogger(out)
+//		}
+//		c.setHttpClient(client)
+//	}
+//
+//	return c
+//}
 
-// setLogger set custom logs destination.
-func (client *BetterClient) setLogger(out io.Writer) {
-	client.logger = out
-}
+//func NewClientWithLogging(configs Config, out io.Writer, nameKeeper NameCheckHandler, accountant CollectionHandler) *BetterClient {
+//	httpClient := &http.Client{
+//		Transport: loggingTransport{
+//			logger: out,
+//			next:   http.DefaultTransport,
+//		},
+//		Timeout: defaultTimeout,
+//	}
+//
+//	return &BetterClient{
+//		Config:                 configs,
+//		httpClient:             httpClient,
+//		NameCheckHandler:       nameKeeper,
+//		CollectionHandler: accountant,
+//		logger:                 os.Stdout,
+//	}
+//}
+
+//func (client *BetterClient) setHttpClient(httpClient *http.Client) {
+//	client.httpClient = httpClient
+//}
+//
+//// setLogger set custom logs destination.
+//func (client *BetterClient) setLogger(out io.Writer) {
+//	client.logger = out
+//}
 
 type BetterService interface {
 	QuerySubscriberNameX(writer http.ResponseWriter, request *http.Request)
@@ -320,7 +342,7 @@ func (client BetterClient) WalletToAccountX(writer http.ResponseWriter, request 
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
 
-	response, err := client.WalletToAccountHandler(ctx, req)
+	response, err := client.CollectionHandler(ctx, req)
 
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)

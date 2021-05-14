@@ -76,7 +76,7 @@ package ussd
 //	return
 //}
 //
-//// WalletToAccountHandler is expected to replace WalletToAccount
+//// WalletToAccountFunc is expected to replace WalletToAccount
 //// This is very experimental ATM
 //// Why experimental? because the response is handled internally by the library which is a bad practice
 //// the ideal should have been
@@ -85,7 +85,7 @@ package ussd
 //// return a struct that should be sent back to tigo. but before then it is properly
 //// marshalled to xml format and request headers are set properly before being sent to back
 //// synchronously to tigo.
-//func (c *Client) WalletToAccountHandler(writer http.ResponseWriter, request *http.Request) {
+//func (c *Client) WalletToAccountFunc(writer http.ResponseWriter, request *http.Request) {
 //
 //	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 //	defer cancel()

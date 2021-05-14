@@ -154,7 +154,7 @@ func main() {
 
 	check := checker{usersMap}
 
-	c := ussd.MakeClient(conf,check.w2aFunc,check.nameFunc)
+	c := ussd.NewClient(conf,check.w2aFunc,check.nameFunc)
 
 	handler := MakeHandler(c)
 

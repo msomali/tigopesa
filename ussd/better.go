@@ -35,21 +35,21 @@ type (
 	// }
 	RequestType int
 
-	NameCheckHandler       func(ctx context.Context, request SubscriberNameRequest) (SubscriberNameResponse, error)
-	WalletToAccountHandler func(ctx context.Context, request WalletToAccountRequest) (WalletToAccountResponse, error)
+	QuerySubscriberFunc func(ctx context.Context, request SubscriberNameRequest) (SubscriberNameResponse, error)
+	WalletToAccountFunc func(ctx context.Context, request WalletToAccountRequest) (WalletToAccountResponse, error)
 
 	// Client is a ussd client that assembles together necessary parts
 	// needed in performing 3 operations
 	// 1. handling of NameCheckRequest, 2. Handling of Collection (WalletToAccount)
 	// requests and 3. Making disbursement requests
 	// it contains Config to store all needed credentials and vars obtained during
-	// integration stage. NameCheckHandler an injected func to handle all namecheck
+	// integration stage. QuerySubscriberFunc an injected func to handle all namecheck
 	// requests and a CollectionHandler to handle all WalletToAccount requests
 	Client struct {
 		Config
 		httpClient        *http.Client
-		NameCheckHandler  NameCheckHandler
-		CollectionHandler WalletToAccountHandler
+		NameCheckHandler  QuerySubscriberFunc
+		CollectionHandler WalletToAccountFunc
 		ctx               context.Context
 		timeout           time.Duration
 		logger            io.Writer // for logging purposes
@@ -158,7 +158,7 @@ func (l loggingTransport) RoundTrip(request *http.Request) (response *http.Respo
 	return
 }
 
-func MakeClient(conf Config, collector WalletToAccountHandler, namesHandler NameCheckHandler,
+func NewClient(conf Config, collector WalletToAccountFunc, namesHandler QuerySubscriberFunc,
 	options ...func(client *Client)) *Client {
 	client := &Client{
 		Config:            conf,
@@ -187,7 +187,7 @@ func WithContext(ctx context.Context) func(client *Client) {
 
 // WithTimeout used to set the timeout used by handlers like sending requests to
 // Tigo Gateway and back in case of Disbursement or to set the max time for
-// handlers NameCheckHandler and CollectionHandler while handling requests from tigo
+// handlers QuerySubscriberFunc and CollectionHandler while handling requests from tigo
 // the default value is 1 minute
 func WithTimeout(timeout time.Duration) func(client *Client) {
 	return func(client *Client) {
@@ -238,75 +238,6 @@ func WithHTTPClient(c *http.Client) func(client *Client) {
 		client.httpClient = hc
 	}
 }
-
-//func NewBetterClient(configs Config, client *http.Client, out io.Writer,
-//	nameKeeper NameCheckHandler, accountant CollectionHandler) *Client {
-//
-//	c := &Client{
-//		Config:                 configs,
-//		NameCheckHandler:       nameKeeper,
-//		CollectionHandler: accountant,
-//	}
-//
-//	if client == nil {
-//
-//		// No *http.Client is set and neither is logger (io.Writer) in our case
-//		// So the http.DefaultClient will then be set  to be used
-//		if out == nil {
-//			c.setHttpClient(http.DefaultClient)
-//		}
-//
-//		// here the http.Client is not set but the logger (io.Writer) is set
-//		// so a a new http.Client will be spun with a modified Transport that
-//		// enables logging of both requests and responses
-//		httpClient := &http.Client{
-//			Transport: loggingTransport{
-//				logger: out,
-//				next:   http.DefaultTransport,
-//			},
-//			Timeout: defaultTimeout,
-//		}
-//		c.setLogger(out)
-//		c.setHttpClient(httpClient)
-//	}
-//
-//	if client != nil {
-//		if out != nil {
-//			c.setLogger(out)
-//		}
-//		c.setHttpClient(client)
-//	}
-//
-//	return c
-//}
-
-//func NewClientWithLogging(configs Config, out io.Writer, nameKeeper NameCheckHandler, accountant CollectionHandler) *Client {
-//	httpClient := &http.Client{
-//		Transport: loggingTransport{
-//			logger: out,
-//			next:   http.DefaultTransport,
-//		},
-//		Timeout: defaultTimeout,
-//	}
-//
-//	return &Client{
-//		Config:                 configs,
-//		httpClient:             httpClient,
-//		NameCheckHandler:       nameKeeper,
-//		CollectionHandler: accountant,
-//		logger:                 os.Stdout,
-//	}
-//}
-
-//func (client *Client) setHttpClient(httpClient *http.Client) {
-//	client.httpClient = httpClient
-//}
-//
-//// setLogger set custom logs destination.
-//func (client *Client) setLogger(out io.Writer) {
-//	client.logger = out
-//}
-
 
 func (client Client) SubscriberNameHandler(writer http.ResponseWriter, request *http.Request) {
 	ctx, cancel := context.WithTimeout(client.ctx, defaultTimeout)

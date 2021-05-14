@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -39,6 +40,7 @@ type (
 		AccountMSISDN                string
 		BrandID                      string
 		BillerCode                   string
+		BillerMSISDN                 int64
 		ApiBaseURL                   string
 		GetTokenRequestURL           string
 		PushPayBillRequestURL        string
@@ -61,8 +63,13 @@ type (
 
 // NewClient initiate new tigosdk client used by other services.
 // Default all pretty formatted requests (in and out) and responses
+<<<<<<< HEAD
 // will be logged to os.Sterr to use custom logger use setLogger.
 func NewClient(config Config) *Client {
+=======
+// will be logged to os.Sterr to use custom logger use SetLogger.
+func NewClient(config Config) (*Client, error) {
+>>>>>>> main
 	client := &Client{
 		Config: config,
 		client: http.DefaultClient,
@@ -70,10 +77,10 @@ func NewClient(config Config) *Client {
 	}
 
 	if _, err := client.getAuthToken(); err != nil {
-		return nil
+		return nil, err
 	}
 
-	return client
+	return client, nil
 }
 
 func (c *Client) SetHTTPClient(client *http.Client) {
@@ -94,14 +101,14 @@ func (c *Client) NewRequest(method, url string, requestType RequestType, payload
 	if payload != nil {
 		switch requestType {
 		case JSONRequest:
-			b, err := json.Marshal(&payload)
+			b, err := json.Marshal(payload)
 			if err != nil {
 				return nil, err
 			}
 			buf = bytes.NewBuffer(b)
 
 		case XMLRequest:
-			b, err := xml.MarshalIndent(&payload, "", "  ")
+			b, err := xml.MarshalIndent(payload, "", "  ")
 			if err != nil {
 				return nil, err
 			}
@@ -118,7 +125,13 @@ func (c *Client) getAuthToken() (string, error) {
 	form.Set("password", c.Password)
 	form.Set("grant_type", "password")
 
-	var getTokenResponse = map[string]interface{}{}
+	var getTokenResponse = struct {
+		AccessToken      string `json:"access_token"`
+		ExpiresIn        int64  `json:"expires_in"`
+		TokenType        string `json:"token_type"`
+		Error            string `json:"error,omitempty"`
+		ErrorDescription string `json:"error_description,omitempty"`
+	}{}
 
 	ctx, _ := context.WithTimeout(context.Background(), 60*time.Second)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.ApiBaseURL+c.GetTokenRequestURL, strings.NewReader(form.Encode()))
@@ -134,20 +147,27 @@ func (c *Client) getAuthToken() (string, error) {
 	}
 
 	// check if response contains error.
-	if _, ok := getTokenResponse["error"]; ok {
-		return "", errors.New(fmt.Sprintf("%v: %v", getTokenResponse["error"], getTokenResponse["error_description"]))
+	if getTokenResponse.Error != "" {
+		return "", errors.New(fmt.Sprintf("%v: %v", getTokenResponse.Error, getTokenResponse.ErrorDescription))
 	}
 
-	if token, ok := getTokenResponse["access_token"]; ok {
-		c.authToken = token.(string)
-		expiresIn := getTokenResponse["expires_in"].(float64)
-		c.authTokenExpiresAt = time.Now().Add(time.Duration(int64(expiresIn)) * time.Second)
+	if getTokenResponse.AccessToken != "" {
+		c.authToken = getTokenResponse.AccessToken
+		c.authTokenExpiresAt = time.Now().Add(time.Duration(getTokenResponse.ExpiresIn) * time.Second)
 	}
 
 	return c.authToken, nil
 }
 
 func (c *Client) Send(ctx context.Context, req *http.Request, v interface{}) error {
+	var bodyBytes []byte
+	if req.Body != nil {
+		bodyBytes, _ = ioutil.ReadAll(req.Body)
+	}
+
+	// Restore the request body content.
+	req.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+
 	if v == nil {
 		return errors.New("v interface can not be empty")
 	}
@@ -158,27 +178,29 @@ func (c *Client) Send(ctx context.Context, req *http.Request, v interface{}) err
 		req.Header.Set("Cache-Control", "no-cache")
 		req.Header.Set("username", c.Username)
 		req.Header.Set("password", c.Password)
-	} else {
-		req.Header.Set("Content-Type", "text/xml")
-		req.Header.Set("Connection", "keep-alive")
 	}
 
+	c.logRequest(req)
 	resp, err := c.client.Do(req)
-	c.log(req, resp)
+	c.logResponse(resp)
 
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
 
-	switch req.Header.Get("Content-Type") {
-	case "application/json":
+	switch resp.Header.Get("Content-Type") {
+	case "application/json", "application/json;charset=UTF-8":
 		if err := json.NewDecoder(resp.Body).Decode(v); err != nil {
-			return err
+			if err != io.EOF {
+				return err
+			}
 		}
-	case "text/xml":
+	case "text/xml", "text/xml;charset=UTF-8":
 		if err := xml.NewDecoder(resp.Body).Decode(v); err != nil {
-			return err
+			if err != io.EOF {
+				return err
+			}
 		}
 	}
 
@@ -187,7 +209,7 @@ func (c *Client) Send(ctx context.Context, req *http.Request, v interface{}) err
 
 func (c *Client) SendWithAuth(ctx context.Context, req *http.Request, v interface{}) error {
 	if c.authToken != "" {
-		if !c.authTokenExpiresAt.IsZero() && c.authTokenExpiresAt.Sub(time.Now()) < (60*time.Second) {
+		if !c.authTokenExpiresAt.IsZero() && time.Until(c.authTokenExpiresAt) < (60*time.Second) {
 			if _, err := c.getAuthToken(); err != nil {
 				return err
 			}
@@ -199,19 +221,26 @@ func (c *Client) SendWithAuth(ctx context.Context, req *http.Request, v interfac
 	return c.Send(ctx, req, v)
 }
 
-// log will dump request and response to the logger.
-func (c *Client) log(req *http.Request, resp *http.Response) {
+func (c *Client) logRequest(req *http.Request) {
 	if c.logger != nil && os.Getenv("DEBUG") == "true" {
-		var reqDump, respDump []byte
+		var reqDump []byte
 
 		if req != nil {
-			reqDump, _ = httputil.DumpRequestOut(req, true)
+			reqDump, _ = httputil.DumpRequest(req, true)
 		}
+
+		c.logger.Write([]byte(fmt.Sprintf("Request: %s\n \n", string(reqDump))))
+	}
+}
+
+func (c *Client) logResponse(resp *http.Response) {
+	if c.logger != nil && os.Getenv("DEBUG") == "true" {
+		var respDump []byte
 
 		if resp != nil {
 			respDump, _ = httputil.DumpResponse(resp, true)
 		}
 
-		c.logger.Write([]byte(fmt.Sprintf("Request: %s\nResponse: %s\n", string(reqDump), string(respDump))))
+		c.logger.Write([]byte(fmt.Sprintf("Response: %s\n \n", string(respDump))))
 	}
 }

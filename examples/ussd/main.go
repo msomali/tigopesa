@@ -56,7 +56,7 @@ func (app *App) disburseHandler(writer http.ResponseWriter, request *http.Reques
 		Type:        "REQMFCI",
 		ReferenceID: refid,
 		Msisdn:      app.USSDClient.Config.AccountMSISDN,
-		PIN:         app.USSDClient.Config.Password,
+		PIN:         app.USSDClient.Config.AccountToWalletRequestPIN,
 		Msisdn1:     info.Msisdn,
 		Amount:      info.Amount,
 		SenderName:  app.USSDClient.Config.AccountName,

@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/xml"
 	"fmt"
-	"github.com/techcraftt/tigosdk"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -40,7 +39,7 @@ type (
 	WalletToAccountHandler func(ctx context.Context, request WalletToAccountRequest) (WalletToAccountResponse, error)
 
 	BetterClient struct {
-		tigosdk.Config
+		Config
 		HttpClient             *http.Client
 		NameCheckHandler       NameCheckHandler
 		WalletToAccountHandler WalletToAccountHandler
@@ -105,7 +104,22 @@ func (l loggingTransport) RoundTrip(request *http.Request) (response *http.Respo
 	return
 }
 
-func NewBetterClient(configs tigosdk.Config, client *http.Client, out io.Writer,
+func MakeClient(tigoConfig Config,accountant WalletToAccountHandler, namechecker NameCheckHandler, options ... func(client *BetterClient))*BetterClient{
+	client := &BetterClient{
+		Config:                 tigoConfig,
+		HttpClient:             nil,
+		NameCheckHandler:       nil,
+		WalletToAccountHandler: nil,
+		logger:                 nil,
+	}
+	for _, option := range options {
+		option(client)
+	}
+
+	return client
+}
+
+func NewBetterClient(configs Config, client *http.Client, out io.Writer,
 	nameKeeper NameCheckHandler, accountant WalletToAccountHandler) *BetterClient {
 
 	c := &BetterClient{
@@ -146,7 +160,7 @@ func NewBetterClient(configs tigosdk.Config, client *http.Client, out io.Writer,
 	return c
 }
 
-func NewClientWithLogging(configs tigosdk.Config, out io.Writer, nameKeeper NameCheckHandler, accountant WalletToAccountHandler) *BetterClient {
+func NewClientWithLogging(configs Config, out io.Writer, nameKeeper NameCheckHandler, accountant WalletToAccountHandler) *BetterClient {
 	httpClient := &http.Client{
 		Transport: loggingTransport{
 			logger: out,

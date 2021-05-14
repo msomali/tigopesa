@@ -43,10 +43,12 @@ type (
 		HttpClient             *http.Client
 		NameCheckHandler       NameCheckHandler
 		WalletToAccountHandler WalletToAccountHandler
-		logger                 io.Writer // for logging purposes
+		Context                context.Context
+		Logger                 io.Writer // for logging purposes
 	}
 
 	loggingTransport struct {
+		ctx context.Context
 		logger io.Writer
 		next   http.RoundTripper
 	}
@@ -75,18 +77,36 @@ const (
 	SubscriberName RequestType = iota
 	WalletToAccount
 
-	//
+	//debugKey is the value that stores the debugging key is env file
+	debugKey              = "DEBUG"
 	defaultTimeout        = time.Minute
 	SYNC_LOOKUP_RESPONSE  = "SYNC_LOOKUP_RESPONSE"
 	SYNC_BILLPAY_RESPONSE = "SYNC_BILLPAY_RESPONSE"
 	REQMFCI               = "REQMFCI"
 )
 
-// loggingTransport implements http.RoundTripper
-var _ http.RoundTripper = (*loggingTransport)(nil)
+var (
+	// loggingTransport implements http.RoundTripper
+	_ http.RoundTripper = (*loggingTransport)(nil)
 
-// BetterClient implements BetterService
-var _ BetterService = (*BetterClient)(nil)
+	// BetterClient implements BetterService
+	_ BetterService = (*BetterClient)(nil)
+
+	// defaultLoggerTransport is a modified http.Transport that is responsible
+	// for logging all requests and responses  that a HTTPClient owned by BetterClient
+	// sent and receives
+	defaultLoggerTransport = loggingTransport{
+		logger: os.Stderr,
+		next:   http.DefaultTransport,
+	}
+
+	// defaultHttpClient is the client used by library to send Http requests, specifically
+	// disbursement requests in case a user does not specify one
+	defaultHttpClient = &http.Client{
+		Transport: defaultLoggerTransport,
+		Timeout:   defaultTimeout,
+	}
+)
 
 func (l loggingTransport) RoundTrip(request *http.Request) (response *http.Response, err error) {
 	defer func() {
@@ -104,19 +124,46 @@ func (l loggingTransport) RoundTrip(request *http.Request) (response *http.Respo
 	return
 }
 
-func MakeClient(tigoConfig Config,accountant WalletToAccountHandler, namechecker NameCheckHandler, options ... func(client *BetterClient))*BetterClient{
+func MakeClient(conf Config, collector WalletToAccountHandler, namesHandler NameCheckHandler, options ...func(client *BetterClient)) *BetterClient {
 	client := &BetterClient{
-		Config:                 tigoConfig,
-		HttpClient:             nil,
-		NameCheckHandler:       nil,
-		WalletToAccountHandler: nil,
-		logger:                 nil,
+		Config:                 conf,
+		HttpClient:             defaultHttpClient,
+		NameCheckHandler:       namesHandler,
+		WalletToAccountHandler: collector,
+		Context:                context.TODO(),
+		Logger:                 os.Stderr,
 	}
 	for _, option := range options {
 		option(client)
 	}
 
 	return client
+}
+
+
+// WithLogger set a logger of user preference but of type io.Writer
+// that will be used for debugging use cases. A default value is os.Stderr
+// it can be replaced by any io.Writer unless its nil which in that case
+// it will be ignored
+func WithLogger(out io.Writer) func(client *BetterClient) {
+	return func(client *BetterClient) {
+		if out == nil{
+			return
+		}
+		client.setLogger(out)
+	}
+}
+
+// WithHTTPClient when called unset the present http.Client and replace it
+// with c. In case user tries to pass a nil value referencing the client
+// i.e WithHTTPClient(nil), it will be ignored and the client wont be replaced
+func WithHTTPClient(c *http.Client) func(client *BetterClient) {
+	return func(client *BetterClient) {
+		if c == nil{
+			return
+		}
+		client.setHttpClient(c)
+	}
 }
 
 func NewBetterClient(configs Config, client *http.Client, out io.Writer,
@@ -130,13 +177,13 @@ func NewBetterClient(configs Config, client *http.Client, out io.Writer,
 
 	if client == nil {
 
-		// No *http.Client is set and neither is logger (io.Writer) in our case
+		// No *http.Client is set and neither is Logger (io.Writer) in our case
 		// So the http.DefaultClient will then be set  to be used
 		if out == nil {
-			c.SetHTTPClient(http.DefaultClient)
+			c.setHttpClient(http.DefaultClient)
 		}
 
-		// here the http.Client is not set but the logger (io.Writer) is set
+		// here the http.Client is not set but the Logger (io.Writer) is set
 		// so a a new http.Client will be spun with a modified Transport that
 		// enables logging of both requests and responses
 		httpClient := &http.Client{
@@ -146,15 +193,15 @@ func NewBetterClient(configs Config, client *http.Client, out io.Writer,
 			},
 			Timeout: defaultTimeout,
 		}
-		c.SetLogger(out)
-		c.SetHTTPClient(httpClient)
+		c.setLogger(out)
+		c.setHttpClient(httpClient)
 	}
 
 	if client != nil {
 		if out != nil {
-			c.SetLogger(out)
+			c.setLogger(out)
 		}
-		c.SetHTTPClient(client)
+		c.setHttpClient(client)
 	}
 
 	return c
@@ -174,17 +221,17 @@ func NewClientWithLogging(configs Config, out io.Writer, nameKeeper NameCheckHan
 		HttpClient:             httpClient,
 		NameCheckHandler:       nameKeeper,
 		WalletToAccountHandler: accountant,
-		logger:                 os.Stdout,
+		Logger:                 os.Stdout,
 	}
 }
 
-func (client *BetterClient) SetHTTPClient(httpClient *http.Client) {
+func (client *BetterClient) setHttpClient(httpClient *http.Client) {
 	client.HttpClient = httpClient
 }
 
-// SetLogger set custom logs destination.
-func (client *BetterClient) SetLogger(out io.Writer) {
-	client.logger = out
+// setLogger set custom logs destination.
+func (client *BetterClient) setLogger(out io.Writer) {
+	client.Logger = out
 }
 
 type BetterService interface {
@@ -223,10 +270,10 @@ func (client BetterClient) QuerySubscriberNameX(writer http.ResponseWriter, requ
 		return
 	}
 
-	//todo: inject logger
-	if client.logger != nil && os.Getenv("DEBUG") == "true" {
+	//todo: inject Logger
+	if client.Logger != nil && os.Getenv(debugKey) == "true" {
 		reqDump, _ := httputil.DumpRequestOut(request, true)
-		_, _ = client.logger.Write([]byte(fmt.Sprintf("Request: %s\nResponse: %s\n", string(reqDump), string(xmlResponse))))
+		_, _ = client.Logger.Write([]byte(fmt.Sprintf("Request: %s\nResponse: %s\n", string(reqDump), string(xmlResponse))))
 	}
 
 	writer.Header().Set("Content-Type", "application/xml")
@@ -262,10 +309,10 @@ func (client BetterClient) WalletToAccountX(writer http.ResponseWriter, request 
 		return
 	}
 
-	//todo: inject logger
-	if client.logger != nil && os.Getenv("DEBUG") == "true" {
+	//todo: inject Logger
+	if client.Logger != nil && os.Getenv("DEBUG") == "true" {
 		reqDump, _ := httputil.DumpRequestOut(request, true)
-		_, _ = client.logger.Write([]byte(fmt.Sprintf("Request: %s\nResponse: %s\n", string(reqDump), string(xmlResponse))))
+		_, _ = client.Logger.Write([]byte(fmt.Sprintf("Request: %s\nResponse: %s\n", string(reqDump), string(xmlResponse))))
 	}
 
 	writer.Header().Set("Content-Type", "application/xml")

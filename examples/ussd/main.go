@@ -78,36 +78,6 @@ func (app *App) disburseHandler(writer http.ResponseWriter, request *http.Reques
 
 }
 
-//func (app *App) namesHandler(writer http.ResponseWriter, request *http.Request) {
-//
-//	resp, err := app.USSDClient.QuerySubscriberName(context.TODO(), request)
-//	if err != nil {
-//		return
-//	}
-//	x, err := xml.MarshalIndent(resp, "", "  ")
-//	if err != nil {
-//		http.Error(writer, err.Error(), http.StatusInternalServerError)
-//		return
-//	}
-//	writer.Header().Set("Content-Type", "application/xml")
-//	writer.Write(x)
-//}
-//
-//func (app *App) transactionHandler(writer http.ResponseWriter, request *http.Request) {
-//
-//	resp, err := app.USSDClient.WalletToAccount(context.TODO(), request)
-//
-//	if err != nil {
-//		return
-//	}
-//	x, err := xml.MarshalIndent(resp, "", "  ")
-//	if err != nil {
-//		http.Error(writer, err.Error(), http.StatusInternalServerError)
-//		return
-//	}
-//	writer.Header().Set("Content-Type", "application/xml")
-//	writer.Write(x)
-//}
 
 type User struct {
 	Name   string `json:"name"`
@@ -144,6 +114,10 @@ func loadFromEnv() (conf ussd.Config, err error) {
 		WalletToAccountRequestURL: os.Getenv(TIGO_W2A_URL),
 		AccountToWalletRequestPIN: os.Getenv(TIGO_DISBURSEMENT_PIN),
 		NameCheckRequestURL:       os.Getenv(TIGO_NAMECHECK_URL),
+	}
+
+	if err != nil{
+		panic(err)
 	}
 
 	return

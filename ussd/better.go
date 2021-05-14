@@ -87,11 +87,11 @@ const (
 	WalletToAccount
 
 	//debugKey is the value that stores the debugging key is env file
-	debugKey              = "DEBUG"
-	defaultTimeout        = time.Minute
-	SYNC_LOOKUP_RESPONSE  = "SYNC_LOOKUP_RESPONSE"
-	SYNC_BILLPAY_RESPONSE = "SYNC_BILLPAY_RESPONSE"
-	REQMFCI               = "REQMFCI"
+	debugKey            = "DEBUG"
+	defaultTimeout      = time.Minute
+	SyncLookupResponse  = "SYNC_LOOKUP_RESPONSE"
+	SyncBillPayResponse = "SYNC_BILLPAY_RESPONSE"
+	REQMFCI             = "REQMFCI"
 )
 
 var (
@@ -133,7 +133,12 @@ func (l loggingTransport) RoundTrip(request *http.Request) (response *http.Respo
 		if response != nil {
 			respDump, _ = httputil.DumpResponse(response, true)
 		}
-		_, _ = l.logger.Write([]byte(fmt.Sprintf("Request: %s\nResponse: %s\n", string(reqDump), string(respDump))))
+
+		// check if the DEBUG mode is on, if its off do not do anything
+		if os.Getenv(debugKey) == "true"{
+			_, _ = l.logger.Write([]byte(fmt.Sprintf("Request: %s\nResponse: %s\n", string(reqDump), string(respDump))))
+		}
+
 	}()
 	response, err = l.next.RoundTrip(request)
 	return

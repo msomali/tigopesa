@@ -59,9 +59,16 @@ type (
 	// that needs a single client implementation, they wont necessary need to
 	// import code they dont want to use.
 	Config struct {
-		NameCheckRequestEndpoint  string `json:"name_request_endpoint"`
-		AccountToWalletRequestPIN string `json:"request_pin"`
-		AccountToWalletRequestURL string `json:"request_url"`
+		Username                  string `json:"username"`
+		Password                  string `json:"password"`
+		AccountName               string `json:"account_name"`
+		AccountMSISDN             string `json:"account_msisdn"`
+		BrandID                   string `json:"brand_id"`
+		BillerCode                string `json:"biller_code"`
+		AccountToWalletRequestURL string `json:"disbursement_request_url"`
+		AccountToWalletRequestPIN string `json:"disbursement_request_pin"`
+		WalletToAccountRequestURL string `json:"collection_request_url"`
+		NameCheckRequestURL       string `json:"namecheck_request_url"`
 	}
 )
 

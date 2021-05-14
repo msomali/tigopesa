@@ -40,12 +40,12 @@ type (
 
 	BetterClient struct {
 		Config
-		HttpClient             *http.Client
+		httpClient             *http.Client
 		NameCheckHandler       NameCheckHandler
 		WalletToAccountHandler WalletToAccountHandler
 		ctx                    context.Context
 		timeout                time.Duration
-		Logger                 io.Writer // for logging purposes
+		logger                 io.Writer // for logging purposes
 	}
 
 	loggingTransport struct {
@@ -131,12 +131,12 @@ func (l loggingTransport) RoundTrip(request *http.Request) (response *http.Respo
 func MakeClient(conf Config, collector WalletToAccountHandler, namesHandler NameCheckHandler, options ...func(client *BetterClient)) *BetterClient {
 	client := &BetterClient{
 		Config:                 conf,
-		HttpClient:             defaultHttpClient,
+		httpClient:             defaultHttpClient,
 		NameCheckHandler:       namesHandler,
 		WalletToAccountHandler: collector,
 		ctx:                    defaultCtx,
 		timeout:                defaultTimeout,
-		Logger:                 defaultWriter,
+		logger:                 defaultWriter,
 	}
 	for _, option := range options {
 		option(client)
@@ -200,13 +200,13 @@ func NewBetterClient(configs Config, client *http.Client, out io.Writer,
 
 	if client == nil {
 
-		// No *http.Client is set and neither is Logger (io.Writer) in our case
+		// No *http.Client is set and neither is logger (io.Writer) in our case
 		// So the http.DefaultClient will then be set  to be used
 		if out == nil {
 			c.setHttpClient(http.DefaultClient)
 		}
 
-		// here the http.Client is not set but the Logger (io.Writer) is set
+		// here the http.Client is not set but the logger (io.Writer) is set
 		// so a a new http.Client will be spun with a modified Transport that
 		// enables logging of both requests and responses
 		httpClient := &http.Client{
@@ -241,20 +241,20 @@ func NewClientWithLogging(configs Config, out io.Writer, nameKeeper NameCheckHan
 
 	return &BetterClient{
 		Config:                 configs,
-		HttpClient:             httpClient,
+		httpClient:             httpClient,
 		NameCheckHandler:       nameKeeper,
 		WalletToAccountHandler: accountant,
-		Logger:                 os.Stdout,
+		logger:                 os.Stdout,
 	}
 }
 
 func (client *BetterClient) setHttpClient(httpClient *http.Client) {
-	client.HttpClient = httpClient
+	client.httpClient = httpClient
 }
 
 // setLogger set custom logs destination.
 func (client *BetterClient) setLogger(out io.Writer) {
-	client.Logger = out
+	client.logger = out
 }
 
 type BetterService interface {
@@ -293,10 +293,10 @@ func (client BetterClient) QuerySubscriberNameX(writer http.ResponseWriter, requ
 		return
 	}
 
-	//todo: inject Logger
-	if client.Logger != nil && os.Getenv(debugKey) == "true" {
+	//todo: inject logger
+	if client.logger != nil && os.Getenv(debugKey) == "true" {
 		reqDump, _ := httputil.DumpRequestOut(request, true)
-		_, _ = client.Logger.Write([]byte(fmt.Sprintf("Request: %s\nResponse: %s\n", string(reqDump), string(xmlResponse))))
+		_, _ = client.logger.Write([]byte(fmt.Sprintf("Request: %s\nResponse: %s\n", string(reqDump), string(xmlResponse))))
 	}
 
 	writer.Header().Set("Content-Type", "application/xml")
@@ -332,10 +332,10 @@ func (client BetterClient) WalletToAccountX(writer http.ResponseWriter, request 
 		return
 	}
 
-	//todo: inject Logger
-	if client.Logger != nil && os.Getenv("DEBUG") == "true" {
+	//todo: inject logger
+	if client.logger != nil && os.Getenv("DEBUG") == "true" {
 		reqDump, _ := httputil.DumpRequestOut(request, true)
-		_, _ = client.Logger.Write([]byte(fmt.Sprintf("Request: %s\nResponse: %s\n", string(reqDump), string(xmlResponse))))
+		_, _ = client.logger.Write([]byte(fmt.Sprintf("Request: %s\nResponse: %s\n", string(reqDump), string(xmlResponse))))
 	}
 
 	writer.Header().Set("Content-Type", "application/xml")
@@ -366,7 +366,7 @@ func (client BetterClient) AccountToWalletX(ctx context.Context, request Account
 
 	req = req.WithContext(ctx)
 
-	resp, err := client.HttpClient.Do(req)
+	resp, err := client.httpClient.Do(req)
 	if err != nil {
 		return
 	}

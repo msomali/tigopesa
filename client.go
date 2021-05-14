@@ -63,8 +63,13 @@ type (
 
 // NewClient initiate new tigosdk client used by other services.
 // Default all pretty formatted requests (in and out) and responses
+<<<<<<< HEAD
+// will be logged to os.Sterr to use custom logger use setLogger.
+func NewClient(config Config) *Client {
+=======
 // will be logged to os.Sterr to use custom logger use SetLogger.
 func NewClient(config Config) (*Client, error) {
+>>>>>>> main
 	client := &Client{
 		Config: config,
 		client: http.DefaultClient,

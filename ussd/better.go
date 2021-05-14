@@ -124,21 +124,22 @@ var (
 )
 
 func (l loggingTransport) RoundTrip(request *http.Request) (response *http.Response, err error) {
+
+	if os.Getenv(debugKey) == "true" && request != nil{
+		reqDump, _ := httputil.DumpRequestOut(request, true)
+		_, err = l.logger.Write([]byte(fmt.Sprintf("Request %s\n",string(reqDump))))
+		if err != nil {
+			return nil, err
+		}
+	}
 	defer func() {
-		var reqDump, respDump []byte
-
-		if request != nil {
-			reqDump, _ = httputil.DumpRequestOut(request, true)
+		if response != nil && os.Getenv(debugKey) == "true"{
+			respDump, err := httputil.DumpResponse(response, true)
+			_, err = l.logger.Write([]byte(fmt.Sprintf("Response %s\n",string(respDump))))
+			if err != nil {
+				return
+			}
 		}
-		if response != nil {
-			respDump, _ = httputil.DumpResponse(response, true)
-		}
-
-		// check if the DEBUG mode is on, if its off do not do anything
-		if os.Getenv(debugKey) == "true"{
-			_, _ = l.logger.Write([]byte(fmt.Sprintf("Request: %s\nResponse: %s\n", string(reqDump), string(respDump))))
-		}
-
 	}()
 	response, err = l.next.RoundTrip(request)
 	return

@@ -61,8 +61,8 @@ func (app *App) disburseHandler(writer http.ResponseWriter, request *http.Reques
 		BrandID:     app.USSDClient.Config.BrandID,
 	}
 
-	logger := log.New(os.Stdout,"disburse",1)
-	logger.Printf("disburse request %v\n",req)
+	//logger := log.New(os.Stdout,"disburse",1)
+	//logger.Printf("disburse request %v\n",req)
 
 	resp, err := app.USSDClient.AccountToWalletX(context.TODO(), req)
 	if err != nil {
@@ -70,7 +70,7 @@ func (app *App) disburseHandler(writer http.ResponseWriter, request *http.Reques
 		return
 	}
 
-	logger.Printf("disburse response %v\n",resp)
+	//logger.Printf("disburse response %v\n",resp)
 
 	writer.Header().Set("Content-Type", "application/json")
 

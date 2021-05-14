@@ -387,8 +387,6 @@ func (client BetterClient) AccountToWalletX(ctx context.Context, request Account
 	}
 	xmlStr = []byte(xml.Header + string(xmlStr))
 
-	fmt.Printf("request is: %s\n", xmlStr)
-
 	// Create a HTTP Post Request to be sent to Tigo gateway
 	req, err := http.NewRequest(http.MethodPost, client.AccountToWalletRequestURL, bytes.NewBuffer(xmlStr)) // URL-encoded payload
 	if err != nil {

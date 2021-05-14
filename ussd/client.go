@@ -19,7 +19,7 @@ type (
 	// one is the name-check request and the other is the W2A request
 	// this is an experimental API still not implemented
 	// Expected implementation, though it may change may involve something like
-	// func HandleRequest(ctx context.Context, requestType RequestType) http.HandlerFunc {
+	// func (client *Client) HandleRequest(ctx context.Context, requestType RequestType) http.HandlerFunc {
 	//   return func(writer http.ResponseWriter, request *http.Request) {
 	//      switch requestType {
 	//      case SubscriberName:
@@ -44,15 +44,15 @@ type (
 	// requests and 3. Making disbursement requests
 	// it contains Config to store all needed credentials and vars obtained during
 	// integration stage. QuerySubscriberFunc an injected func to handle all namecheck
-	// requests and a CollectionHandler to handle all WalletToAccount requests
+	// requests and a WalletToAccountFunc to handle all WalletToAccount requests
 	Client struct {
 		Config
-		httpClient        *http.Client
-		NameCheckHandler  QuerySubscriberFunc
-		CollectionHandler WalletToAccountFunc
-		ctx               context.Context
-		timeout           time.Duration
-		logger            io.Writer // for logging purposes
+		httpClient          *http.Client
+		QuerySubscriberFunc QuerySubscriberFunc
+		WalletToAccountFunc WalletToAccountFunc
+		ctx                 context.Context
+		timeout             time.Duration
+		logger              io.Writer // for logging purposes
 	}
 
 	loggingTransport struct {
@@ -161,13 +161,13 @@ func (l loggingTransport) RoundTrip(request *http.Request) (response *http.Respo
 func NewClient(conf Config, collector WalletToAccountFunc, namesHandler QuerySubscriberFunc,
 	options ...func(client *Client)) *Client {
 	client := &Client{
-		Config:            conf,
-		httpClient:        defaultHttpClient,
-		NameCheckHandler:  namesHandler,
-		CollectionHandler: collector,
-		ctx:               defaultCtx,
-		timeout:           defaultTimeout,
-		logger:            defaultWriter,
+		Config:              conf,
+		httpClient:          defaultHttpClient,
+		QuerySubscriberFunc: namesHandler,
+		WalletToAccountFunc: collector,
+		ctx:                 defaultCtx,
+		timeout:             defaultTimeout,
+		logger:              defaultWriter,
 	}
 	for _, option := range options {
 		option(client)
@@ -187,7 +187,7 @@ func WithContext(ctx context.Context) func(client *Client) {
 
 // WithTimeout used to set the timeout used by handlers like sending requests to
 // Tigo Gateway and back in case of Disbursement or to set the max time for
-// handlers QuerySubscriberFunc and CollectionHandler while handling requests from tigo
+// handlers QuerySubscriberFunc and WalletToAccountFunc while handling requests from tigo
 // the default value is 1 minute
 func WithTimeout(timeout time.Duration) func(client *Client) {
 	return func(client *Client) {
@@ -239,7 +239,7 @@ func WithHTTPClient(c *http.Client) func(client *Client) {
 	}
 }
 
-func (client Client) SubscriberNameHandler(writer http.ResponseWriter, request *http.Request) {
+func (client *Client) SubscriberNameHandler(writer http.ResponseWriter, request *http.Request) {
 	ctx, cancel := context.WithTimeout(client.ctx, defaultTimeout)
 	defer cancel()
 
@@ -255,7 +255,7 @@ func (client Client) SubscriberNameHandler(writer http.ResponseWriter, request *
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
 
-	response, err := client.NameCheckHandler(ctx, req)
+	response, err := client.QuerySubscriberFunc(ctx, req)
 
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
@@ -278,7 +278,7 @@ func (client Client) SubscriberNameHandler(writer http.ResponseWriter, request *
 
 }
 
-func (client Client) WalletToAccountHandler(writer http.ResponseWriter, request *http.Request) {
+func (client *Client) WalletToAccountHandler(writer http.ResponseWriter, request *http.Request) {
 	ctx, cancel := context.WithTimeout(client.ctx, defaultTimeout)
 	defer cancel()
 
@@ -294,7 +294,7 @@ func (client Client) WalletToAccountHandler(writer http.ResponseWriter, request 
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
 
-	response, err := client.CollectionHandler(ctx, req)
+	response, err := client.WalletToAccountFunc(ctx, req)
 
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
@@ -317,7 +317,7 @@ func (client Client) WalletToAccountHandler(writer http.ResponseWriter, request 
 
 }
 
-func (client Client) AccountToWalletHandler(ctx context.Context, request AccountToWalletRequest) (response AccountToWalletResponse, err error) {
+func (client *Client) AccountToWalletHandler(ctx context.Context, request AccountToWalletRequest) (response AccountToWalletResponse, err error) {
 	// Marshal the request body into application/xml
 	xmlStr, err := xml.MarshalIndent(request, "", "    ")
 	if err != nil {

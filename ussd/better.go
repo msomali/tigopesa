@@ -98,7 +98,7 @@ var (
 
 	defaultCtx = context.TODO()
 
-	defaultWriter = os.Stderr
+	defaultWriter = os.Stdout
 
 
 	// loggingTransport implements http.RoundTripper
@@ -126,11 +126,15 @@ var (
 func (l loggingTransport) RoundTrip(request *http.Request) (response *http.Response, err error) {
 
 	if os.Getenv(debugKey) == "true" && request != nil{
-		reqDump, _ := httputil.DumpRequestOut(request, true)
-		_, err = l.logger.Write([]byte(fmt.Sprintf("Request %s\n",string(reqDump))))
+		reqDump, err := httputil.DumpRequestOut(request, true)
 		if err != nil {
 			return nil, err
 		}
+		_, err = fmt.Fprint(l.logger, fmt.Sprintf("Request %s\n", string(reqDump)))
+		if err != nil {
+			return nil, err
+		}
+
 	}
 	defer func() {
 		if response != nil && os.Getenv(debugKey) == "true"{

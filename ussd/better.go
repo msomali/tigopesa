@@ -43,12 +43,13 @@ type (
 		HttpClient             *http.Client
 		NameCheckHandler       NameCheckHandler
 		WalletToAccountHandler WalletToAccountHandler
-		Context                context.Context
+		ctx                    context.Context
+		timeout                time.Duration
 		Logger                 io.Writer // for logging purposes
 	}
 
 	loggingTransport struct {
-		ctx context.Context
+		ctx    context.Context
 		logger io.Writer
 		next   http.RoundTripper
 	}
@@ -86,6 +87,9 @@ const (
 )
 
 var (
+
+	defaultCtx = context.TODO()
+	defaultWriter = os.Stderr
 	// loggingTransport implements http.RoundTripper
 	_ http.RoundTripper = (*loggingTransport)(nil)
 
@@ -130,8 +134,9 @@ func MakeClient(conf Config, collector WalletToAccountHandler, namesHandler Name
 		HttpClient:             defaultHttpClient,
 		NameCheckHandler:       namesHandler,
 		WalletToAccountHandler: collector,
-		Context:                context.TODO(),
-		Logger:                 os.Stderr,
+		ctx:                    defaultCtx,
+		timeout:                defaultTimeout,
+		Logger:                 defaultWriter,
 	}
 	for _, option := range options {
 		option(client)
@@ -140,6 +145,24 @@ func MakeClient(conf Config, collector WalletToAccountHandler, namesHandler Name
 	return client
 }
 
+// WithContext set the context to be used by BetterClient in its ops
+// this unset the default value which is context.TODO()
+// This context value is mostly used by Handlers
+func WithContext(ctx context.Context) func(client *BetterClient) {
+	return func(client *BetterClient) {
+		client.ctx = ctx
+	}
+}
+
+// WithTimeout used to set the timeout used by handlers like sending requests to
+// Tigo Gateway and back in case of Disbursement or to set the max time for
+// handlers NameCheckHandler and CollectionHandler while handling requests from tigo
+// the default value is 1 minute
+func WithTimeout(timeout time.Duration) func(client *BetterClient) {
+	return func(client *BetterClient) {
+		client.timeout = timeout
+	}
+}
 
 // WithLogger set a logger of user preference but of type io.Writer
 // that will be used for debugging use cases. A default value is os.Stderr
@@ -147,7 +170,7 @@ func MakeClient(conf Config, collector WalletToAccountHandler, namesHandler Name
 // it will be ignored
 func WithLogger(out io.Writer) func(client *BetterClient) {
 	return func(client *BetterClient) {
-		if out == nil{
+		if out == nil {
 			return
 		}
 		client.setLogger(out)
@@ -159,7 +182,7 @@ func WithLogger(out io.Writer) func(client *BetterClient) {
 // i.e WithHTTPClient(nil), it will be ignored and the client wont be replaced
 func WithHTTPClient(c *http.Client) func(client *BetterClient) {
 	return func(client *BetterClient) {
-		if c == nil{
+		if c == nil {
 			return
 		}
 		client.setHttpClient(c)

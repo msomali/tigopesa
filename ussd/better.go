@@ -38,6 +38,14 @@ type (
 	NameCheckHandler       func(ctx context.Context, request SubscriberNameRequest) (SubscriberNameResponse, error)
 	WalletToAccountHandler func(ctx context.Context, request WalletToAccountRequest) (WalletToAccountResponse, error)
 
+
+	// BetterClient is a ussd client that assembles together necessary parts
+	// needed in performing 3 operations
+	// 1. handling of NameCheckRequest, 2. Handling of Collection (WalletToAccount)
+	// requests and 3. Making disbursement requests
+	// it contains Config to store all needed credentials and vars obtained during
+	// integration stage. NameCheckHandler an injected func to handle all namecheck
+	// requests and a CollectionHandler to handle all WalletToAccount requests
 	BetterClient struct {
 		Config
 		httpClient        *http.Client
@@ -49,7 +57,7 @@ type (
 	}
 
 	loggingTransport struct {
-		ctx    context.Context
+		//ctx    context.Context
 		logger io.Writer
 		next   http.RoundTripper
 	}
@@ -131,7 +139,8 @@ func (l loggingTransport) RoundTrip(request *http.Request) (response *http.Respo
 	return
 }
 
-func MakeClient(conf Config, collector WalletToAccountHandler, namesHandler NameCheckHandler, options ...func(client *BetterClient)) *BetterClient {
+func MakeClient(conf Config, collector WalletToAccountHandler, namesHandler NameCheckHandler,
+	options ...func(client *BetterClient)) *BetterClient {
 	client := &BetterClient{
 		Config:            conf,
 		httpClient:        defaultHttpClient,
@@ -288,7 +297,7 @@ type BetterService interface {
 }
 
 func (client BetterClient) QuerySubscriberNameX(writer http.ResponseWriter, request *http.Request) {
-	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+	ctx, cancel := context.WithTimeout(client.ctx, defaultTimeout)
 	defer cancel()
 
 	var req SubscriberNameRequest
@@ -327,7 +336,7 @@ func (client BetterClient) QuerySubscriberNameX(writer http.ResponseWriter, requ
 }
 
 func (client BetterClient) WalletToAccountX(writer http.ResponseWriter, request *http.Request) {
-	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+	ctx, cancel := context.WithTimeout(client.ctx, defaultTimeout)
 	defer cancel()
 
 	var req WalletToAccountRequest

@@ -8,6 +8,7 @@ that are used for the TigoPesa integration
 ```
 Account Name: TECH CRAFT
 Account MSISDN: 25565298765
+Biller Number/Company number: 298765
 TIGO_W2A_URL: http://96.126.126.124:8090/api/tigopesa/c2b/transactions
 TIGO_NAMECHECK_URL: http://96.126.126.124:8090/api/tigopesa/c2b/users/names
 

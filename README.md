@@ -1,6 +1,20 @@
 # tigo
 fully compliant tigo integration library in Go
 
+## import
+```bash
+
+go get https://github.com/techcraftt/tigosdk
+
+```
+
+```go
+import (
+   ...
+   "github.com/techcraftt/tigosdk"
+)
+```
+
 ## example
 Follow these procedures to run the ussd example
 

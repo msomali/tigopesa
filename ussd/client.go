@@ -55,6 +55,10 @@ type (
 		logger              io.Writer // for logging purposes
 	}
 
+	// ClientOption is a setter func to set Client details like
+	// timeout, context, httpClient and logger
+	ClientOption func(client *Client)
+
 	loggingTransport struct {
 		//ctx    context.Context
 		logger io.Writer
@@ -105,9 +109,15 @@ const (
 
 var (
 
+	// defaultCtx is the context used by client when none is set
+	// to override this one has to call WithContext method and supply
+	// his her own context.Context
 	defaultCtx = context.TODO()
 
-	defaultWriter = os.Stdout
+	// defaultWriter is an io.Writer used for debugging. When debug mode is
+	// set to true i.e DEBUG=true and no io.Writer is provided via
+	// WithLogger method this is used.
+	defaultWriter = os.Stderr
 
 
 	// loggingTransport implements http.RoundTripper
@@ -158,8 +168,17 @@ func (l loggingTransport) RoundTrip(request *http.Request) (response *http.Respo
 	return
 }
 
+
+
+
+// NewClient creates a *Client from the specified Config, WalletToAccountFunc and QuerySubscriberFunc
+// You can add numerous available ClientOption like timeout using WithTimeout, logger (which is essentially
+// io.Writer) using WithLogger, context using WithContext and httpClient using WithHTTPClient
+// if those options are not set explicitly NewClient go with default values
+// timeout = time.Minute, context = context.TODO() , logger = os.StdErr and a default http.Client which is
+// has been modified to be bale to log requests and responses when debug mode is enabled.
 func NewClient(conf Config, collector WalletToAccountFunc, namesHandler QuerySubscriberFunc,
-	options ...func(client *Client)) *Client {
+	options ...ClientOption) *Client {
 	client := &Client{
 		Config:              conf,
 		httpClient:          defaultHttpClient,
@@ -179,7 +198,7 @@ func NewClient(conf Config, collector WalletToAccountFunc, namesHandler QuerySub
 // WithContext set the context to be used by Client in its ops
 // this unset the default value which is context.TODO()
 // This context value is mostly used by Handlers
-func WithContext(ctx context.Context) func(client *Client) {
+func WithContext(ctx context.Context) ClientOption{
 	return func(client *Client) {
 		client.ctx = ctx
 	}
@@ -189,7 +208,7 @@ func WithContext(ctx context.Context) func(client *Client) {
 // Tigo Gateway and back in case of Disbursement or to set the max time for
 // handlers QuerySubscriberFunc and WalletToAccountFunc while handling requests from tigo
 // the default value is 1 minute
-func WithTimeout(timeout time.Duration) func(client *Client) {
+func WithTimeout(timeout time.Duration) ClientOption {
 	return func(client *Client) {
 		client.timeout = timeout
 	}
@@ -199,7 +218,7 @@ func WithTimeout(timeout time.Duration) func(client *Client) {
 // that will be used for debugging use cases. A default value is os.Stderr
 // it can be replaced by any io.Writer unless its nil which in that case
 // it will be ignored
-func WithLogger(out io.Writer) func(client *Client) {
+func WithLogger(out io.Writer) ClientOption {
 	return func(client *Client) {
 		if out == nil {
 			return
@@ -213,7 +232,7 @@ func WithLogger(out io.Writer) func(client *Client) {
 // i.e WithHTTPClient(nil), it will be ignored and the client wont be replaced
 // Note: the new client Transport will be modified. It will be wrapped by another
 // middleware that enables client to
-func WithHTTPClient(c *http.Client) func(client *Client) {
+func WithHTTPClient(c *http.Client) ClientOption {
 
 	// TODO check if its really necessary to set the default timeout to 1 minute
 	//if c.Timeout == 0 {
@@ -239,6 +258,12 @@ func WithHTTPClient(c *http.Client) func(client *Client) {
 	}
 }
 
+// SubscriberNameHandler is an http.HandleFunc that handles TigoPesa Namecheck requests
+// it uses internally an injected QuerySubscriberFunc.
+// It accepts the *http.Request unmarshal it to SubscriberNameRequest before passed to
+// QuerySubscriberFunc that returns SubscriberNameResponse and error if error is not null
+// this is termed as http.StatusInternalServerError. If its nil the response is marshalled
+// to XML formatted SubscriberNameResponse and returned to TigoPesa.
 func (client *Client) SubscriberNameHandler(writer http.ResponseWriter, request *http.Request) {
 	ctx, cancel := context.WithTimeout(client.ctx, defaultTimeout)
 	defer cancel()

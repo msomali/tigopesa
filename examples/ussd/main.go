@@ -154,7 +154,16 @@ func main() {
 
 	check := checker{usersMap}
 
-	c := ussd.NewClient(conf,check.w2aFunc,check.nameFunc)
+	var opts [] ussd.ClientOption
+
+	opts = append(opts,
+		ussd.WithContext(context.Background()),
+		ussd.WithTimeout(time.Second*30),
+		ussd.WithLogger(os.Stderr),
+		ussd.WithHTTPClient(http.DefaultClient),
+		)
+
+	c := ussd.NewClient(conf,check.w2aFunc,check.nameFunc,opts...)
 
 	handler := MakeHandler(c)
 

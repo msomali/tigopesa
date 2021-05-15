@@ -35,7 +35,43 @@ type (
 	// }
 	RequestType int
 
+	// QuerySubscriberFunc takes a SubscriberNameRequest and return SubscriberNameResponse or error
+	// There is no default implementation of this. It should be implemented and injected to Client as
+	// Client.QuerySubscriberFunc. This carry the whole logic that response from TigoPesa Namecheck
+	// requests.
+	// The likely scenario may be taking SubscriberNameRequest and run it against the user database
+	// or auth system and the respond appropriately.
+	// an example may look like
+	//      func (app *App)QuerySubscriber(ctx context.Context, request SubscriberNameRequest) (resp SubscriberNameResponse, err error){
+	//           err = app.database.find(ctx, request.CustomerReferenceID)
+	//           if err != nil {
+	//               return resp, err
+	//           }
+	//      }
+	// the injected function will then be called by Client.SubscriberNameHandler and its implementation gets
+	// executed in terms of err != nil . http.StatusInternalServerError will be sent to TigoPesa. So make
+	// sure the errors reported by this func are system failure only like database connection but in terms of
+	// things like Customer Not Found or Invalid Reference Number err should be nil and appropriate SubscriberNameResponse
+	// should be used. example
+	//
+	// resp := SubscriberNameResponse {
+	//		Type:      REQMFCI,
+	//		Result:    "TF",
+	//		ErrorCode: NAMECHECK_NOT_REGISTERED,
+	//		ErrorDesc: "Customer Details Not Found",
+	//		Msisdn:    "",
+	//		Flag:      "N",
+	//		Content:   "The provided reference number is unknown",
+	//	}
 	QuerySubscriberFunc func(ctx context.Context, request SubscriberNameRequest) (SubscriberNameResponse, error)
+
+
+	// WalletToAccountFunc handles all the collection requests sent from TigoPesa. The http requests are firstly
+	// received by Client.WalletToAccountHandler properly marshalled to WalletToAccountRequest then passed to
+	// this func which after processing the requests returns an error in case there is a system failure. An error
+	// should not be returned for cases like Insufficient funds, Account is barred etc etc. in case of those errors
+	// just like in QuerySubscriberFunc the error should be nil and these other "errors" should be include in
+	// WalletToAccountResponse
 	WalletToAccountFunc func(ctx context.Context, request WalletToAccountRequest) (WalletToAccountResponse, error)
 
 	// Client is a ussd client that assembles together necessary parts
@@ -84,8 +120,6 @@ type (
 		NameCheckRequestURL       string `json:"namecheck_request_url"`
 	}
 
-
-
 	Service interface {
 		SubscriberNameHandler(writer http.ResponseWriter, request *http.Request)
 
@@ -119,7 +153,6 @@ var (
 	// WithLogger method this is used.
 	defaultWriter = os.Stderr
 
-
 	// loggingTransport implements http.RoundTripper
 	_ http.RoundTripper = (*loggingTransport)(nil)
 
@@ -144,7 +177,7 @@ var (
 
 func (l loggingTransport) RoundTrip(request *http.Request) (response *http.Response, err error) {
 
-	if os.Getenv(debugKey) == "true" && request != nil{
+	if os.Getenv(debugKey) == "true" && request != nil {
 		reqDump, err := httputil.DumpRequestOut(request, true)
 		if err != nil {
 			return nil, err
@@ -156,9 +189,9 @@ func (l loggingTransport) RoundTrip(request *http.Request) (response *http.Respo
 
 	}
 	defer func() {
-		if response != nil && os.Getenv(debugKey) == "true"{
+		if response != nil && os.Getenv(debugKey) == "true" {
 			respDump, err := httputil.DumpResponse(response, true)
-			_, err = l.logger.Write([]byte(fmt.Sprintf("Response %s\n",string(respDump))))
+			_, err = l.logger.Write([]byte(fmt.Sprintf("Response %s\n", string(respDump))))
 			if err != nil {
 				return
 			}
@@ -168,14 +201,11 @@ func (l loggingTransport) RoundTrip(request *http.Request) (response *http.Respo
 	return
 }
 
-
-
-
 // NewClient creates a *Client from the specified Config, WalletToAccountFunc and QuerySubscriberFunc
 // You can add numerous available ClientOption like timeout using WithTimeout, logger (which is essentially
 // io.Writer) using WithLogger, context using WithContext and httpClient using WithHTTPClient
 // if those options are not set explicitly NewClient go with default values
-// timeout = time.Minute, context = context.TODO() , logger = os.StdErr and a default http.Client which is
+// timeout = time.Minute, context = context.TODO() , logger = os.Stderr and a default http.Client which is
 // has been modified to be bale to log requests and responses when debug mode is enabled.
 func NewClient(conf Config, collector WalletToAccountFunc, namesHandler QuerySubscriberFunc,
 	options ...ClientOption) *Client {
@@ -198,7 +228,7 @@ func NewClient(conf Config, collector WalletToAccountFunc, namesHandler QuerySub
 // WithContext set the context to be used by Client in its ops
 // this unset the default value which is context.TODO()
 // This context value is mostly used by Handlers
-func WithContext(ctx context.Context) ClientOption{
+func WithContext(ctx context.Context) ClientOption {
 	return func(client *Client) {
 		client.ctx = ctx
 	}
@@ -368,10 +398,14 @@ func (client *Client) AccountToWalletHandler(ctx context.Context, request Accoun
 		return
 	}
 
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			return
+		}
+	}(resp.Body)
 	xmlBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-
 		return
 	}
 
@@ -381,4 +415,19 @@ func (client *Client) AccountToWalletHandler(ctx context.Context, request Accoun
 	}
 
 	return
+}
+
+func (client *Client) HandleRequest(ctx context.Context, requestType RequestType) http.HandlerFunc {
+	ctx,cancel := context.WithTimeout(ctx, defaultTimeout)
+	defer cancel()
+	return func(writer http.ResponseWriter, request *http.Request) {
+		switch requestType {
+		case SubscriberName:
+			client.SubscriberNameHandler(writer,request)
+		case WalletToAccount:
+			client.WalletToAccountHandler(writer,request)
+		default:
+			http.Error(writer, "unknown request type", http.StatusInternalServerError)
+		}
+	}
 }

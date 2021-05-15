@@ -295,7 +295,7 @@ func WithHTTPClient(c *http.Client) ClientOption {
 // this is termed as http.StatusInternalServerError. If its nil the response is marshalled
 // to XML formatted SubscriberNameResponse and returned to TigoPesa.
 func (client *Client) SubscriberNameHandler(writer http.ResponseWriter, request *http.Request) {
-	ctx, cancel := context.WithTimeout(client.ctx, defaultTimeout)
+	ctx, cancel := context.WithTimeout(client.ctx, client.timeout)
 	defer cancel()
 
 	var req SubscriberNameRequest
@@ -334,7 +334,7 @@ func (client *Client) SubscriberNameHandler(writer http.ResponseWriter, request 
 }
 
 func (client *Client) WalletToAccountHandler(writer http.ResponseWriter, request *http.Request) {
-	ctx, cancel := context.WithTimeout(client.ctx, defaultTimeout)
+	ctx, cancel := context.WithTimeout(client.ctx, client.timeout)
 	defer cancel()
 
 	var req WalletToAccountRequest
@@ -388,7 +388,7 @@ func (client *Client) AccountToWalletHandler(ctx context.Context, request Accoun
 	req.Header.Add("Content-Type", "application/xml")
 
 	// Create context with a timeout of 1 minute
-	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
+	ctx, cancel := context.WithTimeout(ctx, client.timeout)
 	defer cancel()
 
 	req = req.WithContext(ctx)
@@ -418,7 +418,7 @@ func (client *Client) AccountToWalletHandler(ctx context.Context, request Accoun
 }
 
 func (client *Client) HandleRequest(ctx context.Context, requestType RequestType) http.HandlerFunc {
-	ctx,cancel := context.WithTimeout(ctx, defaultTimeout)
+	ctx,cancel := context.WithTimeout(ctx, client.timeout)
 	defer cancel()
 	return func(writer http.ResponseWriter, request *http.Request) {
 		switch requestType {

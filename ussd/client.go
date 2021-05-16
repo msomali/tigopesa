@@ -96,7 +96,6 @@ type (
 	ClientOption func(client *Client)
 
 	loggingTransport struct {
-		//ctx    context.Context
 		logger io.Writer
 		next   http.RoundTripper
 	}
@@ -417,6 +416,8 @@ func (client *Client) AccountToWalletHandler(ctx context.Context, request Accoun
 	return
 }
 
+// HandleRequest is experimental no guarantees
+// For reliability use SubscriberNameHandler and WalletToAccountHandler
 func (client *Client) HandleRequest(ctx context.Context, requestType RequestType) http.HandlerFunc {
 	ctx,cancel := context.WithTimeout(ctx, client.timeout)
 	defer cancel()

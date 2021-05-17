@@ -70,6 +70,7 @@ func (c *client) BillPayCallback(ctx context.Context, r *http.Request, w http.Re
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	callbackResponse := provider(ctx, callbackRequest)
@@ -77,6 +78,7 @@ func (c *client) BillPayCallback(ctx context.Context, r *http.Request, w http.Re
 
 	if err := json.NewEncoder(w).Encode(callbackResponse); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 }

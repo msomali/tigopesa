@@ -13,7 +13,7 @@ type BillPayCallbackRequest struct {
 	Description      string `json:"Description"`
 	MFSTransactionID string `json:"MFSTransactionID,omitempty"`
 	ReferenceID      string `json:"ReferenceID"`
-	Amount           int    `json:"Amount"`
+	Amount           string    `json:"Amount"`
 }
 
 type RefundPaymentRequest struct {

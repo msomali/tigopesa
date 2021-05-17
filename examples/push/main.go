@@ -108,7 +108,7 @@ func (a *app) callbackProvider(ctx context.Context, billPayRequest push.BillPayC
 
 	return &push.BillPayResponse{
 		ResponseCode:        "BILLER-18-0000-S",
-		ResponseStatus:      false,
+		ResponseStatus:      true,
 		ResponseDescription: "Callback successful",
 		ReferenceID:         billPayRequest.ReferenceID,
 	}
@@ -118,6 +118,9 @@ func loadFromEnv() (conf sdk.Config, err error) {
 	var billerMSISDN int64
 
 	err = env.Load("tigo.env")
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
 
 	billerMSISDN, err = strconv.ParseInt(os.Getenv(TIGO_BILLER_MSISDN), 10, 64)
 

@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	env "github.com/joho/godotenv"
-	"github.com/techcraftt/tigosdk"
 	"github.com/techcraftt/tigosdk/push"
+	"github.com/techcraftt/tigosdk/sdk"
 	"log"
 	"net/http"
 	"os"
@@ -45,21 +45,18 @@ func main() {
 	}
 
 	a := &app{
-		pushpay: push.NewClientFromConfig(config),
+		pushpay:     push.NewClientFromConfig(config),
 		transaction: map[string]push.BillPayRequest{},
 	}
 
-	r := mux.NewRouter()
+	router := mux.NewRouter()
 
-	r.HandleFunc("/tigopesa/pushpay", a.pushPayHandler).Methods(http.MethodPost)
-	r.HandleFunc("/tigopesa/pushpay/callback", a.pushPayCallbackHandler).Methods(http.MethodPost)
+	router.HandleFunc("/tigopesa/pushpay", a.pushPayHandler).Methods(http.MethodPost)
+	router.HandleFunc("/tigopesa/pushpay/callback", a.pushPayCallbackHandler).Methods(http.MethodPost)
 
 	s := http.Server{
-		Addr:              ":8090",
-		Handler:           r,
-		ReadTimeout:       30 * time.Second,
-		ReadHeaderTimeout: 30 * time.Second,
-		WriteTimeout:      30 * time.Second,
+		Addr:    ":8090",
+		Handler: router,
 	}
 
 	if err := s.ListenAndServe(); err != nil {
@@ -96,54 +93,35 @@ func (a *app) pushPayHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *app) pushPayCallbackHandler(w http.ResponseWriter, r *http.Request) {
-	var req push.BillPayCallbackRequest
+	a.pushpay.BillPayCallback(context.Background(), r, w, a.callbackProvider)
+}
 
-	defer r.Body.Close()
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		// callback failed if we failed to decode the request sent from tigo
-		json.NewEncoder(w).Encode(&push.BillPayResponse{
+func (a *app) callbackProvider(ctx context.Context, billPayRequest push.BillPayCallbackRequest) *push.BillPayResponse {
+	if !billPayRequest.Status {
+		return &push.BillPayResponse{
 			ResponseCode:        "BILLER-18-3020-E",
 			ResponseStatus:      false,
 			ResponseDescription: "Callback failed",
-			ReferenceID:         req.ReferenceID,
-		})
-
-		return
-	}
-
-	//check if callback status is successful and the request originated from our API.
-	if req.Status {
-		// verify if received billpay reference initiated by our api.
-		trans, ok := a.transaction[req.ReferenceID]
-		if ok && trans.Amount == req.Amount && trans.ReferenceID == req.ReferenceID {
-			json.NewEncoder(w).Encode(&push.BillPayResponse{
-				ResponseCode:        "BILLER-18-0000-S",
-				ResponseStatus:      true,
-				ResponseDescription: "Callback successful",
-				ReferenceID:         req.ReferenceID,
-			})
+			ReferenceID:         billPayRequest.ReferenceID,
 		}
 	}
 
-	// respond with failed callback
-	json.NewEncoder(w).Encode(&push.BillPayResponse{
-		ResponseCode:        "BILLER-18-3020-E",
+	return &push.BillPayResponse{
+		ResponseCode:        "BILLER-18-0000-S",
 		ResponseStatus:      false,
-		ResponseDescription: "Callback failed",
-		ReferenceID:         req.ReferenceID,
-	})
-
-	return
+		ResponseDescription: "Callback successful",
+		ReferenceID:         billPayRequest.ReferenceID,
+	}
 }
 
-func loadFromEnv() (conf tigosdk.Config, err error) {
+func loadFromEnv() (conf sdk.Config, err error) {
 	var billerMSISDN int64
 
 	err = env.Load("tigo.env")
 
 	billerMSISDN, err = strconv.ParseInt(os.Getenv(TIGO_BILLER_MSISDN), 10, 64)
 
-	conf = tigosdk.Config{
+	conf = sdk.Config{
 		Username:              os.Getenv(TIGO_USERNAME),
 		Password:              os.Getenv(TIGO_PASSWORD),
 		BillerCode:            os.Getenv(TIGO_BILLER_CODE),

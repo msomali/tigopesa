@@ -1,4 +1,4 @@
-package tigosdk
+package sdk
 
 import (
 	"bytes"
@@ -17,18 +17,13 @@ import (
 	"time"
 )
 
-const (
-	SyncLookupResponse  = "SYNC_LOOKUP_RESPONSE"
-	SyncBillPayResponse = "SYNC_BILLPAY_RESPONSE"
-)
-
 var (
-	JSONRequest RequestType = "json"
-	XMLRequest  RequestType = "xml"
+	JSONPayload PayloadType = "json"
+	XMLPayload  PayloadType = "xml"
 )
 
 type (
-	RequestType string
+	PayloadType string
 
 	//Config contains details of TigoPesa integration.
 	//These are configurations supplied during the integration stage.
@@ -61,15 +56,10 @@ type (
 	}
 )
 
-// NewClient initiate new tigosdk client used by other services.
+// NewClient initiate new tigosdk sdk used by other services.
 // Default all pretty formatted requests (in and out) and responses
-<<<<<<< HEAD
 // will be logged to os.Sterr to use custom logger use setLogger.
-func NewClient(config Config) *Client {
-=======
-// will be logged to os.Sterr to use custom logger use SetLogger.
 func NewClient(config Config) (*Client, error) {
->>>>>>> main
 	client := &Client{
 		Config: config,
 		client: http.DefaultClient,
@@ -92,31 +82,22 @@ func (c *Client) SetLogger(out io.Writer) {
 	c.logger = out
 }
 
-func (c *Client) NewRequest(method, url string, requestType RequestType, payload interface{}) (*http.Request, error) {
+func (c *Client) NewRequest(method, url string, payloadType PayloadType, payload interface{}) (*http.Request, error) {
 	var (
-		buf    io.Reader
+		buffer io.Reader
 		ctx, _ = context.WithTimeout(context.Background(), 60*time.Second)
 	)
 
 	if payload != nil {
-		switch requestType {
-		case JSONRequest:
-			b, err := json.Marshal(payload)
-			if err != nil {
-				return nil, err
-			}
-			buf = bytes.NewBuffer(b)
-
-		case XMLRequest:
-			b, err := xml.MarshalIndent(payload, "", "  ")
-			if err != nil {
-				return nil, err
-			}
-			buf = bytes.NewBuffer(b)
+		buf, err := marshalPayload(payloadType, payload)
+		if err != nil {
+			return nil, err
 		}
+
+		buffer = bytes.NewBuffer(buf)
 	}
 
-	return http.NewRequestWithContext(ctx, method, c.ApiBaseURL+url, buf)
+	return http.NewRequestWithContext(ctx, method, c.ApiBaseURL+url, buffer)
 }
 
 func (c *Client) getAuthToken() (string, error) {
@@ -174,7 +155,7 @@ func (c *Client) Send(ctx context.Context, req *http.Request, v interface{}) err
 
 	// sending json request by default
 	if req.Header.Get("content-Type") == "" {
-		req.Header.Set("Accept", "application/json")
+		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Cache-Control", "no-cache")
 		req.Header.Set("username", c.Username)
 		req.Header.Set("password", c.Password)
@@ -242,5 +223,32 @@ func (c *Client) logResponse(resp *http.Response) {
 		}
 
 		c.logger.Write([]byte(fmt.Sprintf("Response: %s\n \n", string(respDump))))
+	}
+}
+
+// marshalPayload returns the JSON/XML encoding of payload.
+func marshalPayload(payloadType PayloadType, payload interface{}) (buf []byte, err error) {
+	switch payloadType {
+	case JSONPayload:
+		buf, err = json.Marshal(payload)
+		if err != nil {
+			return nil, err
+		}
+	case XMLPayload:
+		buf, err = xml.MarshalIndent(payload, "", "  ")
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return
+}
+
+// Log write v into logger.
+func (c *Client) Log(prefix string, payloadType PayloadType, payload interface{}) {
+	if c.logger != nil && os.Getenv("DEBUG") == "true" {
+		buf, _ := marshalPayload(payloadType, payload)
+
+		c.logger.Write([]byte(fmt.Sprintf("%s: %s\n\n", prefix, string(buf))))
 	}
 }

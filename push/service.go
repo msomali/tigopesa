@@ -2,22 +2,22 @@ package push
 
 import (
 	"context"
-	"github.com/techcraftt/tigosdk"
+	"encoding/json"
+	"github.com/techcraftt/tigosdk/sdk"
 	"log"
 	"net/http"
 )
 
-// BillPayGetter provide interface for verification of callback request.
-type BillPayGetter interface {
-	GetBillPay(ctx context.Context, referenceID string) BillPayRequest
-}
+// CallbackResponseProvider check and reports the status of the transaction.
+// if transaction status
+type CallbackResponseProvider func(context.Context, BillPayCallbackRequest) *BillPayResponse
 
 type Service interface {
 	// BillPay initiate Service payment flow to deduct a specific amount from customer's Tigo pesa wallet.
 	BillPay(context.Context, BillPayRequest) (*BillPayResponse, error)
 
-	// BillPayCallback ...
-	//BillPayCallback(context.Context, *http.Request, http.ResponseWriter, BillPayGetter) BillPayResponse
+	// BillPayCallback handle push callback request.
+	BillPayCallback(context.Context, *http.Request, http.ResponseWriter, CallbackResponseProvider)
 
 	// RefundPayment initiate payment refund and will be processed only if the payment was successful.
 	RefundPayment(context.Context, RefundPaymentRequest) (*RefundPaymentResponse, error)
@@ -27,15 +27,15 @@ type Service interface {
 }
 
 type client struct {
-	*tigosdk.Client
+	*sdk.Client
 }
 
-func NewClient(c *tigosdk.Client) Service {
+func NewClient(c *sdk.Client) Service {
 	return &client{c}
 }
 
-func NewClientFromConfig(config tigosdk.Config) Service {
-	c, err := tigosdk.NewClient(config)
+func NewClientFromConfig(config sdk.Config) Service {
+	c, err := sdk.NewClient(config)
 	if err != nil {
 		log.Fatalln("failed to get authorization token error: ", err.Error())
 	}
@@ -47,7 +47,7 @@ func (c *client) BillPay(ctx context.Context, billPaymentReq BillPayRequest) (*B
 	var billPayResp = &BillPayResponse{}
 
 	billPaymentReq.BillerMSISDN = c.BillerMSISDN
-	req, err := c.NewRequest(http.MethodPost, c.PushPayBillRequestURL, tigosdk.JSONRequest, &billPaymentReq)
+	req, err := c.NewRequest(http.MethodPost, c.PushPayBillRequestURL, sdk.JSONPayload, &billPaymentReq)
 	if err != nil {
 		return nil, err
 	}
@@ -59,15 +59,32 @@ func (c *client) BillPay(ctx context.Context, billPaymentReq BillPayRequest) (*B
 	return billPayResp, nil
 }
 
-func (c *client) BillPayCallback(ctx context.Context, billPayResp BillPayResponse) error {
-	//todo : change implementation to support http handler
-	return nil
+func (c *client) BillPayCallback(ctx context.Context, r *http.Request, w http.ResponseWriter, provider CallbackResponseProvider) {
+	var callbackRequest BillPayCallbackRequest
+
+	w.Header().Set("Content-Type", "application/json")
+
+	err := json.NewDecoder(r.Body).Decode(&callbackRequest)
+	c.Log("Callback Request", sdk.JSONPayload, &callbackRequest)
+	defer r.Body.Close()
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	callbackResponse := provider(ctx, callbackRequest)
+	c.Log("Callback Response", sdk.JSONPayload, &callbackResponse)
+
+	if err := json.NewEncoder(w).Encode(callbackResponse); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
 }
 
 func (c *client) RefundPayment(ctx context.Context, refundPaymentReq RefundPaymentRequest) (*RefundPaymentResponse, error) {
 	var refundPaymentResp = &RefundPaymentResponse{}
 
-	req, err := c.NewRequest(http.MethodPost, c.PushPayReverseTransactionURL, tigosdk.JSONRequest, refundPaymentReq)
+	req, err := c.NewRequest(http.MethodPost, c.PushPayReverseTransactionURL, sdk.JSONPayload, refundPaymentReq)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +99,7 @@ func (c *client) RefundPayment(ctx context.Context, refundPaymentReq RefundPayme
 func (c *client) HealthCheck(ctx context.Context, healthCheckReq HealthCheckRequest) (*HealthCheckResponse, error) {
 	var healthCheckResp = &HealthCheckResponse{}
 
-	req, err := c.NewRequest(http.MethodPost, c.PushPayHealthCheckURL, tigosdk.JSONRequest, healthCheckReq)
+	req, err := c.NewRequest(http.MethodPost, c.PushPayHealthCheckURL, sdk.JSONPayload, healthCheckReq)
 	if err != nil {
 		return nil, err
 	}

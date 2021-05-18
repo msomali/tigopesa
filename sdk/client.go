@@ -41,10 +41,7 @@ type (
 		PushPayBillRequestURL        string
 		PushPayReverseTransactionURL string
 		PushPayHealthCheckURL        string
-		AccountToWalletRequestURL    string
-		AccountToWalletRequestPIN    string
-		WalletToAccountRequestURL    string
-		NameCheckRequestURL          string
+
 	}
 
 	Client struct {

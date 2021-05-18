@@ -201,6 +201,24 @@ func NewClient(config Config,namesHandler ussd.QuerySubscriberFunc, collectionHa
 		NameCheckRequestURL:       config.NameCheckRequestURL,
 	}
 
+	//todo: change biller msisdn to string
+
+	pushConf := sdk.Config{
+		Username:                     config.Username,
+		Password:                     config.Password,
+		PasswordGrantType:            config.PasswordGrantType,
+		AccountName:                  config.AccountName,
+		AccountMSISDN:                config.AccountMSISDN,
+		BrandID:                      config.BrandID,
+		BillerCode:                   config.BillerCode,
+		BillerMSISDN:                 0,
+		ApiBaseURL:                   config.ApiBaseURL,
+		GetTokenRequestURL:           config.GetTokenRequestURL,
+		PushPayBillRequestURL:        config.PushPayBillRequestURL,
+		PushPayReverseTransactionURL: config.PushPayReverseTransactionURL,
+		PushPayHealthCheckURL:        config.PushPayHealthCheckURL,
+	}
+
 	client = &Client{
 		Config: config,
 		ussd:                    ussd.Client{},

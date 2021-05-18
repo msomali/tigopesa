@@ -39,10 +39,40 @@ import (
 
 const (
 	debugKey            = "DEBUG"
+	defaultTimeout      = time.Minute
 )
 
 var (
+	// defaultCtx is the context used by client when none is set
+	// to override this one has to call WithContext method and supply
+	// his her own context.Context
+	defaultCtx = context.TODO()
+
+	// defaultWriter is an io.Writer used for debugging. When debug mode is
+	// set to true i.e DEBUG=true and no io.Writer is provided via
+	// WithLogger method this is used.
+	defaultWriter = os.Stderr
+
+	// loggingTransport implements http.RoundTripper
+	_ http.RoundTripper = (*loggingTransport)(nil)
+
+	// Client implements Service
 	_ Service = (*Client)(nil)
+
+	// defaultLoggerTransport is a modified http.Transport that is responsible
+	// for logging all requests and responses  that a HTTPClient owned by Client
+	// sent and receives
+	defaultLoggerTransport = loggingTransport{
+		logger: defaultWriter,
+		next:   http.DefaultTransport,
+	}
+
+	// defaultHttpClient is the client used by library to send Http requests, specifically
+	// disbursement requests in case a user does not specify one
+	defaultHttpClient = &http.Client{
+		Transport: defaultLoggerTransport,
+		Timeout:   defaultTimeout,
+	}
 )
 
 
@@ -68,6 +98,7 @@ type (
 	}
 
 	Client struct {
+		Config
 		ussd ussd.Client
 		push sdk.Client
 		httpClient *http.Client
@@ -154,27 +185,53 @@ func (c *Client) HealthCheck(ctx context.Context, request push.HealthCheckReques
 	panic("implement me")
 }
 
-func NewClient(config Config, opts ...ClientOption)*Client{
+func NewClient(config Config,namesHandler ussd.QuerySubscriberFunc, collectionHandler ussd.WalletToAccountFunc, opts ...ClientOption)*Client{
 
 	var client *Client
-	//ussdConf := ussd.Config{
-	//	Username:                  config.Username,
-	//	Password:                  config.Password,
-	//	AccountName:               config.AccountName,
-	//	AccountMSISDN:             config.AccountMSISDN,
-	//	BrandID:                   config.BrandID,
-	//	BillerCode:                config.BillerCode,
-	//	AccountToWalletRequestURL: config.AccountToWalletRequestURL,
-	//	AccountToWalletRequestPIN: config.AccountToWalletRequestPIN,
-	//	WalletToAccountRequestURL: config.WalletToAccountRequestURL,
-	//	NameCheckRequestURL:       config.NameCheckRequestURL,
-	//}
-	//
-	//ussdClient := ussd.NewClient(ussdConf)
+	ussdConf := ussd.Config{
+		Username:                  config.Username,
+		Password:                  config.Password,
+		AccountName:               config.AccountName,
+		AccountMSISDN:             config.AccountMSISDN,
+		BrandID:                   config.BrandID,
+		BillerCode:                config.BillerCode,
+		AccountToWalletRequestURL: config.AccountToWalletRequestURL,
+		AccountToWalletRequestPIN: config.AccountToWalletRequestPIN,
+		WalletToAccountRequestURL: config.WalletToAccountRequestURL,
+		NameCheckRequestURL:       config.NameCheckRequestURL,
+	}
+
+	client = &Client{
+		Config: config,
+		ussd:                    ussd.Client{},
+		push:                    sdk.Client{},
+		httpClient:              defaultHttpClient,
+		logger:                  defaultWriter,
+		timeout:                 defaultTimeout,
+		ctx:                     defaultCtx,
+		QuerySubscriberNameFunc: namesHandler,
+		WalletToAccountFunc:     collectionHandler,
+	}
 
 	for _, opt := range opts {
 		opt(client)
 	}
+
+	//todo: create and set ussd client
+
+	u := ussd.NewClient(
+		ussdConf,
+		client.WalletToAccountFunc,
+		client.QuerySubscriberNameFunc,
+		ussd.WithContext(client.ctx),
+		ussd.WithHTTPClient(client.httpClient),
+		ussd.WithTimeout(client.timeout),
+		ussd.WithLogger(client.logger),
+		)
+
+	client.ussd = *u
+
+	//todo: create and set push client
 
 	return client
 }

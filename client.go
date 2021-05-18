@@ -157,72 +157,37 @@ func SubscriberNameFunc(names ussd.QuerySubscriberFunc) ClientOption {
 	}
 }
 
-func (c *Client) SubscriberNameHandler(writer http.ResponseWriter, request *http.Request) {
-	c.ussd.SubscriberNameHandler(writer,request)
+func (client *Client) SubscriberNameHandler(writer http.ResponseWriter, request *http.Request) {
+	client.ussd.SubscriberNameHandler(writer,request)
 }
 
-func (c *Client) WalletToAccountHandler(writer http.ResponseWriter, request *http.Request) {
+func (client *Client) WalletToAccountHandler(writer http.ResponseWriter, request *http.Request) {
 	panic("implement me")
 }
 
-func (c *Client) AccountToWalletHandler(ctx context.Context, req ussd.AccountToWalletRequest) (resp ussd.AccountToWalletResponse, err error) {
+func (client *Client) AccountToWalletHandler(ctx context.Context, req ussd.AccountToWalletRequest) (resp ussd.AccountToWalletResponse, err error) {
 	panic("implement me")
 }
 
-func (c *Client) BillPay(ctx context.Context, request push.BillPayRequest) (*push.BillPayResponse, error) {
+func (client *Client) BillPay(ctx context.Context, request push.BillPayRequest) (*push.BillPayResponse, error) {
 	panic("implement me")
 }
 
-func (c *Client) BillPayCallback(ctx context.Context, request *http.Request, writer http.ResponseWriter, provider push.CallbackResponseProvider) {
+func (client *Client) BillPayCallback(ctx context.Context, request *http.Request, writer http.ResponseWriter, provider push.CallbackResponseProvider) {
 	panic("implement me")
 }
 
-func (c *Client) RefundPayment(ctx context.Context, request push.RefundPaymentRequest) (*push.RefundPaymentResponse, error) {
+func (client *Client) RefundPayment(ctx context.Context, request push.RefundPaymentRequest) (*push.RefundPaymentResponse, error) {
 	panic("implement me")
 }
 
-func (c *Client) HealthCheck(ctx context.Context, request push.HealthCheckRequest) (*push.HealthCheckResponse, error) {
+func (client *Client) HealthCheck(ctx context.Context, request push.HealthCheckRequest) (*push.HealthCheckResponse, error) {
 	panic("implement me")
 }
 
 func NewClient(config Config,namesHandler ussd.QuerySubscriberFunc, collectionHandler ussd.WalletToAccountFunc, opts ...ClientOption)*Client{
-
-	var client *Client
-	ussdConf := ussd.Config{
-		Username:                  config.Username,
-		Password:                  config.Password,
-		AccountName:               config.AccountName,
-		AccountMSISDN:             config.AccountMSISDN,
-		BrandID:                   config.BrandID,
-		BillerCode:                config.BillerCode,
-		AccountToWalletRequestURL: config.AccountToWalletRequestURL,
-		AccountToWalletRequestPIN: config.AccountToWalletRequestPIN,
-		WalletToAccountRequestURL: config.WalletToAccountRequestURL,
-		NameCheckRequestURL:       config.NameCheckRequestURL,
-	}
-
-	//todo: change biller msisdn to string
-
-	pushConf := sdk.Config{
-		Username:                     config.Username,
-		Password:                     config.Password,
-		PasswordGrantType:            config.PasswordGrantType,
-		AccountName:                  config.AccountName,
-		AccountMSISDN:                config.AccountMSISDN,
-		BrandID:                      config.BrandID,
-		BillerCode:                   config.BillerCode,
-		BillerMSISDN:                 0,
-		ApiBaseURL:                   config.ApiBaseURL,
-		GetTokenRequestURL:           config.GetTokenRequestURL,
-		PushPayBillRequestURL:        config.PushPayBillRequestURL,
-		PushPayReverseTransactionURL: config.PushPayReverseTransactionURL,
-		PushPayHealthCheckURL:        config.PushPayHealthCheckURL,
-	}
-
-	client = &Client{
-		Config: config,
-		ussd:                    ussd.Client{},
-		push:                    sdk.Client{},
+	client := &Client{
+		Config:                  config,
 		httpClient:              defaultHttpClient,
 		logger:                  defaultWriter,
 		timeout:                 defaultTimeout,
@@ -235,21 +200,13 @@ func NewClient(config Config,namesHandler ussd.QuerySubscriberFunc, collectionHa
 		opt(client)
 	}
 
-	//todo: create and set ussd client
+	// todo: set ussd client
+	client.setUSSDClient()
 
-	u := ussd.NewClient(
-		ussdConf,
-		client.WalletToAccountFunc,
-		client.QuerySubscriberNameFunc,
-		ussd.WithContext(client.ctx),
-		ussd.WithHTTPClient(client.httpClient),
-		ussd.WithTimeout(client.timeout),
-		ussd.WithLogger(client.logger),
-		)
 
-	client.ussd = *u
+	// todo: set push client
+	client.setPushClient()
 
-	//todo: create and set push client
 
 	return client
 }
@@ -320,6 +277,28 @@ func WithHTTPClient(c *http.Client) ClientOption {
 
 ///helpers
 func (client *Client) setUSSDClient()  {
+	newClient := ussd.NewClient(
+		ussd.Config{
+			Username:                  client.Username,
+			Password:                  client.Password,
+			AccountName:               client.AccountName,
+			AccountMSISDN:             client.AccountMSISDN,
+			BrandID:                   client.AccountMSISDN,
+			BillerCode:                client.BillerCode,
+			AccountToWalletRequestURL: client.AccountToWalletRequestURL,
+			AccountToWalletRequestPIN: client.AccountToWalletRequestPIN,
+			WalletToAccountRequestURL: client.WalletToAccountRequestURL,
+			NameCheckRequestURL:       client.NameCheckRequestURL,
+		},
+		client.WalletToAccountFunc,
+		client.QuerySubscriberNameFunc,
+		ussd.WithLogger(client.logger),
+		ussd.WithHTTPClient(client.httpClient),
+		ussd.WithContext(client.ctx),
+		ussd.WithTimeout(client.timeout),
+	)
+
+	client.ussd = *newClient
 }
 
 ///helpers

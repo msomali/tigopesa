@@ -35,6 +35,12 @@ type (
 	// }
 	RequestType int
 
+	// QuerySubscriberNameProvider is an  interface that has the signature of QuerySubscriberFunc
+	// which also implements it.
+	QuerySubscriberNameProvider interface {
+		QuerySubscriberName(ctx context.Context,request SubscriberNameRequest)(SubscriberNameResponse,error)
+	}
+
 	// QuerySubscriberFunc takes a SubscriberNameRequest and return SubscriberNameResponse or error
 	// There is no default implementation of this. It should be implemented and injected to Client as
 	// Client.QuerySubscriberFunc. This carry the whole logic that response from TigoPesa Namecheck
@@ -66,6 +72,9 @@ type (
 	QuerySubscriberFunc func(ctx context.Context, request SubscriberNameRequest) (SubscriberNameResponse, error)
 
 
+	WalletToAccountProvider interface {
+		WalletToAccount(ctx context.Context, request WalletToAccountRequest) (WalletToAccountResponse, error)
+	}
 	// WalletToAccountFunc handles all the collection requests sent from TigoPesa. The http requests are firstly
 	// received by Client.WalletToAccountHandler properly marshalled to WalletToAccountRequest then passed to
 	// this func which after processing the requests returns an error in case there is a system failure. An error
@@ -128,6 +137,7 @@ type (
 	}
 )
 
+
 const (
 	SubscriberName RequestType = iota
 	WalletToAccount
@@ -142,6 +152,17 @@ const (
 
 var (
 
+	// loggingTransport implements http.RoundTripper
+	_ http.RoundTripper = (*loggingTransport)(nil)
+
+	// Client implements Service
+	_ Service = (*Client)(nil)
+
+	_ WalletToAccountProvider = (*WalletToAccountFunc)(nil)
+
+	//QuerySubscriberFunc implements QuerySubscriberNameProvider
+	_ QuerySubscriberNameProvider = (*QuerySubscriberFunc)(nil)
+
 	// defaultCtx is the context used by client when none is set
 	// to override this one has to call WithContext method and supply
 	// his her own context.Context
@@ -151,12 +172,6 @@ var (
 	// set to true i.e DEBUG=true and no io.Writer is provided via
 	// WithLogger method this is used.
 	defaultWriter = os.Stderr
-
-	// loggingTransport implements http.RoundTripper
-	_ http.RoundTripper = (*loggingTransport)(nil)
-
-	// Client implements Service
-	_ Service = (*Client)(nil)
 
 	// defaultLoggerTransport is a modified http.Transport that is responsible
 	// for logging all requests and responses  that a HTTPClient owned by Client
@@ -198,6 +213,14 @@ func (l loggingTransport) RoundTrip(request *http.Request) (response *http.Respo
 	}()
 	response, err = l.next.RoundTrip(request)
 	return
+}
+
+func (w WalletToAccountFunc) WalletToAccount(ctx context.Context, request WalletToAccountRequest) (WalletToAccountResponse, error) {
+	return w(ctx,request)
+}
+
+func (q QuerySubscriberFunc) QuerySubscriberName(ctx context.Context, request SubscriberNameRequest) (SubscriberNameResponse, error) {
+	return q(ctx,request)
 }
 
 // NewClient creates a *Client from the specified Config, WalletToAccountFunc and QuerySubscriberFunc
@@ -371,6 +394,7 @@ func (client *Client) WalletToAccountHandler(writer http.ResponseWriter, request
 
 }
 
+// AccountToWalletHandler handles all disbursement requests
 func (client *Client) AccountToWalletHandler(ctx context.Context, request AccountToWalletRequest) (response AccountToWalletResponse, err error) {
 	// Marshal the request body into application/xml
 	xmlStr, err := xml.MarshalIndent(request, "", "    ")

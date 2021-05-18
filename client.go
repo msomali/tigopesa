@@ -318,3 +318,14 @@ func WithHTTPClient(c *http.Client) ClientOption {
 	}
 }
 
+///helpers
+func (client *Client) setUSSDClient()  {
+}
+
+///helpers
+func (client *Client) setPushClient()  {
+
+}
+
+
+

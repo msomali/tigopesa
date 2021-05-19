@@ -3,7 +3,6 @@ package push
 import (
 	"context"
 	"encoding/json"
-	"github.com/techcraftt/tigosdk/sdk"
 	"log"
 	"net/http"
 )
@@ -27,15 +26,15 @@ type Service interface {
 }
 
 type client struct {
-	*sdk.Client
+	*Client
 }
 
-func NewClient(c *sdk.Client) Service {
+func newClient(c *Client) Service {
 	return &client{c}
 }
 
-func NewClientFromConfig(config sdk.Config) Service {
-	c, err := sdk.NewClient(config)
+func NewClientFromConfig(config Config) Service {
+	c, err := NewClient(config)
 	if err != nil {
 		log.Fatalln("failed to get authorization token error: ", err.Error())
 	}
@@ -47,7 +46,7 @@ func (c *client) BillPay(ctx context.Context, billPaymentReq BillPayRequest) (*B
 	var billPayResp = &BillPayResponse{}
 
 	billPaymentReq.BillerMSISDN = c.BillerMSISDN
-	req, err := c.NewRequest(http.MethodPost, c.PushPayBillRequestURL, sdk.JSONPayload, &billPaymentReq)
+	req, err := c.NewRequest(http.MethodPost, c.PushPayBillRequestURL, JSONPayload, &billPaymentReq)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +64,7 @@ func (c *client) BillPayCallback(ctx context.Context, r *http.Request, w http.Re
 	w.Header().Set("Content-Type", "application/json")
 
 	err := json.NewDecoder(r.Body).Decode(&callbackRequest)
-	c.Log("Callback Request", sdk.JSONPayload, &callbackRequest)
+	c.Log("Callback Request", JSONPayload, &callbackRequest)
 	defer r.Body.Close()
 
 	if err != nil {
@@ -74,7 +73,7 @@ func (c *client) BillPayCallback(ctx context.Context, r *http.Request, w http.Re
 	}
 
 	callbackResponse := provider(ctx, callbackRequest)
-	c.Log("Callback Response", sdk.JSONPayload, &callbackResponse)
+	c.Log("Callback Response", JSONPayload, &callbackResponse)
 
 	if err := json.NewEncoder(w).Encode(callbackResponse); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -86,7 +85,7 @@ func (c *client) BillPayCallback(ctx context.Context, r *http.Request, w http.Re
 func (c *client) RefundPayment(ctx context.Context, refundPaymentReq RefundPaymentRequest) (*RefundPaymentResponse, error) {
 	var refundPaymentResp = &RefundPaymentResponse{}
 
-	req, err := c.NewRequest(http.MethodPost, c.PushPayReverseTransactionURL, sdk.JSONPayload, refundPaymentReq)
+	req, err := c.NewRequest(http.MethodPost, c.PushPayReverseTransactionURL, JSONPayload, refundPaymentReq)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +100,7 @@ func (c *client) RefundPayment(ctx context.Context, refundPaymentReq RefundPayme
 func (c *client) HealthCheck(ctx context.Context, healthCheckReq HealthCheckRequest) (*HealthCheckResponse, error) {
 	var healthCheckResp = &HealthCheckResponse{}
 
-	req, err := c.NewRequest(http.MethodPost, c.PushPayHealthCheckURL, sdk.JSONPayload, healthCheckReq)
+	req, err := c.NewRequest(http.MethodPost, c.PushPayHealthCheckURL, JSONPayload, healthCheckReq)
 	if err != nil {
 		return nil, err
 	}

@@ -28,7 +28,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/techcraftt/tigosdk/push"
-	"github.com/techcraftt/tigosdk/sdk"
 	"github.com/techcraftt/tigosdk/ussd"
 	"io"
 	"net/http"
@@ -99,14 +98,14 @@ type (
 
 	Client struct {
 		Config
-		ussd ussd.Client
-		push sdk.Client
-		httpClient *http.Client
-		logger io.Writer
-		timeout time.Duration
-		ctx context.Context
+		ussd                    ussd.Client
+		push                    push.Client
+		httpClient              *http.Client
+		logger                  io.Writer
+		timeout                 time.Duration
+		ctx                     context.Context
 		QuerySubscriberNameFunc ussd.QuerySubscriberFunc
-		WalletToAccountFunc ussd.WalletToAccountFunc
+		WalletToAccountFunc     ussd.WalletToAccountFunc
 	}
 
 	ClientOption func (client *Client)

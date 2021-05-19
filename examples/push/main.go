@@ -7,7 +7,6 @@ import (
 	"github.com/gorilla/mux"
 	env "github.com/joho/godotenv"
 	"github.com/techcraftt/tigosdk/push"
-	"github.com/techcraftt/tigosdk/sdk"
 	"log"
 	"net/http"
 	"os"
@@ -114,7 +113,7 @@ func (a *app) callbackProvider(ctx context.Context, billPayRequest push.BillPayC
 	}
 }
 
-func loadFromEnv() (conf sdk.Config, err error) {
+func loadFromEnv() (conf push.Config, err error) {
 	var billerMSISDN int64
 
 	err = env.Load("tigo.env")
@@ -124,7 +123,7 @@ func loadFromEnv() (conf sdk.Config, err error) {
 
 	billerMSISDN, err = strconv.ParseInt(os.Getenv(TIGO_BILLER_MSISDN), 10, 64)
 
-	conf = sdk.Config{
+	conf = push.Config{
 		Username:              os.Getenv(TIGO_USERNAME),
 		Password:              os.Getenv(TIGO_PASSWORD),
 		BillerCode:            os.Getenv(TIGO_BILLER_CODE),

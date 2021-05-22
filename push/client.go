@@ -74,6 +74,7 @@ type (
 		authTokenExpiresAt time.Time
 		client             *http.Client
 		logger             io.Writer
+		callbackHandler    CallbackResponseProvider
 	}
 )
 

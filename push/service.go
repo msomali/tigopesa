@@ -16,7 +16,7 @@ type Service interface {
 	BillPay(context.Context, BillPayRequest) (*BillPayResponse, error)
 
 	// BillPayCallback handle push callback request.
-	BillPayCallback(context.Context, *http.Request, http.ResponseWriter, CallbackResponseProvider)
+	BillPayCallback(context.Context)http.HandlerFunc
 
 	// RefundPayment initiate payment refund and will be processed only if the payment was successful.
 	RefundPayment(context.Context, RefundPaymentRequest) (*RefundPaymentResponse, error)
@@ -58,26 +58,29 @@ func (c *client) BillPay(ctx context.Context, billPaymentReq BillPayRequest) (*B
 	return billPayResp, nil
 }
 
-func (c *client) BillPayCallback(ctx context.Context, r *http.Request, w http.ResponseWriter, provider CallbackResponseProvider) {
+func (c *client) BillPayCallback(ctx context.Context)http.HandlerFunc {
 	var callbackRequest BillPayCallbackRequest
 
-	w.Header().Set("Content-Type", "application/json")
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 
-	err := json.NewDecoder(r.Body).Decode(&callbackRequest)
-	c.Log("Callback Request", JSONPayload, &callbackRequest)
-	defer r.Body.Close()
+		err := json.NewDecoder(r.Body).Decode(&callbackRequest)
+		c.Log("Callback Request", JSONPayload, &callbackRequest)
+		defer r.Body.Close()
 
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 
-	callbackResponse := provider(ctx, callbackRequest)
-	c.Log("Callback Response", JSONPayload, &callbackResponse)
+		callbackResponse := c.callbackHandler(ctx, callbackRequest)
+		c.Log("Callback Response", JSONPayload, &callbackResponse)
 
-	if err := json.NewEncoder(w).Encode(callbackResponse); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		if err := json.NewEncoder(w).Encode(callbackResponse); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 	}
 
 }

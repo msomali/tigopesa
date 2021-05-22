@@ -162,27 +162,27 @@ func (client *Client) SubscriberNameHandler(writer http.ResponseWriter, request 
 }
 
 func (client *Client) WalletToAccountHandler(writer http.ResponseWriter, request *http.Request) {
-	panic("implement me")
+	client.ussd.WalletToAccountHandler(writer,request)
 }
 
 func (client *Client) AccountToWalletHandler(ctx context.Context, req ussd.AccountToWalletRequest) (resp ussd.AccountToWalletResponse, err error) {
-	panic("implement me")
+	return client.ussd.AccountToWalletHandler(ctx,req)
 }
 
 func (client *Client) BillPay(ctx context.Context, request push.BillPayRequest) (*push.BillPayResponse, error) {
-	panic("implement me")
+	return client.push.BillPay(ctx,request)
 }
 
 func (client *Client) BillPayCallback(ctx context.Context)http.HandlerFunc {
-	panic("implement me")
+	return client.push.BillPayCallback(ctx)
 }
 
 func (client *Client) RefundPayment(ctx context.Context, request push.RefundPaymentRequest) (*push.RefundPaymentResponse, error) {
-	panic("implement me")
+	return client.push.RefundPayment(ctx,request)
 }
 
 func (client *Client) HealthCheck(ctx context.Context, request push.HealthCheckRequest) (*push.HealthCheckResponse, error) {
-	panic("implement me")
+	return client.push.HealthCheck(ctx,request)
 }
 
 func NewClient(config Config,namesHandler ussd.QuerySubscriberFunc,

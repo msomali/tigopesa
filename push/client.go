@@ -70,9 +70,9 @@ type (
 		PushPayHealthCheckURL        string
 	}
 
-	// CallbackResponseProvider check and reports the status of the transaction.
+	// CallbackResponder check and reports the status of the transaction.
 	// if transaction status
-	CallbackResponseProvider func(context.Context, BillPayCallbackRequest) *BillPayResponse
+	CallbackResponder func(context.Context, BillPayCallbackRequest) *BillPayResponse
 
 	Service interface {
 		// BillPay initiate Service payment flow to deduct a specific amount from customer's Tigo pesa wallet.
@@ -94,8 +94,10 @@ type (
 		authTokenExpiresAt time.Time
 		client             *http.Client
 		logger             io.Writer
-		callbackHandler    CallbackResponseProvider
+		callbackHandler    CallbackResponder
 	}
+
+	ClientOption func (client *Client)
 )
 
 func (c *Client) BillPay(ctx context.Context, billPaymentReq BillPayRequest) (*BillPayResponse, error) {
@@ -173,7 +175,7 @@ func (c *Client) HealthCheck(ctx context.Context, healthCheckReq HealthCheckRequ
 // NewClient initiate new tigosdk sdk used by other services.
 // Default all pretty formatted requests (in and out) and responses
 // will be logged to os.Sterr to use custom logger use setLogger.
-func NewClient(config Config, provider CallbackResponseProvider) (*Client, error) {
+func NewClient(config Config, provider CallbackResponder, options ...ClientOption) (*Client, error) {
 	client := &Client{
 		Config:          config,
 		client:          http.DefaultClient,
@@ -185,8 +187,36 @@ func NewClient(config Config, provider CallbackResponseProvider) (*Client, error
 		return nil, err
 	}
 
+	for _, option := range options {
+		option(client)
+	}
+
 	return client, nil
 }
+
+// WithLogger set a logger of user preference but of type io.Writer
+// that will be used for debugging use cases. A default value is os.Stderr
+// it can be replaced by any io.Writer unless its nil which in that case
+// it will be ignored
+func WithLogger(out io.Writer) ClientOption {
+	return func(client *Client) {
+		if out == nil {
+			return
+		}
+		client.logger = out
+	}
+}
+
+func WithHTTPClient(httpClient *http.Client) ClientOption{
+	return func(client *Client) {
+		if client == nil{
+			return
+		}
+
+		client.client = httpClient
+	}
+}
+
 
 func (c *Client) SetHTTPClient(client *http.Client) {
 	c.client = client

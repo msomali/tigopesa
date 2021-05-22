@@ -106,7 +106,7 @@ type (
 		ctx                     context.Context
 		QuerySubscriberNameFunc ussd.QuerySubscriberFunc
 		WalletToAccountFunc     ussd.WalletToAccountFunc
-		CallbackResponder push.CallbackResponseProvider
+		CallbackResponder push.CallbackResponder
 	}
 
 	ClientOption func (client *Client)
@@ -187,7 +187,7 @@ func (client *Client) HealthCheck(ctx context.Context, request push.HealthCheckR
 
 func NewClient(config Config,namesHandler ussd.QuerySubscriberFunc,
 	collectionHandler ussd.WalletToAccountFunc,
-	callbackResponder push.CallbackResponseProvider,
+	callbackResponder push.CallbackResponder,
 	opts ...ClientOption)*Client{
 	client := &Client{
 		Config:                  config,

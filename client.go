@@ -106,6 +106,7 @@ type (
 		ctx                     context.Context
 		QuerySubscriberNameFunc ussd.QuerySubscriberFunc
 		WalletToAccountFunc     ussd.WalletToAccountFunc
+		CallbackResponder push.CallbackResponseProvider
 	}
 
 	ClientOption func (client *Client)
@@ -184,7 +185,10 @@ func (client *Client) HealthCheck(ctx context.Context, request push.HealthCheckR
 	panic("implement me")
 }
 
-func NewClient(config Config,namesHandler ussd.QuerySubscriberFunc, collectionHandler ussd.WalletToAccountFunc, opts ...ClientOption)*Client{
+func NewClient(config Config,namesHandler ussd.QuerySubscriberFunc,
+	collectionHandler ussd.WalletToAccountFunc,
+	callbackResponder push.CallbackResponseProvider,
+	opts ...ClientOption)*Client{
 	client := &Client{
 		Config:                  config,
 		httpClient:              defaultHttpClient,
@@ -193,6 +197,7 @@ func NewClient(config Config,namesHandler ussd.QuerySubscriberFunc, collectionHa
 		ctx:                     defaultCtx,
 		QuerySubscriberNameFunc: namesHandler,
 		WalletToAccountFunc:     collectionHandler,
+		CallbackResponder: callbackResponder,
 	}
 
 	for _, opt := range opts {
@@ -302,6 +307,7 @@ func (client *Client) setUSSDClient()  {
 
 ///helpers
 func (client *Client) setPushClient()  {
+
 
 }
 

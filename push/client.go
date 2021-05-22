@@ -81,11 +81,12 @@ type (
 // NewClient initiate new tigosdk sdk used by other services.
 // Default all pretty formatted requests (in and out) and responses
 // will be logged to os.Sterr to use custom logger use setLogger.
-func NewClient(config Config) (*Client, error) {
+func NewClient(config Config, provider CallbackResponseProvider) (*Client, error) {
 	client := &Client{
 		Config: config,
 		client: http.DefaultClient,
 		logger: os.Stderr,
+		callbackHandler: provider,
 	}
 
 	if _, err := client.getAuthToken(); err != nil {

@@ -7,23 +7,6 @@ import (
 	"net/http"
 )
 
-// CallbackResponseProvider check and reports the status of the transaction.
-// if transaction status
-type CallbackResponseProvider func(context.Context, BillPayCallbackRequest) *BillPayResponse
-
-type Service interface {
-	// BillPay initiate Service payment flow to deduct a specific amount from customer's Tigo pesa wallet.
-	BillPay(context.Context, BillPayRequest) (*BillPayResponse, error)
-
-	// BillPayCallback handle push callback request.
-	BillPayCallback(context.Context)http.HandlerFunc
-
-	// RefundPayment initiate payment refund and will be processed only if the payment was successful.
-	RefundPayment(context.Context, RefundPaymentRequest) (*RefundPaymentResponse, error)
-
-	// HealthCheck check if Tigo Pesa Service API is up and running.
-	HealthCheck(context.Context, HealthCheckRequest) (*HealthCheckResponse, error)
-}
 
 type client struct {
 	*Client

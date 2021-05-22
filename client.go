@@ -172,7 +172,7 @@ func (client *Client) BillPay(ctx context.Context, request push.BillPayRequest) 
 	panic("implement me")
 }
 
-func (client *Client) BillPayCallback(ctx context.Context, request *http.Request, writer http.ResponseWriter, provider push.CallbackResponseProvider) {
+func (client *Client) BillPayCallback(ctx context.Context)http.HandlerFunc {
 	panic("implement me")
 }
 

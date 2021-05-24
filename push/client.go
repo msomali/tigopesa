@@ -45,7 +45,6 @@ var (
 	JSONPayload PayloadType = "json"
 	XMLPayload  PayloadType = "xml"
 
-
 	_ Service = (*Client)(nil)
 )
 
@@ -97,7 +96,7 @@ type (
 		callbackHandler    CallbackResponder
 	}
 
-	ClientOption func (client *Client)
+	ClientOption func(client *Client)
 )
 
 func (c *Client) BillPay(ctx context.Context, billPaymentReq BillPayRequest) (*BillPayResponse, error) {
@@ -207,9 +206,9 @@ func WithLogger(out io.Writer) ClientOption {
 	}
 }
 
-func WithHTTPClient(httpClient *http.Client) ClientOption{
+func WithHTTPClient(httpClient *http.Client) ClientOption {
 	return func(client *Client) {
-		if client == nil{
+		if client == nil {
 			return
 		}
 
@@ -217,15 +216,14 @@ func WithHTTPClient(httpClient *http.Client) ClientOption{
 	}
 }
 
-
-func (c *Client) SetHTTPClient(client *http.Client) {
-	c.client = client
-}
-
-// SetLogger set custom logs destination.
-func (c *Client) SetLogger(out io.Writer) {
-	c.logger = out
-}
+//func (c *Client) SetHTTPClient(client *http.Client) {
+//	c.client = client
+//}
+//
+//// SetLogger set custom logs destination.
+//func (c *Client) SetLogger(out io.Writer) {
+//	c.logger = out
+//}
 
 func (c *Client) NewRequest(method, url string, payloadType PayloadType, payload interface{}) (*http.Request, error) {
 	var (

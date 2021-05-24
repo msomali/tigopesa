@@ -38,7 +38,7 @@ type (
 	// QuerySubscriberNameProvider is an  interface that has the signature of QuerySubscriberFunc
 	// which also implements it.
 	QuerySubscriberNameProvider interface {
-		QuerySubscriberName(ctx context.Context,request SubscriberNameRequest)(SubscriberNameResponse,error)
+		QuerySubscriberName(ctx context.Context, request SubscriberNameRequest) (SubscriberNameResponse, error)
 	}
 
 	// QuerySubscriberFunc takes a SubscriberNameRequest and return SubscriberNameResponse or error
@@ -70,7 +70,6 @@ type (
 	//		Content:   "The provided reference number is unknown",
 	//	}
 	QuerySubscriberFunc func(ctx context.Context, request SubscriberNameRequest) (SubscriberNameResponse, error)
-
 
 	WalletToAccountProvider interface {
 		WalletToAccount(ctx context.Context, request WalletToAccountRequest) (WalletToAccountResponse, error)
@@ -136,7 +135,6 @@ type (
 		AccountToWalletHandler(ctx context.Context, req AccountToWalletRequest) (resp AccountToWalletResponse, err error)
 	}
 )
-
 
 const (
 	SubscriberName RequestType = iota
@@ -216,11 +214,11 @@ func (l loggingTransport) RoundTrip(request *http.Request) (response *http.Respo
 }
 
 func (w WalletToAccountFunc) WalletToAccount(ctx context.Context, request WalletToAccountRequest) (WalletToAccountResponse, error) {
-	return w(ctx,request)
+	return w(ctx, request)
 }
 
 func (q QuerySubscriberFunc) QuerySubscriberName(ctx context.Context, request SubscriberNameRequest) (SubscriberNameResponse, error) {
-	return q(ctx,request)
+	return q(ctx, request)
 }
 
 // NewClient creates a *Client from the specified Config, WalletToAccountFunc and QuerySubscriberFunc
@@ -443,14 +441,14 @@ func (client *Client) AccountToWalletHandler(ctx context.Context, request Accoun
 // HandleRequest is experimental no guarantees
 // For reliability use SubscriberNameHandler and WalletToAccountHandler
 func (client *Client) HandleRequest(ctx context.Context, requestType RequestType) http.HandlerFunc {
-	ctx,cancel := context.WithTimeout(ctx, client.timeout)
+	ctx, cancel := context.WithTimeout(ctx, client.timeout)
 	defer cancel()
 	return func(writer http.ResponseWriter, request *http.Request) {
 		switch requestType {
 		case SubscriberName:
-			client.SubscriberNameHandler(writer,request)
+			client.SubscriberNameHandler(writer, request)
 		case WalletToAccount:
-			client.WalletToAccountHandler(writer,request)
+			client.WalletToAccountHandler(writer, request)
 		default:
 			http.Error(writer, "unknown request type", http.StatusInternalServerError)
 		}

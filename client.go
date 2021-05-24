@@ -37,8 +37,8 @@ import (
 )
 
 const (
-	debugKey            = "DEBUG"
-	defaultTimeout      = time.Minute
+	debugKey       = "DEBUG"
+	defaultTimeout = time.Minute
 )
 
 var (
@@ -74,7 +74,6 @@ var (
 	}
 )
 
-
 type (
 	Config struct {
 		Username                     string
@@ -106,23 +105,20 @@ type (
 		ctx                     context.Context
 		QuerySubscriberNameFunc ussd.QuerySubscriberFunc
 		WalletToAccountFunc     ussd.WalletToAccountFunc
-		CallbackResponder push.CallbackResponder
+		CallbackResponder       push.CallbackResponder
 	}
 
-	ClientOption func (client *Client)
+	ClientOption func(client *Client)
 
 	Service interface {
 		ussd.Service
 		push.Service
 	}
 
-
 	loggingTransport struct {
 		logger io.Writer
 		next   http.RoundTripper
 	}
-
-
 )
 
 func (l loggingTransport) RoundTrip(request *http.Request) (response *http.Response, err error) {
@@ -158,37 +154,37 @@ func SubscriberNameFunc(names ussd.QuerySubscriberFunc) ClientOption {
 }
 
 func (client *Client) SubscriberNameHandler(writer http.ResponseWriter, request *http.Request) {
-	client.ussd.SubscriberNameHandler(writer,request)
+	client.ussd.SubscriberNameHandler(writer, request)
 }
 
 func (client *Client) WalletToAccountHandler(writer http.ResponseWriter, request *http.Request) {
-	client.ussd.WalletToAccountHandler(writer,request)
+	client.ussd.WalletToAccountHandler(writer, request)
 }
 
 func (client *Client) AccountToWalletHandler(ctx context.Context, req ussd.AccountToWalletRequest) (resp ussd.AccountToWalletResponse, err error) {
-	return client.ussd.AccountToWalletHandler(ctx,req)
+	return client.ussd.AccountToWalletHandler(ctx, req)
 }
 
 func (client *Client) BillPay(ctx context.Context, request push.BillPayRequest) (*push.BillPayResponse, error) {
-	return client.push.BillPay(ctx,request)
+	return client.push.BillPay(ctx, request)
 }
 
-func (client *Client) BillPayCallback(ctx context.Context)http.HandlerFunc {
+func (client *Client) BillPayCallback(ctx context.Context) http.HandlerFunc {
 	return client.push.BillPayCallback(ctx)
 }
 
 func (client *Client) RefundPayment(ctx context.Context, request push.RefundPaymentRequest) (*push.RefundPaymentResponse, error) {
-	return client.push.RefundPayment(ctx,request)
+	return client.push.RefundPayment(ctx, request)
 }
 
 func (client *Client) HealthCheck(ctx context.Context, request push.HealthCheckRequest) (*push.HealthCheckResponse, error) {
-	return client.push.HealthCheck(ctx,request)
+	return client.push.HealthCheck(ctx, request)
 }
 
-func NewClient(config Config,namesHandler ussd.QuerySubscriberFunc,
+func NewClient(config Config, namesHandler ussd.QuerySubscriberFunc,
 	collectionHandler ussd.WalletToAccountFunc,
 	callbackResponder push.CallbackResponder,
-	opts ...ClientOption)*Client{
+	opts ...ClientOption) *Client {
 	client := &Client{
 		Config:                  config,
 		httpClient:              defaultHttpClient,
@@ -197,7 +193,7 @@ func NewClient(config Config,namesHandler ussd.QuerySubscriberFunc,
 		ctx:                     defaultCtx,
 		QuerySubscriberNameFunc: namesHandler,
 		WalletToAccountFunc:     collectionHandler,
-		CallbackResponder: callbackResponder,
+		CallbackResponder:       callbackResponder,
 	}
 
 	for _, opt := range opts {
@@ -207,14 +203,11 @@ func NewClient(config Config,namesHandler ussd.QuerySubscriberFunc,
 	// todo: set ussd client
 	client.setUSSDClient()
 
-
 	// todo: set push client
 	client.setPushClient()
 
-
 	return client
 }
-
 
 // WithContext set the context to be used by Client in its ops
 // this unset the default value which is context.TODO()
@@ -280,7 +273,7 @@ func WithHTTPClient(c *http.Client) ClientOption {
 }
 
 ///helpers
-func (client *Client) setUSSDClient()  {
+func (client *Client) setUSSDClient() {
 	newClient := ussd.NewClient(
 		ussd.Config{
 			Username:                  client.Username,
@@ -306,10 +299,6 @@ func (client *Client) setUSSDClient()  {
 }
 
 ///helpers
-func (client *Client) setPushClient()  {
-
+func (client *Client) setPushClient() {
 
 }
-
-
-

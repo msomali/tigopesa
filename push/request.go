@@ -17,8 +17,8 @@ type BillPayCallbackRequest struct {
 }
 
 type RefundPaymentRequest struct {
-	CustomerMSISDN      int64  `json:"CustomerMSISDN"`
-	ChannelMSISDN       int64  `json:"ChannelMSISDN"`
+	CustomerMSISDN      string  `json:"CustomerMSISDN"`
+	ChannelMSISDN       string  `json:"ChannelMSISDN"`
 	ChannelPIN          string `json:"ChannelPIN"`
 	Amount              int    `json:"Amount"`
 	MFSTransactionID    string `json:"MFSTransactionID"`

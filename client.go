@@ -27,6 +27,7 @@ package tigosdk
 import (
 	"context"
 	"fmt"
+	"github.com/techcraftt/tigosdk/pkg/client"
 	"github.com/techcraftt/tigosdk/push"
 	"github.com/techcraftt/tigosdk/ussd"
 	"io"
@@ -75,28 +76,28 @@ var (
 )
 
 type (
-	Config struct {
-		Username                     string
-		Password                     string
-		PasswordGrantType            string
-		AccountName                  string
-		AccountMSISDN                string
-		BrandID                      string
-		BillerCode                   string
-		BillerMSISDN                 string
-		ApiBaseURL                   string
-		GetTokenRequestURL           string
-		PushPayBillRequestURL        string
-		PushPayReverseTransactionURL string
-		PushPayHealthCheckURL        string
-		AccountToWalletRequestURL    string
-		AccountToWalletRequestPIN    string
-		WalletToAccountRequestURL    string
-		NameCheckRequestURL          string
-	}
+	//Config struct {
+	//	Username                     string
+	//	Password                     string
+	//	PasswordGrantType            string
+	//	AccountName                  string
+	//	AccountMSISDN                string
+	//	BrandID                      string
+	//	BillerCode                   string
+	//	BillerMSISDN                 string
+	//	ApiBaseURL                   string
+	//	GetTokenRequestURL           string
+	//	PushPayBillRequestURL        string
+	//	PushPayReverseTransactionURL string
+	//	PushPayHealthCheckURL        string
+	//	AccountToWalletRequestURL    string
+	//	AccountToWalletRequestPIN    string
+	//	WalletToAccountRequestURL    string
+	//	NameCheckRequestURL          string
+	//}
 
 	Client struct {
-		Config
+		client.Config
 		ussd                    ussd.Client
 		push                    push.Client
 		httpClient              *http.Client
@@ -153,35 +154,35 @@ func SubscriberNameFunc(names ussd.QuerySubscriberFunc) ClientOption {
 	}
 }
 
-func (client *Client) SubscriberNameHandler(writer http.ResponseWriter, request *http.Request) {
-	client.ussd.SubscriberNameHandler(writer, request)
+func (c *Client) SubscriberNameHandler(writer http.ResponseWriter, request *http.Request) {
+	c.ussd.SubscriberNameHandler(writer, request)
 }
 
-func (client *Client) WalletToAccountHandler(writer http.ResponseWriter, request *http.Request) {
-	client.ussd.WalletToAccountHandler(writer, request)
+func (c *Client) WalletToAccountHandler(writer http.ResponseWriter, request *http.Request) {
+	c.ussd.WalletToAccountHandler(writer, request)
 }
 
-func (client *Client) AccountToWalletHandler(ctx context.Context, req ussd.AccountToWalletRequest) (resp ussd.AccountToWalletResponse, err error) {
-	return client.ussd.AccountToWalletHandler(ctx, req)
+func (c *Client) AccountToWalletHandler(ctx context.Context, req ussd.AccountToWalletRequest) (resp ussd.AccountToWalletResponse, err error) {
+	return c.ussd.AccountToWalletHandler(ctx, req)
 }
 
-func (client *Client) BillPay(ctx context.Context, request push.BillPayRequest) (*push.BillPayResponse, error) {
-	return client.push.BillPay(ctx, request)
+func (c *Client) BillPay(ctx context.Context, request push.BillPayRequest) (*push.BillPayResponse, error) {
+	return c.push.BillPay(ctx, request)
 }
 
-func (client *Client) BillPayCallback(ctx context.Context) http.HandlerFunc {
-	return client.push.BillPayCallback(ctx)
+func (c *Client) BillPayCallback(ctx context.Context) http.HandlerFunc {
+	return c.push.BillPayCallback(ctx)
 }
 
-func (client *Client) RefundPayment(ctx context.Context, request push.RefundPaymentRequest) (*push.RefundPaymentResponse, error) {
-	return client.push.RefundPayment(ctx, request)
+func (c *Client) RefundPayment(ctx context.Context, request push.RefundPaymentRequest) (*push.RefundPaymentResponse, error) {
+	return c.push.RefundPayment(ctx, request)
 }
 
-func (client *Client) HealthCheck(ctx context.Context, request push.HealthCheckRequest) (*push.HealthCheckResponse, error) {
-	return client.push.HealthCheck(ctx, request)
+func (c *Client) HealthCheck(ctx context.Context, request push.HealthCheckRequest) (*push.HealthCheckResponse, error) {
+	return c.push.HealthCheck(ctx, request)
 }
 
-func NewClient(config Config, namesHandler ussd.QuerySubscriberFunc,
+func NewClient(config client.Config, namesHandler ussd.QuerySubscriberFunc,
 	collectionHandler ussd.WalletToAccountFunc,
 	callbackResponder push.CallbackResponder,
 	opts ...ClientOption) *Client {
@@ -273,52 +274,52 @@ func WithHTTPClient(c *http.Client) ClientOption {
 }
 
 ///helpers
-func (client *Client) setUSSDClient() {
+func (c *Client) setUSSDClient() {
 	newClient := ussd.NewClient(
 		ussd.Config{
-			Username:                  client.Username,
-			Password:                  client.Password,
-			AccountName:               client.AccountName,
-			AccountMSISDN:             client.AccountMSISDN,
-			BrandID:                   client.AccountMSISDN,
-			BillerCode:                client.BillerCode,
-			AccountToWalletRequestURL: client.AccountToWalletRequestURL,
-			AccountToWalletRequestPIN: client.AccountToWalletRequestPIN,
-			WalletToAccountRequestURL: client.WalletToAccountRequestURL,
-			NameCheckRequestURL:       client.NameCheckRequestURL,
+			Username:                  c.Username,
+			Password:                  c.Password,
+			AccountName:               c.AccountName,
+			AccountMSISDN:             c.AccountMSISDN,
+			BrandID:                   c.AccountMSISDN,
+			BillerCode:                c.BillerCode,
+			AccountToWalletRequestURL: c.AccountToWalletRequestURL,
+			AccountToWalletRequestPIN: c.AccountToWalletRequestPIN,
+			WalletToAccountRequestURL: c.WalletToAccountRequestURL,
+			NameCheckRequestURL:       c.NameCheckRequestURL,
 		},
-		client.WalletToAccountFunc,
-		client.QuerySubscriberNameFunc,
-		ussd.WithLogger(client.logger),
-		ussd.WithHTTPClient(client.httpClient),
-		ussd.WithContext(client.ctx),
-		ussd.WithTimeout(client.timeout),
+		c.WalletToAccountFunc,
+		c.QuerySubscriberNameFunc,
+		ussd.WithLogger(c.logger),
+		ussd.WithHTTPClient(c.httpClient),
+		ussd.WithContext(c.ctx),
+		ussd.WithTimeout(c.timeout),
 	)
 
-	client.ussd = *newClient
+	c.ussd = *newClient
 }
 
 ///helpers
-func (client *Client) setPushClient() {
+func (c *Client) setPushClient() {
 	newClient, _ := push.NewClient(
-		push.Config{
-			Username:                     client.Username,
-			Password:                     client.Password,
-			PasswordGrantType:            client.PasswordGrantType,
-			AccountName:                  client.AccountName,
-			AccountMSISDN:                client.AccountMSISDN,
-			BrandID:                      client.BrandID,
-			BillerCode:                   client.BillerCode,
-			BillerMSISDN:                 client.BillerMSISDN,
-			ApiBaseURL:                   "",
-			GetTokenRequestURL:           "",
-			PushPayBillRequestURL:        "",
-			PushPayReverseTransactionURL: "",
-			PushPayHealthCheckURL:        "",
+		client.Config{
+			Username:                     c.Username,
+			Password:                     c.Password,
+			PasswordGrantType:            c.PasswordGrantType,
+			AccountName:                  c.AccountName,
+			AccountMSISDN:                c.AccountMSISDN,
+			BrandID:                      c.BrandID,
+			BillerCode:                   c.BillerCode,
+			BillerMSISDN:                 c.BillerMSISDN,
+			ApiBaseURL:                   c.ApiBaseURL,
+			GetTokenRequestURL:           c.GetTokenRequestURL,
+			PushPayBillRequestURL:        c.PushPayBillRequestURL,
+			PushPayReverseTransactionURL: c.PushPayReverseTransactionURL,
+			PushPayHealthCheckURL:        c.PushPayHealthCheckURL,
 		},
-		client.CallbackResponder,
-		push.WithHTTPClient(client.httpClient),
-		push.WithLogger(client.logger),
+		c.CallbackResponder,
+		push.WithHTTPClient(c.httpClient),
+		push.WithLogger(c.logger),
 	)
-	client.push = *newClient
+	c.push = *newClient
 }

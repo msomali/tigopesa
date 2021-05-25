@@ -31,6 +31,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"github.com/techcraftt/tigosdk/pkg/client"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -50,24 +51,24 @@ var (
 
 type (
 	PayloadType string
-
-	//Config contains details of TigoPesa integration.
-	//These are configurations supplied during the integration stage.
-	Config struct {
-		Username                     string
-		Password                     string
-		PasswordGrantType            string
-		AccountName                  string
-		AccountMSISDN                string
-		BrandID                      string
-		BillerCode                   string
-		BillerMSISDN                 string
-		ApiBaseURL                   string
-		GetTokenRequestURL           string
-		PushPayBillRequestURL        string
-		PushPayReverseTransactionURL string
-		PushPayHealthCheckURL        string
-	}
+	//
+	////Config contains details of TigoPesa integration.
+	////These are configurations supplied during the integration stage.
+	//Config struct {
+	//	Username                     string
+	//	Password                     string
+	//	PasswordGrantType            string
+	//	AccountName                  string
+	//	AccountMSISDN                string
+	//	BrandID                      string
+	//	BillerCode                   string
+	//	BillerMSISDN                 string
+	//	ApiBaseURL                   string
+	//	GetTokenRequestURL           string
+	//	PushPayBillRequestURL        string
+	//	PushPayReverseTransactionURL string
+	//	PushPayHealthCheckURL        string
+	//}
 
 	// CallbackResponder check and reports the status of the transaction.
 	// if transaction status
@@ -88,7 +89,7 @@ type (
 	}
 
 	Client struct {
-		Config
+		client.Config
 		authToken          string
 		authTokenExpiresAt time.Time
 		client             *http.Client
@@ -174,7 +175,7 @@ func (c *Client) HealthCheck(ctx context.Context, healthCheckReq HealthCheckRequ
 // NewClient initiate new tigosdk sdk used by other services.
 // Default all pretty formatted requests (in and out) and responses
 // will be logged to os.Sterr to use custom logger use setLogger.
-func NewClient(config Config, provider CallbackResponder, options ...ClientOption) (*Client, error) {
+func NewClient(config client.Config, provider CallbackResponder, options ...ClientOption) (*Client, error) {
 	client := &Client{
 		Config:          config,
 		client:          http.DefaultClient,

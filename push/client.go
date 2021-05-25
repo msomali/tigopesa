@@ -61,7 +61,7 @@ type (
 		AccountMSISDN                string
 		BrandID                      string
 		BillerCode                   string
-		BillerMSISDN                 int64
+		BillerMSISDN                 string
 		ApiBaseURL                   string
 		GetTokenRequestURL           string
 		PushPayBillRequestURL        string

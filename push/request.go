@@ -1,8 +1,8 @@
 package push
 
 type BillPayRequest struct {
-	CustomerMSISDN int64  `json:"CustomerMSISDN"`
-	BillerMSISDN   int64  `json:"BillerMSISDN"`
+	CustomerMSISDN string  `json:"CustomerMSISDN"`
+	BillerMSISDN   string  `json:"BillerMSISDN"`
 	Amount         int    `json:"Amount"`
 	Remarks        string `json:"Remarks,omitempty"`
 	ReferenceID    string `json:"ReferenceID"`

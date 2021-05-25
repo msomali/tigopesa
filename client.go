@@ -300,5 +300,25 @@ func (client *Client) setUSSDClient() {
 
 ///helpers
 func (client *Client) setPushClient() {
-
+	newClient, _ := push.NewClient(
+		push.Config{
+			Username:                     client.Username,
+			Password:                     client.Password,
+			PasswordGrantType:            client.PasswordGrantType,
+			AccountName:                  client.AccountName,
+			AccountMSISDN:                client.AccountMSISDN,
+			BrandID:                      client.BrandID,
+			BillerCode:                   client.BillerCode,
+			BillerMSISDN:                 client.BillerMSISDN,
+			ApiBaseURL:                   "",
+			GetTokenRequestURL:           "",
+			PushPayBillRequestURL:        "",
+			PushPayReverseTransactionURL: "",
+			PushPayHealthCheckURL:        "",
+		},
+		client.CallbackResponder,
+		push.WithHTTPClient(client.httpClient),
+		push.WithLogger(client.logger),
+	)
+	client.push = *newClient
 }

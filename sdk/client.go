@@ -1,4 +1,11 @@
-package client
+package sdk
+
+import (
+	"context"
+	"io"
+	"net/http"
+	"time"
+)
 
 type (
 	Config struct {
@@ -20,4 +27,17 @@ type (
 		WalletToAccountRequestURL    string
 		NameCheckRequestURL          string
 	}
+
+	Client struct {
+		Config
+		httpClient          *http.Client
+		ctx                 context.Context
+		timeout             time.Duration
+		logger              io.Writer // for logging purposes
+	}
+
+	// ClientOption is a setter func to set Client details like
+	// timeout, context, httpClient and logger
+	ClientOption func(client *Client)
+
 )

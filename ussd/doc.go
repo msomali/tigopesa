@@ -1,4 +1,4 @@
-// Package ussd contains everything you will need to craft a tigopesa ussd client
+// Package ussd contains everything you will need to craft a tigopesa ussd sdk
 //import (
 //	"context"
 //	"log"
@@ -7,7 +7,7 @@
 //)
 //
 //func doc(){
-//	// But Before creating the client for ussd you must first create the config object
+//	// But Before creating the sdk for ussd you must first create the config object
 //	// which has all the details obtained during network integration stage with tigo
 //	conf := Config{
 //		Username:                  "",
@@ -48,8 +48,8 @@
 //		return r,e
 //	}
 //
-//	// You can create client with default context.Context, timeout, io.Writer and http.Client
-//	client := NewClient(conf,collectionHandler,namesHandleFunc)
+//	// You can create sdk with default context.Context, timeout, io.Writer and http.Client
+//	sdk := NewClient(conf,collectionHandler,namesHandleFunc)
 //
 //	// Or you can rather roll out your own
 //
@@ -71,9 +71,9 @@
 //
 //	var mux http.ServeMux
 //
-//	mux.HandleFunc(client.NameCheckRequestURL,client.SubscriberNameHandler)
-//	mux.HandleFunc(client.WalletToAccountRequestURL,client.WalletToAccountHandler)
-//	mux.HandleFunc(client.AccountToWalletRequestURL, disburseHandler)
+//	mux.HandleFunc(sdk.NameCheckRequestURL,sdk.SubscriberNameHandler)
+//	mux.HandleFunc(sdk.WalletToAccountRequestURL,sdk.WalletToAccountHandler)
+//	mux.HandleFunc(sdk.AccountToWalletRequestURL, disburseHandler)
 //}
 //
 //func disburseHandler(writer http.ResponseWriter, request *http.Request) {

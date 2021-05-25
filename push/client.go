@@ -31,7 +31,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"github.com/techcraftt/tigosdk/pkg/client"
+	sdk2 "github.com/techcraftt/tigosdk/sdk"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -89,7 +89,7 @@ type (
 	}
 
 	Client struct {
-		client.Config
+		sdk2.Config
 		authToken          string
 		authTokenExpiresAt time.Time
 		client             *http.Client
@@ -175,7 +175,7 @@ func (c *Client) HealthCheck(ctx context.Context, healthCheckReq HealthCheckRequ
 // NewClient initiate new tigosdk sdk used by other services.
 // Default all pretty formatted requests (in and out) and responses
 // will be logged to os.Sterr to use custom logger use setLogger.
-func NewClient(config client.Config, provider CallbackResponder, options ...ClientOption) (*Client, error) {
+func NewClient(config sdk2.Config, provider CallbackResponder, options ...ClientOption) (*Client, error) {
 	client := &Client{
 		Config:          config,
 		client:          http.DefaultClient,
@@ -217,8 +217,8 @@ func WithHTTPClient(httpClient *http.Client) ClientOption {
 	}
 }
 
-//func (c *Client) SetHTTPClient(client *http.Client) {
-//	c.client = client
+//func (c *Client) SetHTTPClient(sdk *http.Client) {
+//	c.sdk = sdk
 //}
 //
 //// SetLogger set custom logs destination.

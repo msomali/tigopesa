@@ -77,15 +77,15 @@ type (
 	}
 
 	// ClientOption is a setter func to set BaseClient details like
-	// timeout, context, httpClient and logger
+	// Timeout, context, HttpClient and Logger
 	ClientOption func(client *BaseClient)
 
 	BaseClient struct {
 		Config
-		httpClient          *http.Client
-		ctx                 context.Context
-		timeout             time.Duration
-		logger              io.Writer // for logging purposes
+		HttpClient *http.Client
+		Ctx        context.Context
+		Timeout    time.Duration
+		Logger     io.Writer // for logging purposes
 	}
 
 )
@@ -121,21 +121,21 @@ func (l loggingTransport) RoundTrip(request *http.Request) (response *http.Respo
 // This context value is mostly used by Handlers
 func WithContext(ctx context.Context) ClientOption {
 	return func(client *BaseClient) {
-		client.ctx = ctx
+		client.Ctx = ctx
 	}
 }
 
-// WithTimeout used to set the timeout used by handlers like sending requests to
+// WithTimeout used to set the Timeout used by handlers like sending requests to
 // Tigo Gateway and back in case of Disbursement or to set the max time for
 // handlers QuerySubscriberFunc and WalletToAccountFunc while handling requests from tigo
 // the default value is 1 minute
 func WithTimeout(timeout time.Duration) ClientOption {
 	return func(client *BaseClient) {
-		client.timeout = timeout
+		client.Timeout = timeout
 	}
 }
 
-// WithLogger set a logger of user preference but of type io.Writer
+// WithLogger set a Logger of user preference but of type io.Writer
 // that will be used for debugging use cases. A default value is os.Stderr
 // it can be replaced by any io.Writer unless its nil which in that case
 // it will be ignored
@@ -144,7 +144,7 @@ func WithLogger(out io.Writer) ClientOption {
 		if out == nil {
 			return
 		}
-		client.logger = out
+		client.Logger = out
 	}
 }
 
@@ -155,7 +155,7 @@ func WithLogger(out io.Writer) ClientOption {
 // middleware that enables pkg to
 func WithHTTPClient(c *http.Client) ClientOption {
 
-	// TODO check if its really necessary to set the default timeout to 1 minute
+	// TODO check if its really necessary to set the default Timeout to 1 minute
 	//if c.Timeout == 0 {
 	//	c.Timeout = defaultTimeout
 	//}
@@ -165,7 +165,7 @@ func WithHTTPClient(c *http.Client) ClientOption {
 		}
 
 		lt := loggingTransport{
-			logger: client.logger,
+			logger: client.Logger,
 			next:   c.Transport,
 		}
 
@@ -175,17 +175,17 @@ func WithHTTPClient(c *http.Client) ClientOption {
 			Jar:           c.Jar,
 			Timeout:       c.Timeout,
 		}
-		client.httpClient = hc
+		client.HttpClient = hc
 	}
 }
 
 func NewBaseClient(config Config, opts...ClientOption) *BaseClient {
 	client := &BaseClient{
 		Config:     config,
-		httpClient: defaultHttpClient,
-		logger:     defaultWriter,
-		timeout:    defaultTimeout,
-		ctx:        defaultCtx,
+		HttpClient: defaultHttpClient,
+		Logger:     defaultWriter,
+		Timeout:    defaultTimeout,
+		Ctx:        defaultCtx,
 	}
 
 	for _, opt := range opts {

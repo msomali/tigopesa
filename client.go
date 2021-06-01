@@ -30,18 +30,16 @@ import (
 	"github.com/techcraftt/tigosdk/push"
 	"github.com/techcraftt/tigosdk/ussd"
 	"net/http"
-
 )
 
-var	_ Service = (*Client)(nil)
+var _ Service = (*Client)(nil)
 
 type (
-
 	Client struct {
 		*tigo.BaseClient
-		ussd                    *ussd.Client
-		push                    *push.Client
-		CallbackResponder       push.CallbackResponder
+		ussd              *ussd.Client
+		push              *push.Client
+		CallbackResponder push.CallbackResponder
 	}
 
 	Service interface {
@@ -49,7 +47,6 @@ type (
 		push.Service
 	}
 )
-
 
 func (c *Client) SubscriberNameHandler(writer http.ResponseWriter, request *http.Request) {
 	c.ussd.SubscriberNameHandler(writer, request)
@@ -83,11 +80,11 @@ func NewClient(bc *tigo.BaseClient, namesHandler ussd.QuerySubscriberFunc,
 	collectionHandler ussd.WalletToAccountFunc,
 	callbackResponder push.CallbackResponder) *Client {
 	client := &Client{
-		BaseClient:              bc,
-		CallbackResponder:       callbackResponder,
+		BaseClient:        bc,
+		CallbackResponder: callbackResponder,
 	}
 
-	client.ussd = ussd.NewClient(bc,collectionHandler,namesHandler)
+	client.ussd = ussd.NewClient(bc, collectionHandler, namesHandler)
 
 	// todo: set push pkg
 	client.setPushClient()

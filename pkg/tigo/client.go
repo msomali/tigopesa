@@ -15,7 +15,6 @@ const (
 	defaultTimeout = time.Minute
 )
 
-
 var (
 	// defaultCtx is the context used by pkg when none is set
 	// to override this one has to call WithContext method and supply
@@ -48,7 +47,6 @@ var (
 		Timeout:   defaultTimeout,
 	}
 )
-
 
 type (
 	Config struct {
@@ -87,7 +85,6 @@ type (
 		Timeout    time.Duration
 		Logger     io.Writer // for logging purposes
 	}
-
 )
 
 func (l loggingTransport) RoundTrip(request *http.Request) (response *http.Response, err error) {
@@ -179,7 +176,7 @@ func WithHTTPClient(c *http.Client) ClientOption {
 	}
 }
 
-func NewBaseClient(config Config, opts...ClientOption) *BaseClient {
+func NewBaseClient(config Config, opts ...ClientOption) *BaseClient {
 	client := &BaseClient{
 		Config:     config,
 		HttpClient: defaultHttpClient,

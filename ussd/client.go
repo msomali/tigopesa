@@ -127,9 +127,7 @@ var (
 
 	//QuerySubscriberFunc implements QuerySubscriberNameProvider
 	_ QuerySubscriberNameProvider = (*QuerySubscriberFunc)(nil)
-
 )
-
 
 func (w WalletToAccountFunc) WalletToAccount(ctx context.Context, request WalletToAccountRequest) (WalletToAccountResponse, error) {
 	return w(ctx, request)
@@ -152,7 +150,6 @@ func NewClient(client *tigo.BaseClient, collector WalletToAccountFunc, namesHand
 		WalletToAccountFunc: collector,
 	}
 }
-
 
 // SubscriberNameHandler is an http.HandleFunc that handles TigoPesa Namecheck requests
 // it uses internally an injected QuerySubscriberFunc.

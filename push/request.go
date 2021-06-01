@@ -1,8 +1,8 @@
 package push
 
 type BillPayRequest struct {
-	CustomerMSISDN string  `json:"CustomerMSISDN"`
-	BillerMSISDN   string  `json:"BillerMSISDN"`
+	CustomerMSISDN string `json:"CustomerMSISDN"`
+	BillerMSISDN   string `json:"BillerMSISDN"`
 	Amount         int    `json:"Amount"`
 	Remarks        string `json:"Remarks,omitempty"`
 	ReferenceID    string `json:"ReferenceID"`
@@ -17,8 +17,8 @@ type BillPayCallbackRequest struct {
 }
 
 type RefundPaymentRequest struct {
-	CustomerMSISDN      string  `json:"CustomerMSISDN"`
-	ChannelMSISDN       string  `json:"ChannelMSISDN"`
+	CustomerMSISDN      string `json:"CustomerMSISDN"`
+	ChannelMSISDN       string `json:"ChannelMSISDN"`
 	ChannelPIN          string `json:"ChannelPIN"`
 	Amount              int    `json:"Amount"`
 	MFSTransactionID    string `json:"MFSTransactionID"`

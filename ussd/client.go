@@ -90,7 +90,7 @@ type (
 	// integration stage. QuerySubscriberFunc an injected func to handle all namecheck
 	// requests and a WalletToAccountFunc to handle all WalletToAccount requests
 	Client struct {
-		tigo.BaseClient
+		*tigo.BaseClient
 		QuerySubscriberFunc QuerySubscriberFunc
 		WalletToAccountFunc WalletToAccountFunc
 	}
@@ -145,7 +145,7 @@ func (q QuerySubscriberFunc) QuerySubscriberName(ctx context.Context, request Su
 // if those options are not set explicitly NewClient go with default values
 // timeout = time.Minute, context = context.TODO() , logger = os.Stderr and a default http.Client which is
 // has been modified to be bale to log requests and responses when debug mode is enabled.
-func NewClient(client tigo.BaseClient, collector WalletToAccountFunc, namesHandler QuerySubscriberFunc) *Client {
+func NewClient(client *tigo.BaseClient, collector WalletToAccountFunc, namesHandler QuerySubscriberFunc) *Client {
 	return &Client{
 		BaseClient:          client,
 		QuerySubscriberFunc: namesHandler,
@@ -200,6 +200,7 @@ func (client *Client) SubscriberNameHandler(writer http.ResponseWriter, request 
 }
 
 func (client *Client) WalletToAccountHandler(writer http.ResponseWriter, request *http.Request) {
+
 	ctx, cancel := context.WithTimeout(client.Ctx, client.Timeout)
 	defer cancel()
 

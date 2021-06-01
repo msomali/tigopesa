@@ -39,7 +39,7 @@ type App struct {
 func (app *App) disburseHandler(writer http.ResponseWriter, request *http.Request) {
 	var info disburseInfo
 	//	// Try to decode the request body into the struct. If there is an error,
-	// respond to the sdk with the error message and a 400 status code.
+	// respond to the pkg with the error message and a 400 status code.
 	err := json.NewDecoder(request.Body).Decode(&info)
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusBadRequest)

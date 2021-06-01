@@ -27,8 +27,8 @@ package tigosdk
 import (
 	"context"
 	"fmt"
+	"github.com/techcraftt/tigosdk/pkg/tigo"
 	"github.com/techcraftt/tigosdk/push"
-	sdk2 "github.com/techcraftt/tigosdk/sdk"
 	"github.com/techcraftt/tigosdk/ussd"
 	"io"
 	"net/http"
@@ -43,7 +43,7 @@ const (
 )
 
 var (
-	// defaultCtx is the context used by sdk when none is set
+	// defaultCtx is the context used by pkg when none is set
 	// to override this one has to call WithContext method and supply
 	// his her own context.Context
 	defaultCtx = context.TODO()
@@ -67,7 +67,7 @@ var (
 		next:   http.DefaultTransport,
 	}
 
-	// defaultHttpClient is the sdk used by library to send Http requests, specifically
+	// defaultHttpClient is the pkg used by library to send Http requests, specifically
 	// disbursement requests in case a user does not specify one
 	defaultHttpClient = &http.Client{
 		Transport: defaultLoggerTransport,
@@ -97,7 +97,7 @@ type (
 	//}
 
 	Client struct {
-		sdk2.Config
+		tigo.Config
 		ussd                    ussd.Client
 		push                    push.Client
 		httpClient              *http.Client
@@ -182,7 +182,7 @@ func (c *Client) HealthCheck(ctx context.Context, request push.HealthCheckReques
 	return c.push.HealthCheck(ctx, request)
 }
 
-func NewClient(config sdk2.Config, namesHandler ussd.QuerySubscriberFunc,
+func NewClient(config tigo.Config, namesHandler ussd.QuerySubscriberFunc,
 	collectionHandler ussd.WalletToAccountFunc,
 	callbackResponder push.CallbackResponder,
 	opts ...ClientOption) *Client {
@@ -201,10 +201,10 @@ func NewClient(config sdk2.Config, namesHandler ussd.QuerySubscriberFunc,
 		opt(client)
 	}
 
-	// todo: set ussd sdk
+	// todo: set ussd pkg
 	client.setUSSDClient()
 
-	// todo: set push sdk
+	// todo: set push pkg
 	client.setPushClient()
 
 	return client
@@ -243,10 +243,10 @@ func WithLogger(out io.Writer) ClientOption {
 }
 
 // WithHTTPClient when called unset the present http.Client and replace it
-// with c. In case user tries to pass a nil value referencing the sdk
-// i.e WithHTTPClient(nil), it will be ignored and the sdk wont be replaced
-// Note: the new sdk Transport will be modified. It will be wrapped by another
-// middleware that enables sdk to
+// with c. In case user tries to pass a nil value referencing the pkg
+// i.e WithHTTPClient(nil), it will be ignored and the pkg wont be replaced
+// Note: the new pkg Transport will be modified. It will be wrapped by another
+// middleware that enables pkg to
 func WithHTTPClient(c *http.Client) ClientOption {
 
 	// TODO check if its really necessary to set the default timeout to 1 minute
@@ -302,7 +302,7 @@ func (c *Client) setUSSDClient() {
 ///helpers
 func (c *Client) setPushClient() {
 	newClient, _ := push.NewClient(
-		sdk2.Config{
+		tigo.Config{
 			Username:                     c.Username,
 			Password:                     c.Password,
 			PasswordGrantType:            c.PasswordGrantType,

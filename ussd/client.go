@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/xml"
 	"fmt"
+	"github.com/techcraftt/tigosdk/pkg/tigo"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -19,7 +20,7 @@ type (
 	// one is the name-check request and the other is the W2A request
 	// this is an experimental API still not implemented
 	// Expected implementation, though it may change may involve something like
-	// func (sdk *Client) HandleRequest(ctx context.Context, requestType RequestType) http.HandlerFunc {
+	// func (pkg *Client) HandleRequest(ctx context.Context, requestType RequestType) http.HandlerFunc {
 	//   return func(writer http.ResponseWriter, request *http.Request) {
 	//      switch requestType {
 	//      case SubscriberName:
@@ -82,7 +83,7 @@ type (
 	// WalletToAccountResponse
 	WalletToAccountFunc func(ctx context.Context, request WalletToAccountRequest) (WalletToAccountResponse, error)
 
-	// Client is a ussd sdk that assembles together necessary parts
+	// Client is a ussd pkg that assembles together necessary parts
 	// needed in performing 3 operations
 	// 1. handling of NameCheckRequest, 2. Handling of Collection (WalletToAccount)
 	// requests and 3. Making disbursement requests
@@ -90,6 +91,7 @@ type (
 	// integration stage. QuerySubscriberFunc an injected func to handle all namecheck
 	// requests and a WalletToAccountFunc to handle all WalletToAccount requests
 	Client struct {
+		tigo.BaseClient
 		Config
 		httpClient          *http.Client
 		QuerySubscriberFunc QuerySubscriberFunc
@@ -109,10 +111,10 @@ type (
 	}
 
 	// Config contains configurations that are only needed by Client
-	// a USSD sdk. This is different from tigosdk.Config which contains
+	// a USSD pkg. This is different from tigosdk.Config which contains
 	// other configurations that are not needed by the USSD Client but
-	// are needed by the pushpay sdk. This will make it easier for those
-	// that needs a single sdk implementation, they wont necessary need to
+	// are needed by the pushpay pkg. This will make it easier for those
+	// that needs a single pkg implementation, they wont necessary need to
 	// import code they dont want to use.
 	Config struct {
 		Username                  string `json:"username"`
@@ -161,7 +163,7 @@ var (
 	//QuerySubscriberFunc implements QuerySubscriberNameProvider
 	_ QuerySubscriberNameProvider = (*QuerySubscriberFunc)(nil)
 
-	// defaultCtx is the context used by sdk when none is set
+	// defaultCtx is the context used by pkg when none is set
 	// to override this one has to call WithContext method and supply
 	// his her own context.Context
 	defaultCtx = context.TODO()
@@ -179,7 +181,7 @@ var (
 		next:   http.DefaultTransport,
 	}
 
-	// defaultHttpClient is the sdk used by library to send Http requests, specifically
+	// defaultHttpClient is the pkg used by library to send Http requests, specifically
 	// disbursement requests in case a user does not specify one
 	defaultHttpClient = &http.Client{
 		Transport: defaultLoggerTransport,
@@ -278,10 +280,10 @@ func WithLogger(out io.Writer) ClientOption {
 }
 
 // WithHTTPClient when called unset the present http.Client and replace it
-// with c. In case user tries to pass a nil value referencing the sdk
-// i.e WithHTTPClient(nil), it will be ignored and the sdk wont be replaced
-// Note: the new sdk Transport will be modified. It will be wrapped by another
-// middleware that enables sdk to
+// with c. In case user tries to pass a nil value referencing the pkg
+// i.e WithHTTPClient(nil), it will be ignored and the pkg wont be replaced
+// Note: the new pkg Transport will be modified. It will be wrapped by another
+// middleware that enables pkg to
 func WithHTTPClient(c *http.Client) ClientOption {
 
 	// TODO check if its really necessary to set the default timeout to 1 minute

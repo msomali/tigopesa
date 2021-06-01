@@ -51,24 +51,6 @@ var (
 
 type (
 	PayloadType string
-	//
-	////Config contains details of TigoPesa integration.
-	////These are configurations supplied during the integration stage.
-	//Config struct {
-	//	Username                     string
-	//	Password                     string
-	//	PasswordGrantType            string
-	//	AccountName                  string
-	//	AccountMSISDN                string
-	//	BrandID                      string
-	//	BillerCode                   string
-	//	BillerMSISDN                 string
-	//	ApiBaseURL                   string
-	//	GetTokenRequestURL           string
-	//	PushPayBillRequestURL        string
-	//	PushPayReverseTransactionURL string
-	//	PushPayHealthCheckURL        string
-	//}
 
 	// CallbackResponder check and reports the status of the transaction.
 	// if transaction status
@@ -89,15 +71,11 @@ type (
 	}
 
 	Client struct {
-		tigo.Config
+		*tigo.BaseClient
 		authToken          string
 		authTokenExpiresAt time.Time
-		client             *http.Client
-		logger             io.Writer
 		callbackHandler    CallbackResponder
 	}
-
-	ClientOption func(client *Client)
 )
 
 func (c *Client) BillPay(ctx context.Context, billPaymentReq BillPayRequest) (*BillPayResponse, error) {
@@ -172,14 +150,9 @@ func (c *Client) HealthCheck(ctx context.Context, healthCheckReq HealthCheckRequ
 	return healthCheckResp, nil
 }
 
-// NewClient initiate new tigosdk pkg used by other services.
-// Default all pretty formatted requests (in and out) and responses
-// will be logged to os.Sterr to use custom logger use setLogger.
-func NewClient(config tigo.Config, provider CallbackResponder, options ...ClientOption) (*Client, error) {
+func NewClient(bc *tigo.BaseClient, provider CallbackResponder) (*Client, error) {
 	client := &Client{
-		Config:          config,
-		client:          http.DefaultClient,
-		logger:          os.Stderr,
+		BaseClient:      bc,
 		callbackHandler: provider,
 	}
 
@@ -187,44 +160,8 @@ func NewClient(config tigo.Config, provider CallbackResponder, options ...Client
 		return nil, err
 	}
 
-	for _, option := range options {
-		option(client)
-	}
-
 	return client, nil
 }
-
-// WithLogger set a logger of user preference but of type io.Writer
-// that will be used for debugging use cases. A default value is os.Stderr
-// it can be replaced by any io.Writer unless its nil which in that case
-// it will be ignored
-func WithLogger(out io.Writer) ClientOption {
-	return func(client *Client) {
-		if out == nil {
-			return
-		}
-		client.logger = out
-	}
-}
-
-func WithHTTPClient(httpClient *http.Client) ClientOption {
-	return func(client *Client) {
-		if client == nil {
-			return
-		}
-
-		client.client = httpClient
-	}
-}
-
-//func (c *Client) SetHTTPClient(pkg *http.Client) {
-//	c.pkg = pkg
-//}
-//
-//// SetLogger set custom logs destination.
-//func (c *Client) SetLogger(out io.Writer) {
-//	c.logger = out
-//}
 
 func (c *Client) NewRequest(method, url string, payloadType PayloadType, payload interface{}) (*http.Request, error) {
 	var (
@@ -306,7 +243,7 @@ func (c *Client) Send(ctx context.Context, req *http.Request, v interface{}) err
 	}
 
 	c.logRequest(req)
-	resp, err := c.client.Do(req)
+	resp, err := c.HttpClient.Do(req)
 	c.logResponse(resp)
 
 	if err != nil {
@@ -347,26 +284,26 @@ func (c *Client) SendWithAuth(ctx context.Context, req *http.Request, v interfac
 }
 
 func (c *Client) logRequest(req *http.Request) {
-	if c.logger != nil && os.Getenv("DEBUG") == "true" {
+	if c.Logger != nil && os.Getenv("DEBUG") == "true" {
 		var reqDump []byte
 
 		if req != nil {
 			reqDump, _ = httputil.DumpRequest(req, true)
 		}
 
-		c.logger.Write([]byte(fmt.Sprintf("Request: %s\n \n", string(reqDump))))
+		c.Logger.Write([]byte(fmt.Sprintf("Request: %s\n \n", string(reqDump))))
 	}
 }
 
 func (c *Client) logResponse(resp *http.Response) {
-	if c.logger != nil && os.Getenv("DEBUG") == "true" {
+	if c.Logger != nil && os.Getenv("DEBUG") == "true" {
 		var respDump []byte
 
 		if resp != nil {
 			respDump, _ = httputil.DumpResponse(resp, true)
 		}
 
-		c.logger.Write([]byte(fmt.Sprintf("Response: %s\n \n", string(respDump))))
+		c.Logger.Write([]byte(fmt.Sprintf("Response: %s\n \n", string(respDump))))
 	}
 }
 
@@ -390,9 +327,9 @@ func marshalPayload(payloadType PayloadType, payload interface{}) (buf []byte, e
 
 // Log write v into logger.
 func (c *Client) Log(prefix string, payloadType PayloadType, payload interface{}) {
-	if c.logger != nil && os.Getenv("DEBUG") == "true" {
+	if c.Logger != nil && os.Getenv("DEBUG") == "true" {
 		buf, _ := marshalPayload(payloadType, payload)
 
-		c.logger.Write([]byte(fmt.Sprintf("%s: %s\n\n", prefix, string(buf))))
+		c.Logger.Write([]byte(fmt.Sprintf("%s: %s\n\n", prefix, string(buf))))
 	}
 }

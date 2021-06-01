@@ -79,40 +79,14 @@ func (c *Client) HealthCheck(ctx context.Context, request push.HealthCheckReques
 func NewClient(bc *tigo.BaseClient, namesHandler ussd.QuerySubscriberFunc,
 	collectionHandler ussd.WalletToAccountFunc,
 	callbackResponder push.CallbackResponder) *Client {
+
+	//todo: set push client avoid returning error in constructor
 	client := &Client{
 		BaseClient:        bc,
+		ussd:              ussd.NewClient(bc, collectionHandler, namesHandler),
+		push:              nil,
 		CallbackResponder: callbackResponder,
 	}
 
-	client.ussd = ussd.NewClient(bc, collectionHandler, namesHandler)
-
-	// todo: set push pkg
-	client.setPushClient()
-
 	return client
-}
-
-///helpers
-func (c *Client) setPushClient() {
-	newClient, _ := push.NewClient(
-		tigo.Config{
-			Username:                     c.Username,
-			Password:                     c.Password,
-			PasswordGrantType:            c.PasswordGrantType,
-			AccountName:                  c.AccountName,
-			AccountMSISDN:                c.AccountMSISDN,
-			BrandID:                      c.BrandID,
-			BillerCode:                   c.BillerCode,
-			BillerMSISDN:                 c.BillerMSISDN,
-			ApiBaseURL:                   c.ApiBaseURL,
-			GetTokenRequestURL:           c.GetTokenRequestURL,
-			PushPayBillRequestURL:        c.PushPayBillRequestURL,
-			PushPayReverseTransactionURL: c.PushPayReverseTransactionURL,
-			PushPayHealthCheckURL:        c.PushPayHealthCheckURL,
-		},
-		c.CallbackResponder,
-		push.WithHTTPClient(c.HttpClient),
-		push.WithLogger(c.Logger),
-	)
-	c.push = newClient
 }

@@ -94,34 +94,6 @@ type (
 		QuerySubscriberFunc QuerySubscriberFunc
 		WalletToAccountFunc WalletToAccountFunc
 	}
-	//
-	//// ClientOption is a setter func to set Client details like
-	//// timeout, context, httpClient and logger
-	//ClientOption func(client *Client)
-	//
-	//loggingTransport struct {
-	//	logger io.Writer
-	//	next   http.RoundTripper
-	//}
-	//
-	//// Config contains configurations that are only needed by Client
-	//// a USSD pkg. This is different from tigosdk.Config which contains
-	//// other configurations that are not needed by the USSD Client but
-	//// are needed by the pushpay pkg. This will make it easier for those
-	//// that needs a single pkg implementation, they wont necessary need to
-	//// import code they dont want to use.
-	//Config struct {
-	//	Username                  string `json:"username"`
-	//	Password                  string `json:"password"`
-	//	AccountName               string `json:"account_name"`
-	//	AccountMSISDN             string `json:"account_msisdn"`
-	//	BrandID                   string `json:"brand_id"`
-	//	BillerCode                string `json:"biller_code"`
-	//	AccountToWalletRequestURL string `json:"disbursement_request_url"`
-	//	AccountToWalletRequestPIN string `json:"disbursement_request_pin"`
-	//	WalletToAccountRequestURL string `json:"collection_request_url"`
-	//	NameCheckRequestURL       string `json:"namecheck_request_url"`
-	//}
 
 	Service interface {
 		SubscriberNameHandler(writer http.ResponseWriter, request *http.Request)
@@ -138,7 +110,6 @@ const (
 
 	//debugKey is the value that stores the debugging key is env file
 	debugKey            = "DEBUG"
-//	defaultTimeout      = time.Minute
 	SyncLookupResponse  = "SYNC_LOOKUP_RESPONSE"
 	SyncBillPayResponse = "SYNC_BILLPAY_RESPONSE"
 	REQMFCI             = "REQMFCI"
@@ -157,57 +128,8 @@ var (
 	//QuerySubscriberFunc implements QuerySubscriberNameProvider
 	_ QuerySubscriberNameProvider = (*QuerySubscriberFunc)(nil)
 
-	//// defaultCtx is the context used by pkg when none is set
-	//// to override this one has to call WithContext method and supply
-	//// his her own context.Context
-	//defaultCtx = context.TODO()
-	//
-	//// defaultWriter is an io.Writer used for debugging. When debug mode is
-	//// set to true i.e DEBUG=true and no io.Writer is provided via
-	//// WithLogger method this is used.
-	//defaultWriter = os.Stderr
-	//
-	//// defaultLoggerTransport is a modified http.Transport that is responsible
-	//// for logging all requests and responses  that a HTTPClient owned by Client
-	//// sent and receives
-	//defaultLoggerTransport = loggingTransport{
-	//	logger: defaultWriter,
-	//	next:   http.DefaultTransport,
-	//}
-	//
-	//// defaultHttpClient is the pkg used by library to send Http requests, specifically
-	//// disbursement requests in case a user does not specify one
-	//defaultHttpClient = &http.Client{
-	//	Transport: defaultLoggerTransport,
-	//	Timeout:   defaultTimeout,
-	//}
 )
 
-//func (l loggingTransport) RoundTrip(request *http.Request) (response *http.Response, err error) {
-//
-//	if os.Getenv(debugKey) == "true" && request != nil {
-//		reqDump, err := httputil.DumpRequestOut(request, true)
-//		if err != nil {
-//			return nil, err
-//		}
-//		_, err = fmt.Fprint(l.logger, fmt.Sprintf("Request %s\n", string(reqDump)))
-//		if err != nil {
-//			return nil, err
-//		}
-//
-//	}
-//	defer func() {
-//		if response != nil && os.Getenv(debugKey) == "true" {
-//			respDump, err := httputil.DumpResponse(response, true)
-//			_, err = l.logger.Write([]byte(fmt.Sprintf("Response %s\n", string(respDump))))
-//			if err != nil {
-//				return
-//			}
-//		}
-//	}()
-//	response, err = l.next.RoundTrip(request)
-//	return
-//}
 
 func (w WalletToAccountFunc) WalletToAccount(ctx context.Context, request WalletToAccountRequest) (WalletToAccountResponse, error) {
 	return w(ctx, request)
@@ -231,68 +153,6 @@ func NewClient(client tigo.BaseClient, collector WalletToAccountFunc, namesHandl
 	}
 }
 
-//// WithContext set the context to be used by Client in its ops
-//// this unset the default value which is context.TODO()
-//// This context value is mostly used by Handlers
-//func WithContext(ctx context.Context) ClientOption {
-//	return func(client *Client) {
-//		client.ctx = ctx
-//	}
-//}
-//
-//// WithTimeout used to set the timeout used by handlers like sending requests to
-//// Tigo Gateway and back in case of Disbursement or to set the max time for
-//// handlers QuerySubscriberFunc and WalletToAccountFunc while handling requests from tigo
-//// the default value is 1 minute
-//func WithTimeout(timeout time.Duration) ClientOption {
-//	return func(client *Client) {
-//		client.timeout = timeout
-//	}
-//}
-//
-//// WithLogger set a logger of user preference but of type io.Writer
-//// that will be used for debugging use cases. A default value is os.Stderr
-//// it can be replaced by any io.Writer unless its nil which in that case
-//// it will be ignored
-//func WithLogger(out io.Writer) ClientOption {
-//	return func(client *Client) {
-//		if out == nil {
-//			return
-//		}
-//		client.logger = out
-//	}
-//}
-//
-//// WithHTTPClient when called unset the present http.Client and replace it
-//// with c. In case user tries to pass a nil value referencing the pkg
-//// i.e WithHTTPClient(nil), it will be ignored and the pkg wont be replaced
-//// Note: the new pkg Transport will be modified. It will be wrapped by another
-//// middleware that enables pkg to
-//func WithHTTPClient(c *http.Client) ClientOption {
-//
-//	// TODO check if its really necessary to set the default timeout to 1 minute
-//	//if c.Timeout == 0 {
-//	//	c.Timeout = defaultTimeout
-//	//}
-//	return func(client *Client) {
-//		if c == nil {
-//			return
-//		}
-//
-//		lt := loggingTransport{
-//			logger: client.logger,
-//			next:   c.Transport,
-//		}
-//
-//		hc := &http.Client{
-//			Transport:     lt,
-//			CheckRedirect: c.CheckRedirect,
-//			Jar:           c.Jar,
-//			Timeout:       c.Timeout,
-//		}
-//		client.httpClient = hc
-//	}
-//}
 
 // SubscriberNameHandler is an http.HandleFunc that handles TigoPesa Namecheck requests
 // it uses internally an injected QuerySubscriberFunc.

@@ -33,10 +33,7 @@ import (
 
 )
 
-var (
-	// Client implements Service
-	_ Service = (*Client)(nil)
-)
+var	_ Service = (*Client)(nil)
 
 type (
 
@@ -46,8 +43,6 @@ type (
 		push                    *push.Client
 		CallbackResponder       push.CallbackResponder
 	}
-
-	ClientOption func(client *Client)
 
 	Service interface {
 		ussd.Service

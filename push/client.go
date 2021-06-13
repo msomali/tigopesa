@@ -52,9 +52,9 @@ var (
 type (
 	PayloadType string
 
-	// CallbackResponder check and reports the status of the transaction.
+	// CallbackProvider check and reports the status of the transaction.
 	// if transaction status
-	CallbackResponder func(context.Context, BillPayCallbackRequest) *BillPayResponse
+	CallbackProvider func(context.Context, BillPayCallbackRequest) *BillPayResponse
 
 	Service interface {
 		// BillPay initiate Service payment flow to deduct a specific amount from customer's Tigo pesa wallet.
@@ -74,7 +74,7 @@ type (
 		*tigo.BaseClient
 		authToken          string
 		authTokenExpiresAt time.Time
-		callbackHandler    CallbackResponder
+		CallbackProvider   CallbackProvider
 	}
 )
 
@@ -109,7 +109,7 @@ func (c *Client) BillPayCallback(ctx context.Context) http.HandlerFunc {
 			return
 		}
 
-		callbackResponse := c.callbackHandler(ctx, callbackRequest)
+		callbackResponse := c.CallbackProvider(ctx, callbackRequest)
 		c.Log("Callback Response", JSONPayload, &callbackResponse)
 
 		if err := json.NewEncoder(w).Encode(callbackResponse); err != nil {
@@ -150,17 +150,18 @@ func (c *Client) HealthCheck(ctx context.Context, healthCheckReq HealthCheckRequ
 	return healthCheckResp, nil
 }
 
-func NewClient(bc *tigo.BaseClient, provider CallbackResponder) (*Client, error) {
+// NewClient acts as a constructor of Push Pay Client.
+func NewClient(bc *tigo.BaseClient, provider CallbackProvider) *Client {
 	client := &Client{
-		BaseClient:      bc,
-		callbackHandler: provider,
+		BaseClient:       bc,
+		CallbackProvider: provider,
 	}
 
 	if _, err := client.getAuthToken(); err != nil {
-		return nil, err
+		return nil
 	}
 
-	return client, nil
+	return client
 }
 
 func (c *Client) NewRequest(method, url string, payloadType PayloadType, payload interface{}) (*http.Request, error) {

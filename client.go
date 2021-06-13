@@ -39,7 +39,6 @@ type (
 		*tigo.BaseClient
 		ussd              *ussd.Client
 		push              *push.Client
-		CallbackResponder push.CallbackResponder
 	}
 
 	Service interface {
@@ -78,14 +77,13 @@ func (c *Client) HealthCheck(ctx context.Context, request push.HealthCheckReques
 
 func NewClient(bc *tigo.BaseClient, namesHandler ussd.QuerySubscriberFunc,
 	collectionHandler ussd.WalletToAccountFunc,
-	callbackResponder push.CallbackResponder) *Client {
+	provider push.CallbackProvider) *Client {
 
 	//todo: set push client avoid returning error in constructor
 	client := &Client{
 		BaseClient:        bc,
 		ussd:              ussd.NewClient(bc, collectionHandler, namesHandler),
-		push:              nil,
-		CallbackResponder: callbackResponder,
+		push:              push.NewClient(bc, provider),
 	}
 
 	return client

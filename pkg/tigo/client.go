@@ -84,6 +84,7 @@ type (
 		Ctx        context.Context
 		Timeout    time.Duration
 		Logger     io.Writer // for logging purposes
+		DebugMode  bool
 	}
 )
 

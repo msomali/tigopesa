@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	env "github.com/joho/godotenv"
+	"github.com/techcraftt/tigosdk/pkg/tigo"
 	"github.com/techcraftt/tigosdk/push"
-	"github.com/techcraftt/tigosdk/sdk"
 	"log"
 	"net/http"
 	"os"
@@ -44,8 +44,18 @@ func main() {
 		log.Fatalln(err.Error())
 	}
 
+
+
 	a := &app{
-		pushpay:     push.NewClientFromConfig(config),
+		pushpay:     push.NewClient(&tigo.BaseClient{
+			Config:     config,
+			HttpClient: nil,
+			Ctx:        nil,
+			Timeout:    0,
+			Logger:     nil,
+		}, func(ctx context.Context, request push.BillPayCallbackRequest) *push.BillPayResponse {
+			return nil
+		}),
 		transaction: map[string]push.BillPayRequest{},
 	}
 
@@ -73,7 +83,7 @@ func (a *app) pushPayHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	billRequest := push.BillPayRequest{
-		CustomerMSISDN: req.CustomerMSSID,
+		CustomerMSISDN: strconv.FormatInt(req.CustomerMSSID, 10),
 		Amount:         req.Amount,
 		Remarks:        req.Remarks,
 		ReferenceID:    fmt.Sprintf("%s%d", os.Getenv(TIGO_BILLER_CODE), time.Now().Local().Unix()),
@@ -93,7 +103,7 @@ func (a *app) pushPayHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *app) pushPayCallbackHandler(w http.ResponseWriter, r *http.Request) {
-	a.pushpay.BillPayCallback(context.Background(), r, w, a.callbackProvider)
+	a.pushpay.BillPayCallback(context.Background())
 }
 
 func (a *app) callbackProvider(ctx context.Context, billPayRequest push.BillPayCallbackRequest) *push.BillPayResponse {
@@ -114,7 +124,7 @@ func (a *app) callbackProvider(ctx context.Context, billPayRequest push.BillPayC
 	}
 }
 
-func loadFromEnv() (conf sdk.Config, err error) {
+func loadFromEnv() (conf tigo.Config, err error) {
 	var billerMSISDN int64
 
 	err = env.Load("tigo.env")
@@ -124,11 +134,11 @@ func loadFromEnv() (conf sdk.Config, err error) {
 
 	billerMSISDN, err = strconv.ParseInt(os.Getenv(TIGO_BILLER_MSISDN), 10, 64)
 
-	conf = sdk.Config{
+	conf = tigo.Config{
 		Username:              os.Getenv(TIGO_USERNAME),
 		Password:              os.Getenv(TIGO_PASSWORD),
 		BillerCode:            os.Getenv(TIGO_BILLER_CODE),
-		BillerMSISDN:          billerMSISDN,
+		BillerMSISDN: strconv.FormatInt(billerMSISDN, 10),
 		GetTokenRequestURL:    os.Getenv(TIGO_GET_TOKEN_URL),
 		PushPayBillRequestURL: os.Getenv(TIGO_BILL_URL),
 		ApiBaseURL:            os.Getenv(TIGO_BASE_URL),

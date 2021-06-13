@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	env "github.com/joho/godotenv"
+	"github.com/techcraftt/tigosdk/pkg/tigo"
 	"github.com/techcraftt/tigosdk/ussd"
 	"log"
 	"net/http"
@@ -20,16 +21,16 @@ type disburseInfo struct {
 }
 
 const (
-	TIGO_USERNAME            = "TIGO_USERNAME"
-	TIGO_PASSWORD            = "TIGO_PASSWORD"
-	TIGO_ACCOUNT_NAME        = "TIGO_ACCOUNT_NAME"
-	TIGO_ACCOUNT_MSISDN      = "TIGO_ACCOUNT_MSISDN"
-	TIGO_BRAND_ID            = "TIGO_BRAND_ID"
-	TIGO_BILLER_CODE         = "TIGO_BILLER_CODE"
-	TIGO_A2W_URL             = "TIGO_A2W_URL"
-	TIGO_NAMECHECK_URL       = "TIGO_NAMECHECK_URL"
-	TIGO_W2A_URL             = "TIGO_W2A_URL"
-	TIGO_DISBURSEMENT_PIN    = "TIGO_DISBURSEMENT_PIN"
+	TIGO_USERNAME         = "TIGO_USERNAME"
+	TIGO_PASSWORD         = "TIGO_PASSWORD"
+	TIGO_ACCOUNT_NAME     = "TIGO_ACCOUNT_NAME"
+	TIGO_ACCOUNT_MSISDN   = "TIGO_ACCOUNT_MSISDN"
+	TIGO_BRAND_ID         = "TIGO_BRAND_ID"
+	TIGO_BILLER_CODE      = "TIGO_BILLER_CODE"
+	TIGO_A2W_URL          = "TIGO_A2W_URL"
+	TIGO_NAMECHECK_URL    = "TIGO_NAMECHECK_URL"
+	TIGO_W2A_URL          = "TIGO_W2A_URL"
+	TIGO_DISBURSEMENT_PIN = "TIGO_DISBURSEMENT_PIN"
 )
 
 type App struct {
@@ -39,7 +40,7 @@ type App struct {
 func (app *App) disburseHandler(writer http.ResponseWriter, request *http.Request) {
 	var info disburseInfo
 	//	// Try to decode the request body into the struct. If there is an error,
-	// respond to the client with the error message and a 400 status code.
+	// respond to the pkg with the error message and a 400 status code.
 	err := json.NewDecoder(request.Body).Decode(&info)
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusBadRequest)
@@ -78,7 +79,6 @@ func (app *App) disburseHandler(writer http.ResponseWriter, request *http.Reques
 
 }
 
-
 type User struct {
 	Name   string `json:"name"`
 	RefID  string `json:"ref_id"`
@@ -100,10 +100,10 @@ func MakeHandler(client *ussd.Client) http.Handler {
 	return router
 }
 
-func loadFromEnv() (conf ussd.Config, err error) {
+func loadFromEnv() (conf tigo.Config, err error) {
 
 	err = env.Load("tigo.env")
-	conf = ussd.Config{
+	conf = tigo.Config{
 		Username:                  os.Getenv(TIGO_USERNAME),
 		Password:                  os.Getenv(TIGO_PASSWORD),
 		AccountName:               os.Getenv(TIGO_ACCOUNT_NAME),
@@ -116,7 +116,7 @@ func loadFromEnv() (conf ussd.Config, err error) {
 		NameCheckRequestURL:       os.Getenv(TIGO_NAMECHECK_URL),
 	}
 
-	if err != nil{
+	if err != nil {
 		panic(err)
 	}
 
@@ -151,19 +151,26 @@ func main() {
 			Status: 2,
 		},
 	}
+	
+	checker := checker{usersMap}
 
-	check := checker{usersMap}
 
-	var opts [] ussd.ClientOption
+	var opts []tigo.ClientOption
 
 	opts = append(opts,
-		ussd.WithContext(context.Background()),
-		ussd.WithTimeout(time.Second*30),
-		ussd.WithLogger(os.Stderr),
-		ussd.WithHTTPClient(http.DefaultClient),
-		)
+		tigo.WithContext(context.Background()),
+		tigo.WithTimeout(time.Second*30),
+		tigo.WithLogger(os.Stderr),
+		tigo.WithHTTPClient(http.DefaultClient),
+	)
 
-	c := ussd.NewClient(conf,check.w2aFunc,check.nameFunc,opts...)
+	c := ussd.NewClient(&tigo.BaseClient{
+		Config:     conf,
+		HttpClient: nil,
+		Ctx:        nil,
+		Timeout:    0,
+		Logger:     nil,
+	},checker.w2aFunc,checker.nameFunc)
 
 	handler := MakeHandler(c)
 
@@ -173,7 +180,6 @@ func main() {
 		ReadTimeout:       30 * time.Second,
 		ReadHeaderTimeout: 30 * time.Second,
 		WriteTimeout:      30 * time.Second,
-
 	}
 
 	err = server.ListenAndServe()
@@ -187,12 +193,12 @@ type checker struct {
 	Users map[string]User
 }
 
-func (c *checker) w2aFunc(ctx context.Context, request ussd.WalletToAccountRequest) (ussd.WalletToAccountResponse,error) {
+func (c *checker) w2aFunc(ctx context.Context, request ussd.WalletToAccountRequest) (ussd.WalletToAccountResponse, error) {
 
 	user, found := c.checkUser(request.CustomerReferenceID)
 	refid := fmt.Sprintf("%s", strconv.FormatInt(time.Now().UnixNano(), 10))
 
-	if ! found{
+	if !found {
 		resp := ussd.WalletToAccountResponse{
 
 			Type:             ussd.SyncBillPayResponse,
@@ -206,9 +212,9 @@ func (c *checker) w2aFunc(ctx context.Context, request ussd.WalletToAccountReque
 			Content:          request.SenderName,
 		}
 
-		return resp,nil
-	}else{
-		if user.Status ==1 {
+		return resp, nil
+	} else {
+		if user.Status == 1 {
 			resp := ussd.WalletToAccountResponse{
 				Type:             ussd.SyncBillPayResponse,
 				TxnID:            request.TxnID,
@@ -220,8 +226,8 @@ func (c *checker) w2aFunc(ctx context.Context, request ussd.WalletToAccountReque
 				Flag:             "N",
 				Content:          request.SenderName,
 			}
-			return resp,nil
-		}else if user.Status ==2{
+			return resp, nil
+		} else if user.Status == 2 {
 			resp := ussd.WalletToAccountResponse{
 				Type:             ussd.SyncBillPayResponse,
 				TxnID:            request.TxnID,
@@ -233,7 +239,7 @@ func (c *checker) w2aFunc(ctx context.Context, request ussd.WalletToAccountReque
 				Flag:             "N",
 				Content:          request.SenderName,
 			}
-			return resp,nil
+			return resp, nil
 		}
 	}
 	resp := ussd.WalletToAccountResponse{
@@ -247,10 +253,10 @@ func (c *checker) w2aFunc(ctx context.Context, request ussd.WalletToAccountReque
 		Flag:             "Y",
 		Content:          request.SenderName,
 	}
-	return resp,nil
+	return resp, nil
 }
 
-func (c *checker) nameFunc(ctx context.Context, request ussd.SubscriberNameRequest) (ussd.SubscriberNameResponse,error){
+func (c *checker) nameFunc(ctx context.Context, request ussd.SubscriberNameRequest) (ussd.SubscriberNameResponse, error) {
 
 	user, found := c.checkUser(request.CustomerReferenceID)
 	if !found {
@@ -264,7 +270,7 @@ func (c *checker) nameFunc(ctx context.Context, request ussd.SubscriberNameReque
 			Content:   "User is not known",
 		}
 
-		return resp,nil
+		return resp, nil
 	} else {
 		if user.Status == 1 {
 
@@ -278,7 +284,7 @@ func (c *checker) nameFunc(ctx context.Context, request ussd.SubscriberNameReque
 				Content:   fmt.Sprintf("%s", user.Name),
 			}
 
-			return resp,nil
+			return resp, nil
 		}
 
 		if user.Status == 2 {
@@ -292,7 +298,7 @@ func (c *checker) nameFunc(ctx context.Context, request ussd.SubscriberNameReque
 				Content:   fmt.Sprintf("%s", user.Name),
 			}
 
-			return resp,nil
+			return resp, nil
 		}
 
 		resp := ussd.SubscriberNameResponse{
@@ -304,7 +310,7 @@ func (c *checker) nameFunc(ctx context.Context, request ussd.SubscriberNameReque
 			Flag:      "Y",
 			Content:   fmt.Sprintf("%s", user.Name),
 		}
-		return resp,nil
+		return resp, nil
 	}
 
 }

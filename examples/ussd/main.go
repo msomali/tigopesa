@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	env "github.com/joho/godotenv"
+	"github.com/techcraftt/tigosdk/pkg/tigo"
 	"github.com/techcraftt/tigosdk/ussd"
 	"log"
 	"net/http"
@@ -99,10 +100,10 @@ func MakeHandler(client *ussd.Client) http.Handler {
 	return router
 }
 
-func loadFromEnv() (conf ussd.Config, err error) {
+func loadFromEnv() (conf tigo.Config, err error) {
 
 	err = env.Load("tigo.env")
-	conf = ussd.Config{
+	conf = tigo.Config{
 		Username:                  os.Getenv(TIGO_USERNAME),
 		Password:                  os.Getenv(TIGO_PASSWORD),
 		AccountName:               os.Getenv(TIGO_ACCOUNT_NAME),
@@ -150,19 +151,26 @@ func main() {
 			Status: 2,
 		},
 	}
+	
+	checker := checker{usersMap}
 
-	check := checker{usersMap}
 
-	var opts []ussd.ClientOption
+	var opts []tigo.ClientOption
 
 	opts = append(opts,
-		ussd.WithContext(context.Background()),
-		ussd.WithTimeout(time.Second*30),
-		ussd.WithLogger(os.Stderr),
-		ussd.WithHTTPClient(http.DefaultClient),
+		tigo.WithContext(context.Background()),
+		tigo.WithTimeout(time.Second*30),
+		tigo.WithLogger(os.Stderr),
+		tigo.WithHTTPClient(http.DefaultClient),
 	)
 
-	c := ussd.NewClient(conf, check.w2aFunc, check.nameFunc, opts...)
+	c := ussd.NewClient(&tigo.BaseClient{
+		Config:     conf,
+		HttpClient: nil,
+		Ctx:        nil,
+		Timeout:    0,
+		Logger:     nil,
+	},checker.w2aFunc,checker.nameFunc)
 
 	handler := MakeHandler(c)
 

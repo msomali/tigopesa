@@ -1,7 +1,15 @@
-# tigo
-fully compliant tigo integration library in Go
+# tigosdk
+tigosdk is open sourced fully compliant tigo pesa client written in golang
 
-## import
+
+## contents
+1. [usage](#usage)
+2. [contributors](#contributors)
+3. [sponsors](#sponsors)
+4. [Projects](#projects)
+5. [Example](#example)
+
+## usage
 ```bash
 
 go get https://github.com/techcraftt/tigosdk
@@ -10,10 +18,26 @@ go get https://github.com/techcraftt/tigosdk
 
 ```go
 import (
-   ...
    "github.com/techcraftt/tigosdk"
 )
 ```
+
+## links
+
+## contributors
+
+1. [Bethuel Mmbaga]()
+2. [Frances Ruganyumisa]()
+3. [Pius Alfred]()
+
+## sponsors
+
+[Techcraft Technologies Co. LTD]()
+
+## projects
+The List of projects using this library
+
+1. [PAYCRAFT]() - Full-Fledged Payment as a Service
 
 ## example
 Follow these procedures to run the ussd example

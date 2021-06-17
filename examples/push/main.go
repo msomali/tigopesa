@@ -44,10 +44,8 @@ func main() {
 		log.Fatalln(err.Error())
 	}
 
-
-
 	a := &app{
-		pushpay:     push.NewClient(&tigo.BaseClient{
+		pushpay: push.NewClient(&tigo.BaseClient{
 			Config:     config,
 			HttpClient: nil,
 			Ctx:        nil,
@@ -138,7 +136,7 @@ func loadFromEnv() (conf tigo.Config, err error) {
 		Username:              os.Getenv(TIGO_USERNAME),
 		Password:              os.Getenv(TIGO_PASSWORD),
 		BillerCode:            os.Getenv(TIGO_BILLER_CODE),
-		BillerMSISDN: strconv.FormatInt(billerMSISDN, 10),
+		BillerMSISDN:          strconv.FormatInt(billerMSISDN, 10),
 		GetTokenRequestURL:    os.Getenv(TIGO_GET_TOKEN_URL),
 		PushPayBillRequestURL: os.Getenv(TIGO_BILL_URL),
 		ApiBaseURL:            os.Getenv(TIGO_BASE_URL),

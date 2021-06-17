@@ -109,10 +109,7 @@ const (
 	WalletToAccount
 
 	//debugKey is the value that stores the debugging key is env file
-	debugKey            = "DEBUG"
-	SyncLookupResponse  = "SYNC_LOOKUP_RESPONSE"
-	SyncBillPayResponse = "SYNC_BILLPAY_RESPONSE"
-	REQMFCI             = "REQMFCI"
+	debugKey = "DEBUG"
 )
 
 var (

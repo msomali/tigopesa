@@ -64,16 +64,16 @@ func main() {
 		WalletToAccountRequestURL:    "",
 		NameCheckRequestURL:          "",
 	}
-	
+
 	var opts []tigo.ClientOption
-	
+
 	opts = append(
 		opts,
 		tigo.WithTimeout(time.Minute),
 		tigo.WithContext(context.Background()),
 		tigo.WithLogger(os.Stdout),
-		)
-	bc := tigo.NewBaseClient(conf,opts...)
+	)
+	bc := tigo.NewBaseClient(conf, opts...)
 
 	var names ussd.QuerySubscriberFunc
 	{
@@ -81,7 +81,7 @@ func main() {
 			return ussd.SubscriberNameResponse{}, nil
 		}
 	}
-	
+
 	var collector ussd.WalletToAccountFunc
 	{
 		collector = func(ctx context.Context, request ussd.WalletToAccountRequest) (ussd.WalletToAccountResponse, error) {
@@ -92,10 +92,10 @@ func main() {
 	{
 		provider = func(ctx context.Context, request push.BillPayCallbackRequest) *push.BillPayResponse {
 			return nil
-			
+
 		}
 	}
-	client := tsdk.NewClient(bc,names,collector,provider)
+	client := tsdk.NewClient(bc, names, collector, provider)
 
 	router := mux.NewRouter()
 
@@ -105,7 +105,6 @@ func main() {
 
 	router.HandleFunc(client.AccountToWalletRequestURL, disburseHandleFunc).Methods(http.MethodPost)
 
-
 	svc := &http.Server{
 		Addr:              ":8090",
 		Handler:           router,
@@ -113,10 +112,10 @@ func main() {
 		ReadHeaderTimeout: 30 * time.Second,
 		WriteTimeout:      30 * time.Second,
 	}
-	
+
 	app := Application{
-		Client:client,
-		svc: svc,
+		Client: client,
+		svc:    svc,
 	}
 
 	err := app.svc.ListenAndServe()
@@ -126,5 +125,5 @@ func main() {
 }
 
 func disburseHandleFunc(writer http.ResponseWriter, request *http.Request) {
-	
+
 }

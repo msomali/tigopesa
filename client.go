@@ -37,8 +37,8 @@ var _ Service = (*Client)(nil)
 type (
 	Client struct {
 		*tigo.BaseClient
-		ussd              *ussd.Client
-		push              *push.Client
+		ussd *ussd.Client
+		push *push.Client
 	}
 
 	Service interface {
@@ -81,9 +81,9 @@ func NewClient(bc *tigo.BaseClient, namesHandler ussd.QuerySubscriberFunc,
 
 	//todo: set push client avoid returning error in constructor
 	client := &Client{
-		BaseClient:        bc,
-		ussd:              ussd.NewClient(bc, collectionHandler, namesHandler),
-		push:              push.NewClient(bc, provider),
+		BaseClient: bc,
+		ussd:       ussd.NewClient(bc, collectionHandler, namesHandler),
+		push:       push.NewClient(bc, provider),
 	}
 
 	return client

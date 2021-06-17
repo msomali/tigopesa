@@ -151,9 +151,8 @@ func main() {
 			Status: 2,
 		},
 	}
-	
-	checker := checker{usersMap}
 
+	checker := checker{usersMap}
 
 	var opts []tigo.ClientOption
 
@@ -170,7 +169,7 @@ func main() {
 		Ctx:        nil,
 		Timeout:    0,
 		Logger:     nil,
-	},checker.w2aFunc,checker.nameFunc)
+	}, checker.w2aFunc, checker.nameFunc)
 
 	handler := MakeHandler(c)
 
@@ -204,11 +203,11 @@ func (c *checker) w2aFunc(ctx context.Context, request ussd.WalletToAccountReque
 			Type:             ussd.SyncBillPayResponse,
 			TxnID:            request.TxnID,
 			RefID:            refid,
-			Result:           "TF",
-			ErrorCode:        "error010",
+			Result:           ussd.FailedTxnResult,
+			ErrorCode:        ussd.ErrInvalidCustomerRefNumber,
 			ErrorDescription: "User Not Found",
 			Msisdn:           request.Msisdn,
-			Flag:             "N",
+			Flag:             ussd.NoFlag,
 			Content:          request.SenderName,
 		}
 
@@ -220,7 +219,7 @@ func (c *checker) w2aFunc(ctx context.Context, request ussd.WalletToAccountReque
 				TxnID:            request.TxnID,
 				RefID:            refid,
 				Result:           "TF",
-				ErrorCode:        ussd.W2A_ERR_INVALID_CUSTOMER_REF_NUMBER,
+				ErrorCode:        ussd.ErrInvalidCustomerRefNumber,
 				ErrorDescription: "Invalid Customer ref Number",
 				Msisdn:           request.Msisdn,
 				Flag:             "N",
@@ -233,7 +232,7 @@ func (c *checker) w2aFunc(ctx context.Context, request ussd.WalletToAccountReque
 				TxnID:            request.TxnID,
 				RefID:            refid,
 				Result:           "TF",
-				ErrorCode:        ussd.W2A_ERR_CUSTOMER_REF_NUM_LOCKED,
+				ErrorCode:        ussd.ErrCustomerRefNumLocked,
 				ErrorDescription: "Customer Locked",
 				Msisdn:           request.Msisdn,
 				Flag:             "N",
@@ -291,7 +290,7 @@ func (c *checker) nameFunc(ctx context.Context, request ussd.SubscriberNameReque
 			resp := ussd.SubscriberNameResponse{
 				Type:      ussd.SyncLookupResponse,
 				Result:    "TF",
-				ErrorCode: "error030",
+				ErrorCode: ussd.ErrNameInvalidFormat,
 				ErrorDesc: "Transaction Failed: Format not known",
 				Msisdn:    request.Msisdn,
 				Flag:      "N",
@@ -303,11 +302,11 @@ func (c *checker) nameFunc(ctx context.Context, request ussd.SubscriberNameReque
 
 		resp := ussd.SubscriberNameResponse{
 			Type:      ussd.SyncLookupResponse,
-			Result:    "TS",
-			ErrorCode: "error000",
+			Result:    ussd.SucceededTxnResult,
+			ErrorCode: ussd.NoNamecheckErr,
 			ErrorDesc: "Transaction Successfully",
 			Msisdn:    request.Msisdn,
-			Flag:      "Y",
+			Flag:      ussd.YesFlag,
 			Content:   fmt.Sprintf("%s", user.Name),
 		}
 		return resp, nil

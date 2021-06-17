@@ -1,13 +1,14 @@
 # tigosdk
-tigosdk is open sourced fully compliant tigo pesa client written in golang
+tigosdk is open source fully compliant tigo pesa client written in golang
 
 
 ## contents
 1. [usage](#usage)
-2. [contributors](#contributors)
-3. [sponsors](#sponsors)
-4. [Projects](#projects)
-5. [Example](#example)
+2. [example](#example)
+2. [projects](#projects)
+3. [links](#links)
+4. [contributors](#contributors)
+5. [sponsors](#sponsers)
 
 ## usage
 ```bash
@@ -22,22 +23,6 @@ import (
 )
 ```
 
-## links
-
-## contributors
-
-1. [Bethuel Mmbaga]()
-2. [Frances Ruganyumisa]()
-3. [Pius Alfred]()
-
-## sponsors
-
-[Techcraft Technologies Co. LTD]()
-
-## projects
-The List of projects using this library
-
-1. [PAYCRAFT]() - Full-Fledged Payment as a Service
 
 ## example
 Follow these procedures to run the ussd example
@@ -65,3 +50,22 @@ then run these commands
 go build -o ussd && ./ussd
 
 ```
+
+
+
+## projects
+The List of projects using this library
+
+1. [PAYCRAFT]() - Full-Fledged Payment as a Service
+
+## links
+
+## contributors
+
+1. [Bethuel Mmbaga]()
+2. [Frances Ruganyumisa]()
+3. [Pius Alfred]()
+
+## sponsors
+
+[Techcraft Technologies Co. LTD]()

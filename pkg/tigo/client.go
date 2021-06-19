@@ -50,23 +50,23 @@ var (
 
 type (
 	Config struct {
-		Username                     string
-		Password                     string
-		PasswordGrantType            string
-		AccountName                  string
-		AccountMSISDN                string
-		BrandID                      string
-		BillerCode                   string
-		BillerMSISDN                 string
-		ApiBaseURL                   string
-		GetTokenRequestURL           string
-		PushPayBillRequestURL        string
-		PushPayReverseTransactionURL string
-		PushPayHealthCheckURL        string
-		AccountToWalletRequestURL    string
-		AccountToWalletRequestPIN    string
-		WalletToAccountRequestURL    string
-		NameCheckRequestURL          string
+		//Username                     string
+		//Password                     string
+		//PasswordGrantType            string
+		//AccountName                  string
+		//AccountMSISDN                string
+		//BrandID                      string
+		//BillerCode                   string
+		//BillerMSISDN                 string
+		//ApiBaseURL                   string
+		//GetTokenRequestURL           string
+		//PushPayBillRequestURL        string
+		//PushPayReverseTransactionURL string
+		//PushPayHealthCheckURL        string
+		//AccountToWalletRequestURL    string
+		//AccountToWalletRequestPIN    string
+		//WalletToAccountRequestURL    string
+		//NameCheckRequestURL          string
 	}
 
 	loggingTransport struct {
@@ -79,7 +79,7 @@ type (
 	ClientOption func(client *BaseClient)
 
 	BaseClient struct {
-		Config
+		//Config
 		HttpClient *http.Client
 		Ctx        context.Context
 		Timeout    time.Duration
@@ -177,9 +177,9 @@ func WithHTTPClient(c *http.Client) ClientOption {
 	}
 }
 
-func NewBaseClient(config Config, opts ...ClientOption) *BaseClient {
+func NewBaseClient(opts ...ClientOption) *BaseClient {
 	client := &BaseClient{
-		Config:     config,
+		//Config:     config,
 		HttpClient: defaultHttpClient,
 		Logger:     defaultWriter,
 		Timeout:    defaultTimeout,

@@ -50,6 +50,19 @@ var (
 )
 
 type (
+
+	Config struct {
+		Username string
+		Password string
+		PasswordGrantType string
+		ApiBaseURL string
+		GetTokenURL string
+		BillerMSISDN string
+		BillerCode string
+		PushPayURL string
+		ReverseTransactionURL string
+		HealthCheckURL string
+	}
 	PayloadType string
 
 	// CallbackProvider check and reports the status of the transaction.
@@ -71,6 +84,7 @@ type (
 	}
 
 	Client struct {
+		Config
 		*tigo.BaseClient
 		authToken          string
 		authTokenExpiresAt time.Time
@@ -82,7 +96,7 @@ func (c *Client) BillPay(ctx context.Context, billPaymentReq BillPayRequest) (*B
 	var billPayResp = &BillPayResponse{}
 
 	billPaymentReq.BillerMSISDN = c.BillerMSISDN
-	req, err := c.NewRequest(http.MethodPost, c.PushPayBillRequestURL, JSONPayload, &billPaymentReq)
+	req, err := c.NewRequest(http.MethodPost, c.PushPayURL, JSONPayload, &billPaymentReq)
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +137,7 @@ func (c *Client) BillPayCallback(ctx context.Context) http.HandlerFunc {
 func (c *Client) RefundPayment(ctx context.Context, refundPaymentReq RefundPaymentRequest) (*RefundPaymentResponse, error) {
 	var refundPaymentResp = &RefundPaymentResponse{}
 
-	req, err := c.NewRequest(http.MethodPost, c.PushPayReverseTransactionURL, JSONPayload, refundPaymentReq)
+	req, err := c.NewRequest(http.MethodPost, c.ReverseTransactionURL, JSONPayload, refundPaymentReq)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +152,7 @@ func (c *Client) RefundPayment(ctx context.Context, refundPaymentReq RefundPayme
 func (c *Client) HealthCheck(ctx context.Context, healthCheckReq HealthCheckRequest) (*HealthCheckResponse, error) {
 	var healthCheckResp = &HealthCheckResponse{}
 
-	req, err := c.NewRequest(http.MethodPost, c.PushPayHealthCheckURL, JSONPayload, healthCheckReq)
+	req, err := c.NewRequest(http.MethodPost, c.HealthCheckURL, JSONPayload, healthCheckReq)
 	if err != nil {
 		return nil, err
 	}
@@ -197,7 +211,7 @@ func (c *Client) getAuthToken() (string, error) {
 	}{}
 
 	ctx, _ := context.WithTimeout(context.Background(), 60*time.Second)
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.ApiBaseURL+c.GetTokenRequestURL, strings.NewReader(form.Encode()))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.ApiBaseURL+c.GetTokenURL, strings.NewReader(form.Encode()))
 	if err != nil {
 		return "", err
 	}

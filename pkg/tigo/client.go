@@ -201,7 +201,7 @@ func NewBaseClient(opts ...ClientOption) *BaseClient {
 	return client
 }
 
-func Log(writer io.Writer, request *http.Request, response *http.Response) {
+func (client *BaseClient)Log(request *http.Request, response *http.Response) {
 
 	errors := make(chan error)
 	done := make(chan bool)
@@ -212,7 +212,7 @@ func Log(writer io.Writer, request *http.Request, response *http.Response) {
 			if err != nil {
 				errors <- fmt.Errorf("could not dump request due to: %s\n", err.Error())
 			}
-			_, err = fmt.Fprintf(writer, "request %s\n", reqDump)
+			_, err = fmt.Fprintf(client.Logger, "request %s\n", reqDump)
 			if err != nil {
 				errors <- fmt.Errorf("could not print  request due to: %s\n", err.Error())
 			}
@@ -227,7 +227,7 @@ func Log(writer io.Writer, request *http.Request, response *http.Response) {
 			if err != nil {
 				errors <- fmt.Errorf("could not dump response due to: %s\n", err.Error())
 			}
-			_, err = fmt.Fprintf(writer, "response:  %s\n", respDump)
+			_, err = fmt.Fprintf(client.Logger, "response:  %s\n", respDump)
 
 			if err != nil {
 				errors <- fmt.Errorf("could not print out response due to: %s\n", err.Error())

@@ -161,7 +161,7 @@ func (client *Client) NameQueryHandler(writer http.ResponseWriter, request *http
 	//todo: log here
 	go func(debugMode bool) {
 		if client.DebugMode{
-			tigo.Log(client.Logger,request,nil)
+			client.Log(request,nil)
 		}
 
 		//xmlResponse is not exactly *http.Response hence we passed nil
@@ -208,7 +208,7 @@ func (client *Client) PaymentHandler(writer http.ResponseWriter, request *http.R
 	//todo: log here
 	go func(debugMode bool) {
 		if client.DebugMode{
-			tigo.Log(client.Logger,request,nil)
+			client.Log(request,nil)
 		}
 
 		//xmlResponse is not exactly *http.Response hence we passed nil
@@ -217,6 +217,7 @@ func (client *Client) PaymentHandler(writer http.ResponseWriter, request *http.R
 
 		return
 	}(client.DebugMode)
+
 
 	writer.Header().Set("Content-Type", "application/xml")
 	_, _ = writer.Write(xmlResponse)

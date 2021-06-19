@@ -11,7 +11,6 @@ import (
 )
 
 const (
-	debugKey       = "DEBUG"
 	defaultTimeout = time.Minute
 )
 
@@ -36,6 +35,7 @@ var (
 	// for logging all requests and responses  that a HTTPClient owned by Client
 	// sent and receives
 	defaultLoggerTransport = loggingTransport{
+		debugMode: false,
 		logger: defaultWriter,
 		next:   http.DefaultTransport,
 	}
@@ -70,6 +70,7 @@ type (
 	}
 
 	loggingTransport struct {
+		debugMode bool
 		logger io.Writer
 		next   http.RoundTripper
 	}
@@ -90,7 +91,7 @@ type (
 
 func (l loggingTransport) RoundTrip(request *http.Request) (response *http.Response, err error) {
 
-	if os.Getenv(debugKey) == "true" && request != nil {
+	if l.debugMode && request != nil {
 		reqDump, err := httputil.DumpRequestOut(request, true)
 		if err != nil {
 			return nil, err
@@ -102,7 +103,7 @@ func (l loggingTransport) RoundTrip(request *http.Request) (response *http.Respo
 
 	}
 	defer func() {
-		if response != nil && os.Getenv(debugKey) == "true" {
+		if response != nil && l.debugMode{
 			respDump, err := httputil.DumpResponse(response, true)
 			_, err = l.logger.Write([]byte(fmt.Sprintf("Response %s\n", string(respDump))))
 			if err != nil {
@@ -133,6 +134,14 @@ func WithTimeout(timeout time.Duration) ClientOption {
 	}
 }
 
+
+// WithDebugMode set debug mode to true or false
+func WithDebugMode(debugMode bool)ClientOption{
+	return func(client *BaseClient) {
+		client.DebugMode = debugMode
+	}
+}
+
 // WithLogger set a Logger of user preference but of type io.Writer
 // that will be used for debugging use cases. A default value is os.Stderr
 // it can be replaced by any io.Writer unless its nil which in that case
@@ -154,15 +163,14 @@ func WithLogger(out io.Writer) ClientOption {
 func WithHTTPClient(c *http.Client) ClientOption {
 
 	// TODO check if its really necessary to set the default Timeout to 1 minute
-	//if c.Timeout == 0 {
-	//	c.Timeout = defaultTimeout
-	//}
+
 	return func(client *BaseClient) {
 		if c == nil {
 			return
 		}
 
 		lt := loggingTransport{
+			debugMode: client.DebugMode,
 			logger: client.Logger,
 			next:   c.Transport,
 		}
@@ -184,6 +192,7 @@ func NewBaseClient(opts ...ClientOption) *BaseClient {
 		Logger:     defaultWriter,
 		Timeout:    defaultTimeout,
 		Ctx:        defaultCtx,
+		DebugMode: false,
 	}
 
 	for _, opt := range opts {

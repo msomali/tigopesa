@@ -3,11 +3,9 @@ package wa
 import (
 	"context"
 	"encoding/xml"
-	"fmt"
 	"github.com/techcraftt/tigosdk/pkg/tigo"
 	"io/ioutil"
 	"net/http"
-	"net/http/httputil"
 )
 
 const (
@@ -160,11 +158,18 @@ func (client *Client) NameQueryHandler(writer http.ResponseWriter, request *http
 		return
 	}
 
-	//todo: inject logger
-	if client.Logger != nil && client.DebugMode {
-		reqDump, _ := httputil.DumpRequestOut(request, true)
-		_, _ = client.Logger.Write([]byte(fmt.Sprintf("Request: %s\nResponse: %s\n", string(reqDump), string(xmlResponse))))
-	}
+	//todo: log here
+	go func(debugMode bool) {
+		if client.DebugMode{
+			tigo.Log(client.Logger,request,nil)
+		}
+
+		//xmlResponse is not exactly *http.Response hence we passed nil
+		//on the tigo.Log() func. but for purpose of logging
+		_,_ = client.Logger.Write(xmlResponse)
+
+		return
+	}(client.DebugMode)
 
 	writer.Header().Set("Content-Type", "application/xml")
 	_, _ = writer.Write(xmlResponse)
@@ -193,17 +198,25 @@ func (client *Client) PaymentHandler(writer http.ResponseWriter, request *http.R
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
 
+
 	xmlResponse, err := xml.MarshalIndent(response, "", "  ")
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	//todo: inject logger
-	if client.Logger != nil && client.DebugMode {
-		reqDump, _ := httputil.DumpRequestOut(request, true)
-		_, _ = client.Logger.Write([]byte(fmt.Sprintf("Request: %s\nResponse: %s\n", string(reqDump), string(xmlResponse))))
-	}
+	//todo: log here
+	go func(debugMode bool) {
+		if client.DebugMode{
+			tigo.Log(client.Logger,request,nil)
+		}
+
+		//xmlResponse is not exactly *http.Response hence we passed nil
+		//on the tigo.Log() func. but for purpose of logging
+		_,_ = client.Logger.Write(xmlResponse)
+
+		return
+	}(client.DebugMode)
 
 	writer.Header().Set("Content-Type", "application/xml")
 	_, _ = writer.Write(xmlResponse)

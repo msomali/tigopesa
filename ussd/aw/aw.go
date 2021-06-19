@@ -82,9 +82,17 @@ func (client *Client) Do(ctx context.Context, request DisburseRequest) (response
 	req = req.WithContext(ctx)
 
 	resp, err := client.HttpClient.Do(req)
+
 	if err != nil {
 		return
 	}
+
+	//todo: log here:
+	go func(debugMode bool) {
+		if client.DebugMode{
+			tigo.Log(client.Logger,req,resp)
+		}
+	}(client.DebugMode)
 
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()

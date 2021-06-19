@@ -1,6 +1,8 @@
 package ussd
 
-import "encoding/xml"
+import (
+	"encoding/xml"
+)
 
 const (
 	TXN_STATUS_200   = "200"
@@ -41,7 +43,7 @@ const (
 
 	// WalletToAccount error codes
 
-	WalletToAccountSuccessTxn   = "error000"
+	ErrSuccessTxn   = "error000"
 	ErrServiceNotAvailable      = "error001"
 	ErrInvalidCustomerRefNumber = "error010"
 	ErrCustomerRefNumLocked     = "error011"
@@ -151,6 +153,7 @@ type (
 		Flag             string   `xml:"FLAG"`
 		Content          string   `xml:"CONTENT"`
 	}
+
 )
 
 func TxnStatusDesc(errCode string) (string, bool) {

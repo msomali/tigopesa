@@ -11,24 +11,23 @@ import (
 )
 
 var (
-	_ DisburseHandler = (*DisburseHandleFunc)(nil)
+	_ DisburseHandler = (*DisburseHandlerFunc)(nil)
 	_ DisburseHandler = (*Client)(nil)
 )
 
 type (
-
 	DisburseHandler interface {
-		Disburse(ctx context.Context,request DisburseRequest)(DisburseResponse, error)
+		Disburse(ctx context.Context, request DisburseRequest) (DisburseResponse, error)
 	}
 
-	DisburseHandleFunc func(ctx context.Context,request DisburseRequest)(DisburseResponse, error)
+	DisburseHandlerFunc func(ctx context.Context, request DisburseRequest) (DisburseResponse, error)
 
 	Config struct {
-		AccountName string
+		AccountName   string
 		AccountMSISDN string
-		BrandID string
-		PIN string
-		RequestURL string
+		BrandID       string
+		PIN           string
+		RequestURL    string
 	}
 
 	DisburseRequest struct {
@@ -56,10 +55,9 @@ type (
 	}
 
 	Client struct {
-		Config
-		tigo.BaseClient
+		*Config
+		*tigo.BaseClient
 	}
-
 )
 
 func (client *Client) Disburse(ctx context.Context, request DisburseRequest) (response DisburseResponse, err error) {
@@ -107,8 +105,6 @@ func (client *Client) Disburse(ctx context.Context, request DisburseRequest) (re
 	return
 }
 
-func (handler DisburseHandleFunc) Disburse(ctx context.Context, request DisburseRequest) (DisburseResponse, error) {
-	return handler(ctx,request)
+func (handler DisburseHandlerFunc) Disburse(ctx context.Context, request DisburseRequest) (DisburseResponse, error) {
+	return handler(ctx, request)
 }
-
-

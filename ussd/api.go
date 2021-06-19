@@ -43,7 +43,7 @@ const (
 
 	// WalletToAccount error codes
 
-	ErrSuccessTxn   = "error000"
+	ErrSuccessTxn               = "error000"
 	ErrServiceNotAvailable      = "error001"
 	ErrInvalidCustomerRefNumber = "error010"
 	ErrCustomerRefNumLocked     = "error011"
@@ -153,7 +153,6 @@ type (
 		Flag             string   `xml:"FLAG"`
 		Content          string   `xml:"CONTENT"`
 	}
-
 )
 
 func TxnStatusDesc(errCode string) (string, bool) {

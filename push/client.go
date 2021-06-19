@@ -50,18 +50,17 @@ var (
 )
 
 type (
-
 	Config struct {
-		Username string
-		Password string
-		PasswordGrantType string
-		ApiBaseURL string
-		GetTokenURL string
-		BillerMSISDN string
-		BillerCode string
-		PushPayURL string
+		Username              string
+		Password              string
+		PasswordGrantType     string
+		ApiBaseURL            string
+		GetTokenURL           string
+		BillerMSISDN          string
+		BillerCode            string
+		PushPayURL            string
 		ReverseTransactionURL string
-		HealthCheckURL string
+		HealthCheckURL        string
 	}
 	PayloadType string
 

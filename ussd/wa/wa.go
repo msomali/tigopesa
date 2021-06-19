@@ -11,8 +11,37 @@ import (
 	"os"
 )
 
-type (
+const (
 
+	//NameQuery Error Codes
+
+	ErrNameNotRegistered = "error010"
+	ErrNameInvalidFormat = "error030"
+	ErrNameUserSuspended = "error030"
+	NoNamecheckErr       = "error000"
+
+	//WalletToAccount error codes
+
+	ErrSuccessTxn               = "error000"
+	ErrServiceNotAvailable      = "error001"
+	ErrInvalidCustomerRefNumber = "error010"
+	ErrCustomerRefNumLocked     = "error011"
+	ErrInvalidAmount            = "error012"
+	ErrAmountInsufficient       = "error013"
+	ErrAmountTooHigh            = "error014"
+	ErrAmountTooLow             = "error015"
+	ErrInvalidPayment           = "error016"
+	ErrGeneralError             = "error100"
+	ErrRetryConditionNoResponse = "error111"
+)
+
+var (
+	_ PayHandler  = (*PayHandlerFunc)(nil)
+	_ NameHandler = (*NameHandlerFunc)(nil)
+	_ Service     = (*Client)(nil)
+)
+
+type (
 	Service interface {
 		NameQueryHandler(writer http.ResponseWriter, request *http.Request)
 
@@ -87,43 +116,12 @@ type (
 	}
 
 	Client struct {
-		tigo.BaseClient
-		Config
-		PayHandler PayHandler
+		*tigo.BaseClient
+		*Config
+		PayHandler  PayHandler
 		NameHandler NameHandler
-		DebugMode bool
+		DebugMode   bool
 	}
-)
-
-
-const (
-
-	//NameQuery Error Codes
-
-	ErrNameNotRegistered = "error010"
-	ErrNameInvalidFormat = "error030"
-	ErrNameUserSuspended = "error030"
-	NoNamecheckErr       = "error000"
-
-	//WalletToAccount error codes
-
-	ErrSuccessTxn               = "error000"
-	ErrServiceNotAvailable      = "error001"
-	ErrInvalidCustomerRefNumber = "error010"
-	ErrCustomerRefNumLocked     = "error011"
-	ErrInvalidAmount            = "error012"
-	ErrAmountInsufficient       = "error013"
-	ErrAmountTooHigh            = "error014"
-	ErrAmountTooLow             = "error015"
-	ErrInvalidPayment           = "error016"
-	ErrGeneralError             = "error100"
-	ErrRetryConditionNoResponse = "error111"
-)
-
-var (
-	_ PayHandler  = (*PayHandlerFunc)(nil)
-	_ NameHandler = (*NameHandlerFunc)(nil)
-	_ Service     = (*Client)(nil)
 )
 
 func (handler PayHandlerFunc) Do(ctx context.Context, request PayRequest) (PayResponse, error) {
@@ -133,8 +131,6 @@ func (handler PayHandlerFunc) Do(ctx context.Context, request PayRequest) (PayRe
 func (handler NameHandlerFunc) Do(ctx context.Context, request NameRequest) (NameResponse, error) {
 	return handler(ctx, request)
 }
-
-
 
 func (client *Client) NameQueryHandler(writer http.ResponseWriter, request *http.Request) {
 
@@ -166,7 +162,7 @@ func (client *Client) NameQueryHandler(writer http.ResponseWriter, request *http
 	}
 
 	//todo: inject logger
-	if client.Logger != nil && client.DebugMode{
+	if client.Logger != nil && client.DebugMode {
 		reqDump, _ := httputil.DumpRequestOut(request, true)
 		_, _ = client.Logger.Write([]byte(fmt.Sprintf("Request: %s\nResponse: %s\n", string(reqDump), string(xmlResponse))))
 	}

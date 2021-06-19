@@ -89,8 +89,8 @@ func (client *Client) Do(ctx context.Context, request DisburseRequest) (response
 
 	//todo: log here:
 	go func(debugMode bool) {
-		if client.DebugMode{
-			tigo.Log(client.Logger,req,resp)
+		if debugMode{
+			client.Log(req,resp)
 		}
 	}(client.DebugMode)
 

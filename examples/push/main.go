@@ -34,7 +34,7 @@ type (
 
 	app struct {
 		pushpay     push.Service
-		transaction map[string]push.BillPayRequest
+		transaction map[string]push.PayRequest
 	}
 )
 
@@ -51,10 +51,10 @@ func main() {
 			Ctx:        nil,
 			Timeout:    0,
 			Logger:     nil,
-		}, func(ctx context.Context, request push.BillPayCallbackRequest) *push.BillPayResponse {
+		}, func(ctx context.Context, request push.CallbackRequest) *push.PayResponse {
 			return nil
 		}),
-		transaction: map[string]push.BillPayRequest{},
+		transaction: map[string]push.PayRequest{},
 	}
 
 	router := mux.NewRouter()
@@ -80,7 +80,7 @@ func (a *app) pushPayHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 
-	billRequest := push.BillPayRequest{
+	billRequest := push.PayRequest{
 		CustomerMSISDN: strconv.FormatInt(req.CustomerMSSID, 10),
 		Amount:         req.Amount,
 		Remarks:        req.Remarks,
@@ -104,9 +104,9 @@ func (a *app) pushPayCallbackHandler(w http.ResponseWriter, r *http.Request) {
 	a.pushpay.BillPayCallback(context.Background())
 }
 
-func (a *app) callbackProvider(ctx context.Context, billPayRequest push.BillPayCallbackRequest) *push.BillPayResponse {
+func (a *app) callbackProvider(ctx context.Context, billPayRequest push.CallbackRequest) *push.PayResponse {
 	if !billPayRequest.Status {
-		return &push.BillPayResponse{
+		return &push.PayResponse{
 			ResponseCode:        "BILLER-18-3020-E",
 			ResponseStatus:      false,
 			ResponseDescription: "Callback failed",
@@ -114,7 +114,7 @@ func (a *app) callbackProvider(ctx context.Context, billPayRequest push.BillPayC
 		}
 	}
 
-	return &push.BillPayResponse{
+	return &push.PayResponse{
 		ResponseCode:        "BILLER-18-0000-S",
 		ResponseStatus:      true,
 		ResponseDescription: "Callback successful",

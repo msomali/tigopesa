@@ -35,7 +35,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"net/http/httputil"
 	"net/url"
 	"os"
 	"strings"
@@ -66,17 +65,17 @@ type (
 
 	// CallbackProvider check and reports the status of the transaction.
 	// if transaction status
-	CallbackProvider func(context.Context, BillPayCallbackRequest) *BillPayResponse
+	CallbackProvider func(context.Context, CallbackRequest) *PayResponse
 
 	Service interface {
 		// BillPay initiate Service payment flow to deduct a specific amount from customer's Tigo pesa wallet.
-		BillPay(context.Context, BillPayRequest) (*BillPayResponse, error)
+		BillPay(context.Context, PayRequest) (*PayResponse, error)
 
 		// BillPayCallback handle push callback request.
 		BillPayCallback(context.Context) http.HandlerFunc
 
 		// RefundPayment initiate payment refund and will be processed only if the payment was successful.
-		RefundPayment(context.Context, RefundPaymentRequest) (*RefundPaymentResponse, error)
+		RefundPayment(context.Context, RefundRequest) (*RefundResponse, error)
 
 		// HealthCheck check if Tigo Pesa Service API is up and running.
 		HealthCheck(context.Context, HealthCheckRequest) (*HealthCheckResponse, error)
@@ -91,8 +90,8 @@ type (
 	}
 )
 
-func (c *Client) BillPay(ctx context.Context, billPaymentReq BillPayRequest) (*BillPayResponse, error) {
-	var billPayResp = &BillPayResponse{}
+func (c *Client) BillPay(ctx context.Context, billPaymentReq PayRequest) (*PayResponse, error) {
+	var billPayResp = &PayResponse{}
 
 	billPaymentReq.BillerMSISDN = c.BillerMSISDN
 	req, err := c.NewRequest(http.MethodPost, c.PushPayURL, JSONPayload, &billPaymentReq)
@@ -108,7 +107,7 @@ func (c *Client) BillPay(ctx context.Context, billPaymentReq BillPayRequest) (*B
 }
 
 func (c *Client) BillPayCallback(ctx context.Context) http.HandlerFunc {
-	var callbackRequest BillPayCallbackRequest
+	var callbackRequest CallbackRequest
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -133,8 +132,8 @@ func (c *Client) BillPayCallback(ctx context.Context) http.HandlerFunc {
 	}
 }
 
-func (c *Client) RefundPayment(ctx context.Context, refundPaymentReq RefundPaymentRequest) (*RefundPaymentResponse, error) {
-	var refundPaymentResp = &RefundPaymentResponse{}
+func (c *Client) RefundPayment(ctx context.Context, refundPaymentReq RefundRequest) (*RefundResponse, error) {
+	var refundPaymentResp = &RefundResponse{}
 
 	req, err := c.NewRequest(http.MethodPost, c.ReverseTransactionURL, JSONPayload, refundPaymentReq)
 	if err != nil {
@@ -255,10 +254,16 @@ func (c *Client) Send(ctx context.Context, req *http.Request, v interface{}) err
 		req.Header.Set("username", c.Username)
 		req.Header.Set("password", c.Password)
 	}
-
-	c.logRequest(req)
+	
 	resp, err := c.HttpClient.Do(req)
-	c.logResponse(resp)
+	
+	
+	//todo log here
+	go func(debugMode bool) {
+		if debugMode{
+			c.BaseClient.Log(req,resp)
+		}
+	}(c.DebugMode)
 
 	if err != nil {
 		return err
@@ -297,29 +302,29 @@ func (c *Client) SendWithAuth(ctx context.Context, req *http.Request, v interfac
 	return c.Send(ctx, req, v)
 }
 
-func (c *Client) logRequest(req *http.Request) {
-	if c.Logger != nil && os.Getenv("DEBUG") == "true" {
-		var reqDump []byte
-
-		if req != nil {
-			reqDump, _ = httputil.DumpRequest(req, true)
-		}
-
-		c.Logger.Write([]byte(fmt.Sprintf("Request: %s\n \n", string(reqDump))))
-	}
-}
-
-func (c *Client) logResponse(resp *http.Response) {
-	if c.Logger != nil && os.Getenv("DEBUG") == "true" {
-		var respDump []byte
-
-		if resp != nil {
-			respDump, _ = httputil.DumpResponse(resp, true)
-		}
-
-		c.Logger.Write([]byte(fmt.Sprintf("Response: %s\n \n", string(respDump))))
-	}
-}
+//func (c *Client) logRequest(req *http.Request) {
+//	if c.Logger != nil && os.Getenv("DEBUG") == "true" {
+//		var reqDump []byte
+//
+//		if req != nil {
+//			reqDump, _ = httputil.DumpRequest(req, true)
+//		}
+//
+//		c.Logger.Write([]byte(fmt.Sprintf("Request: %s\n \n", string(reqDump))))
+//	}
+//}
+//
+//func (c *Client) logResponse(resp *http.Response) {
+//	if c.Logger != nil && os.Getenv("DEBUG") == "true" {
+//		var respDump []byte
+//
+//		if resp != nil {
+//			respDump, _ = httputil.DumpResponse(resp, true)
+//		}
+//
+//		c.Logger.Write([]byte(fmt.Sprintf("Response: %s\n \n", string(respDump))))
+//	}
+//}
 
 // marshalPayload returns the JSON/XML encoding of payload.
 func marshalPayload(payloadType PayloadType, payload interface{}) (buf []byte, err error) {

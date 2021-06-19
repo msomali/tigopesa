@@ -90,7 +90,7 @@ func main() {
 	}
 	var provider push.CallbackProvider
 	{
-		provider = func(ctx context.Context, request push.BillPayCallbackRequest) *push.BillPayResponse {
+		provider = func(ctx context.Context, request push.CallbackRequest) *push.PayResponse {
 			return nil
 
 		}

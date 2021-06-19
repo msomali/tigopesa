@@ -59,7 +59,7 @@ func (c *Client) AccountToWalletHandler(ctx context.Context, req ussd.AccountToW
 	return c.ussd.AccountToWalletHandler(ctx, req)
 }
 
-func (c *Client) BillPay(ctx context.Context, request push.BillPayRequest) (*push.BillPayResponse, error) {
+func (c *Client) BillPay(ctx context.Context, request push.PayRequest) (*push.PayResponse, error) {
 	return c.push.BillPay(ctx, request)
 }
 
@@ -67,7 +67,7 @@ func (c *Client) BillPayCallback(ctx context.Context) http.HandlerFunc {
 	return c.push.BillPayCallback(ctx)
 }
 
-func (c *Client) RefundPayment(ctx context.Context, request push.RefundPaymentRequest) (*push.RefundPaymentResponse, error) {
+func (c *Client) RefundPayment(ctx context.Context, request push.RefundRequest) (*push.RefundResponse, error) {
 	return c.push.RefundPayment(ctx, request)
 }
 

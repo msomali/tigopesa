@@ -117,7 +117,6 @@ type (
 		*Config
 		PayHandler  PayHandler
 		NameHandler NameHandler
-		DebugMode   bool
 	}
 )
 
@@ -160,7 +159,7 @@ func (client *Client) NameQueryHandler(writer http.ResponseWriter, request *http
 
 	//todo: log here
 	go func(debugMode bool) {
-		if client.DebugMode{
+		if debugMode{
 			client.Log(request,nil)
 		}
 

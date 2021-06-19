@@ -2,10 +2,8 @@ package tigo
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"net/http"
-	"net/http/httputil"
 	"os"
 	"time"
 )
@@ -25,25 +23,24 @@ var (
 	// WithLogger method this is used.
 	defaultWriter = os.Stderr
 
-	// loggingTransport implements http.RoundTripper
-	_ http.RoundTripper = (*loggingTransport)(nil)
-
-	// Client implements Service
-	//_ Service = (*Client)(nil)
-
-	// defaultLoggerTransport is a modified http.Transport that is responsible
-	// for logging all requests and responses  that a HTTPClient owned by Client
-	// sent and receives
-	defaultLoggerTransport = loggingTransport{
-		debugMode: false,
-		logger: defaultWriter,
-		next:   http.DefaultTransport,
-	}
+	//// loggingTransport implements http.RoundTripper
+	//_ http.RoundTripper = (*loggingTransport)(nil)
+	//
+	//// Client implements Service
+	////_ Service = (*Client)(nil)
+	//
+	//// defaultLoggerTransport is a modified http.Transport that is responsible
+	//// for logging all requests and responses  that a HTTPClient owned by Client
+	//// sent and receives
+	//defaultLoggerTransport = loggingTransport{
+	//	debugMode: false,
+	//	logger: defaultWriter,
+	//	next:   http.DefaultTransport,
+	//}
 
 	// defaultHttpClient is the pkg used by library to send Http requests, specifically
 	// disbursement requests in case a user does not specify one
 	defaultHttpClient = &http.Client{
-		Transport: defaultLoggerTransport,
 		Timeout:   defaultTimeout,
 	}
 )
@@ -69,11 +66,11 @@ type (
 		//NameCheckRequestURL          string
 	}
 
-	loggingTransport struct {
-		debugMode bool
-		logger io.Writer
-		next   http.RoundTripper
-	}
+	//loggingTransport struct {
+	//	debugMode bool
+	//	logger io.Writer
+	//	next   http.RoundTripper
+	//}
 
 	// ClientOption is a setter func to set BaseClient details like
 	// Timeout, context, HttpClient and Logger
@@ -89,31 +86,31 @@ type (
 	}
 )
 
-func (l loggingTransport) RoundTrip(request *http.Request) (response *http.Response, err error) {
-
-	if l.debugMode && request != nil {
-		reqDump, err := httputil.DumpRequestOut(request, true)
-		if err != nil {
-			return nil, err
-		}
-		_, err = fmt.Fprint(l.logger, fmt.Sprintf("Request %s\n", string(reqDump)))
-		if err != nil {
-			return nil, err
-		}
-
-	}
-	defer func() {
-		if response != nil && l.debugMode{
-			respDump, err := httputil.DumpResponse(response, true)
-			_, err = l.logger.Write([]byte(fmt.Sprintf("Response %s\n", string(respDump))))
-			if err != nil {
-				return
-			}
-		}
-	}()
-	response, err = l.next.RoundTrip(request)
-	return
-}
+//func (l loggingTransport) RoundTrip(request *http.Request) (response *http.Response, err error) {
+//
+//	if l.debugMode && request != nil {
+//		reqDump, err := httputil.DumpRequestOut(request, true)
+//		if err != nil {
+//			return nil, err
+//		}
+//		_, err = fmt.Fprint(l.logger, fmt.Sprintf("Request %s\n", string(reqDump)))
+//		if err != nil {
+//			return nil, err
+//		}
+//
+//	}
+//	defer func() {
+//		if response != nil && l.debugMode{
+//			respDump, err := httputil.DumpResponse(response, true)
+//			_, err = l.logger.Write([]byte(fmt.Sprintf("Response %s\n", string(respDump))))
+//			if err != nil {
+//				return
+//			}
+//		}
+//	}()
+//	response, err = l.next.RoundTrip(request)
+//	return
+//}
 
 // WithContext set the context to be used by Client in its ops
 // this unset the default value which is context.TODO()
@@ -139,6 +136,8 @@ func WithTimeout(timeout time.Duration) ClientOption {
 func WithDebugMode(debugMode bool)ClientOption{
 	return func(client *BaseClient) {
 		client.DebugMode = debugMode
+
+
 	}
 }
 
@@ -160,28 +159,28 @@ func WithLogger(out io.Writer) ClientOption {
 // i.e WithHTTPClient(nil), it will be ignored and the pkg wont be replaced
 // Note: the new pkg Transport will be modified. It will be wrapped by another
 // middleware that enables pkg to
-func WithHTTPClient(c *http.Client) ClientOption {
+func WithHTTPClient(httpClient *http.Client) ClientOption {
 
 	// TODO check if its really necessary to set the default Timeout to 1 minute
 
 	return func(client *BaseClient) {
-		if c == nil {
+		if httpClient == nil {
 			return
 		}
 
-		lt := loggingTransport{
-			debugMode: client.DebugMode,
-			logger: client.Logger,
-			next:   c.Transport,
-		}
-
-		hc := &http.Client{
-			Transport:     lt,
-			CheckRedirect: c.CheckRedirect,
-			Jar:           c.Jar,
-			Timeout:       c.Timeout,
-		}
-		client.HttpClient = hc
+		//lt := loggingTransport{
+		//	debugMode: client.DebugMode,
+		//	logger: client.Logger,
+		//	next:   c.Transport,
+		//}
+		//
+		//hc := &http.Client{
+		//	Transport:     lt,
+		//	CheckRedirect: c.CheckRedirect,
+		//	Jar:           c.Jar,
+		//	Timeout:       c.Timeout,
+		//}
+		client.HttpClient = httpClient
 	}
 }
 

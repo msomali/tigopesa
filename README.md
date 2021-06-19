@@ -50,7 +50,7 @@ then run these commands
 go build -o ussd && ./ussd
 
 ```
-
+**TO ENABLE DEBUG MODE CALL WithDebugMode(true) before With HttpClient**
 
 
 ## projects

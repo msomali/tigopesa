@@ -3,7 +3,12 @@ package wa
 import (
 	"context"
 	"encoding/xml"
+	"fmt"
+	"github.com/techcraftt/tigosdk/pkg/tigo"
+	"io/ioutil"
 	"net/http"
+	"net/http/httputil"
+	"os"
 )
 
 type (
@@ -80,7 +85,16 @@ type (
 		RequestURL    string
 		NamecheckURL  string
 	}
+
+	Client struct {
+		tigo.BaseClient
+		Config
+		PayHandler PayHandler
+		NameHandler NameHandler
+		DebugMode bool
+	}
 )
+
 
 const (
 
@@ -109,6 +123,7 @@ const (
 var (
 	_ PayHandler  = (*PayHandlerFunc)(nil)
 	_ NameHandler = (*NameHandlerFunc)(nil)
+	_ Service     = (*Client)(nil)
 )
 
 func (handler PayHandlerFunc) Do(ctx context.Context, request PayRequest) (PayResponse, error) {
@@ -117,4 +132,85 @@ func (handler PayHandlerFunc) Do(ctx context.Context, request PayRequest) (PayRe
 
 func (handler NameHandlerFunc) Do(ctx context.Context, request NameRequest) (NameResponse, error) {
 	return handler(ctx, request)
+}
+
+
+
+func (client *Client) NameQueryHandler(writer http.ResponseWriter, request *http.Request) {
+
+	ctx, cancel := context.WithTimeout(client.Ctx, client.Timeout)
+	defer cancel()
+
+	var req NameRequest
+	xmlBody, err := ioutil.ReadAll(request.Body)
+	if err != nil {
+		http.Error(writer, err.Error(), http.StatusInternalServerError)
+	}
+	// Try to decode the request body into the struct. If there is an error,
+	// respond to the Client with the error message and a 400 status code.
+	err = xml.Unmarshal(xmlBody, &req)
+	if err != nil {
+		http.Error(writer, err.Error(), http.StatusInternalServerError)
+	}
+
+	response, err := client.NameHandler.Do(ctx, req)
+
+	if err != nil {
+		http.Error(writer, err.Error(), http.StatusInternalServerError)
+	}
+
+	xmlResponse, err := xml.MarshalIndent(response, "", "  ")
+	if err != nil {
+		http.Error(writer, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	//todo: inject logger
+	if client.Logger != nil && client.DebugMode{
+		reqDump, _ := httputil.DumpRequestOut(request, true)
+		_, _ = client.Logger.Write([]byte(fmt.Sprintf("Request: %s\nResponse: %s\n", string(reqDump), string(xmlResponse))))
+	}
+
+	writer.Header().Set("Content-Type", "application/xml")
+	_, _ = writer.Write(xmlResponse)
+
+}
+
+func (client *Client) PaymentHandler(writer http.ResponseWriter, request *http.Request) {
+	ctx, cancel := context.WithTimeout(client.Ctx, client.Timeout)
+	defer cancel()
+
+	var req PayRequest
+	xmlBody, err := ioutil.ReadAll(request.Body)
+	if err != nil {
+		http.Error(writer, err.Error(), http.StatusInternalServerError)
+	}
+	// Try to decode the request body into the struct. If there is an error,
+	// respond to the Client with the error message and a 400 status code.
+	err = xml.Unmarshal(xmlBody, &req)
+	if err != nil {
+		http.Error(writer, err.Error(), http.StatusInternalServerError)
+	}
+
+	response, err := client.PayHandler.Do(ctx, req)
+
+	if err != nil {
+		http.Error(writer, err.Error(), http.StatusInternalServerError)
+	}
+
+	xmlResponse, err := xml.MarshalIndent(response, "", "  ")
+	if err != nil {
+		http.Error(writer, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	//todo: inject logger
+	if client.Logger != nil && os.Getenv("DEBUG") == "true" {
+		reqDump, _ := httputil.DumpRequestOut(request, true)
+		_, _ = client.Logger.Write([]byte(fmt.Sprintf("Request: %s\nResponse: %s\n", string(reqDump), string(xmlResponse))))
+	}
+
+	writer.Header().Set("Content-Type", "application/xml")
+	_, _ = writer.Write(xmlResponse)
+
 }

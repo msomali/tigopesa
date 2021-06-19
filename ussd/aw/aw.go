@@ -1,10 +1,34 @@
 package aw
 
-import "encoding/xml"
+import (
+	"bytes"
+	"context"
+	"encoding/xml"
+	"github.com/techcraftt/tigosdk/pkg/tigo"
+	"io"
+	"io/ioutil"
+	"net/http"
+)
+
+var (
+	_ DisburseHandler = (*DisburseHandleFunc)(nil)
+	_ DisburseHandler = (*Client)(nil)
+)
 
 type (
-	Config struct {
 
+	DisburseHandler interface {
+		Disburse(ctx context.Context,request DisburseRequest)(DisburseResponse, error)
+	}
+
+	DisburseHandleFunc func(ctx context.Context,request DisburseRequest)(DisburseResponse, error)
+
+	Config struct {
+		AccountName string
+		AccountMSISDN string
+		BrandID string
+		PIN string
+		RequestURL string
 	}
 
 	DisburseRequest struct {
@@ -31,5 +55,60 @@ type (
 		Message     string   `xml:"MESSAGE" json:"message"`
 	}
 
+	Client struct {
+		Config
+		tigo.BaseClient
+	}
+
 )
+
+func (client *Client) Disburse(ctx context.Context, request DisburseRequest) (response DisburseResponse, err error) {
+	// Marshal the request body into application/xml
+	xmlStr, err := xml.MarshalIndent(request, "", "    ")
+	if err != nil {
+		return
+	}
+	xmlStr = []byte(xml.Header + string(xmlStr))
+
+	// Create a HTTP Post Request to be sent to Tigo gateway
+	req, err := http.NewRequest(http.MethodPost, client.RequestURL, bytes.NewBuffer(xmlStr)) // URL-encoded payload
+	if err != nil {
+		return
+	}
+	req.Header.Add("Content-Type", "application/xml")
+
+	// Create context with a timeout of 1 minute
+	ctx, cancel := context.WithTimeout(ctx, client.Timeout)
+	defer cancel()
+
+	req = req.WithContext(ctx)
+
+	resp, err := client.HttpClient.Do(req)
+	if err != nil {
+		return
+	}
+
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			return
+		}
+	}(resp.Body)
+	xmlBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+
+	err = xml.Unmarshal(xmlBody, &response)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+func (handler DisburseHandleFunc) Disburse(ctx context.Context, request DisburseRequest) (DisburseResponse, error) {
+	return handler(ctx,request)
+}
+
 

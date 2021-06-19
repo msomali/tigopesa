@@ -17,7 +17,7 @@ var (
 
 type (
 	DisburseHandler interface {
-		Disburse(ctx context.Context, request DisburseRequest) (DisburseResponse, error)
+		Do(ctx context.Context, request DisburseRequest) (DisburseResponse, error)
 	}
 
 	DisburseHandlerFunc func(ctx context.Context, request DisburseRequest) (DisburseResponse, error)
@@ -60,7 +60,7 @@ type (
 	}
 )
 
-func (client *Client) Disburse(ctx context.Context, request DisburseRequest) (response DisburseResponse, err error) {
+func (client *Client) Do(ctx context.Context, request DisburseRequest) (response DisburseResponse, err error) {
 	// Marshal the request body into application/xml
 	xmlStr, err := xml.MarshalIndent(request, "", "    ")
 	if err != nil {
@@ -105,6 +105,6 @@ func (client *Client) Disburse(ctx context.Context, request DisburseRequest) (re
 	return
 }
 
-func (handler DisburseHandlerFunc) Disburse(ctx context.Context, request DisburseRequest) (DisburseResponse, error) {
+func (handler DisburseHandlerFunc) Do(ctx context.Context, request DisburseRequest) (DisburseResponse, error) {
 	return handler(ctx, request)
 }

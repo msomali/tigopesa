@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
-	"os"
 )
 
 const (
@@ -201,7 +200,7 @@ func (client *Client) PaymentHandler(writer http.ResponseWriter, request *http.R
 	}
 
 	//todo: inject logger
-	if client.Logger != nil && os.Getenv("DEBUG") == "true" {
+	if client.Logger != nil && client.DebugMode {
 		reqDump, _ := httputil.DumpRequestOut(request, true)
 		_, _ = client.Logger.Write([]byte(fmt.Sprintf("Request: %s\nResponse: %s\n", string(reqDump), string(xmlResponse))))
 	}

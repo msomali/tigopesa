@@ -2,8 +2,10 @@ package tigo
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net/http"
+	"net/http/httputil"
 	"os"
 	"time"
 )
@@ -41,7 +43,7 @@ var (
 	// defaultHttpClient is the pkg used by library to send Http requests, specifically
 	// disbursement requests in case a user does not specify one
 	defaultHttpClient = &http.Client{
-		Timeout:   defaultTimeout,
+		Timeout: defaultTimeout,
 	}
 )
 
@@ -131,12 +133,10 @@ func WithTimeout(timeout time.Duration) ClientOption {
 	}
 }
 
-
 // WithDebugMode set debug mode to true or false
-func WithDebugMode(debugMode bool)ClientOption{
+func WithDebugMode(debugMode bool) ClientOption {
 	return func(client *BaseClient) {
 		client.DebugMode = debugMode
-
 
 	}
 }
@@ -191,7 +191,7 @@ func NewBaseClient(opts ...ClientOption) *BaseClient {
 		Logger:     defaultWriter,
 		Timeout:    defaultTimeout,
 		Ctx:        defaultCtx,
-		DebugMode: false,
+		DebugMode:  false,
 	}
 
 	for _, opt := range opts {
@@ -199,4 +199,53 @@ func NewBaseClient(opts ...ClientOption) *BaseClient {
 	}
 
 	return client
+}
+
+func Log(writer io.Writer, request *http.Request, response *http.Response) {
+
+	errors := make(chan error)
+	done := make(chan bool)
+
+	go func() {
+		if request != nil {
+			reqDump, err := httputil.DumpRequestOut(request, true)
+			if err != nil {
+				errors <- fmt.Errorf("could not dump request due to: %s\n", err.Error())
+			}
+			_, err = fmt.Fprintf(writer, "request %s\n", reqDump)
+			if err != nil {
+				errors <- fmt.Errorf("could not print  request due to: %s\n", err.Error())
+			}
+
+			if response == nil {
+				done <- true
+			}
+		}
+
+		if response != nil {
+			respDump, err := httputil.DumpResponse(response, true)
+			if err != nil {
+				errors <- fmt.Errorf("could not dump response due to: %s\n", err.Error())
+			}
+			_, err = fmt.Fprintf(writer, "response:  %s\n", respDump)
+
+			if err != nil {
+				errors <- fmt.Errorf("could not print out response due to: %s\n", err.Error())
+			}
+
+			done <- true
+
+		}
+	}()
+
+	select {
+	case err := <-errors:
+		fmt.Printf("error encountered: %s\n", err)
+		return
+
+	case <-done:
+		fmt.Printf("done logging\n")
+		return
+	}
+
 }

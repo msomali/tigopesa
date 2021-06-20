@@ -3,6 +3,7 @@ package wa
 import (
 	"context"
 	"encoding/xml"
+	"github.com/techcraftt/tigosdk/internal"
 	"github.com/techcraftt/tigosdk/pkg/tigo"
 	"io/ioutil"
 	"net/http"
@@ -33,29 +34,29 @@ const (
 )
 
 var (
-	_ PayHandler  = (*PayHandlerFunc)(nil)
-	_ NameHandler = (*NameHandlerFunc)(nil)
-	_ Service     = (*Client)(nil)
+	_ PaymentHandler   = (*PaymentHandleFunc)(nil)
+	_ NameQueryHandler = (*NameQueryFunc)(nil)
+	_ Service          = (*Client)(nil)
 )
 
 type (
 	Service interface {
-		NameQueryHandler(writer http.ResponseWriter, request *http.Request)
+		HandleNameQuery(writer http.ResponseWriter, request *http.Request)
 
-		PaymentHandler(writer http.ResponseWriter, request *http.Request)
+		HandlePayment(writer http.ResponseWriter, request *http.Request)
 	}
 
-	PayHandler interface {
+	PaymentHandler interface {
 		Do(ctx context.Context, request PayRequest) (PayResponse, error)
 	}
 
-	PayHandlerFunc func(ctx context.Context, request PayRequest) (PayResponse, error)
+	PaymentHandleFunc func(ctx context.Context, request PayRequest) (PayResponse, error)
 
-	NameHandler interface {
+	NameQueryHandler interface {
 		Do(ctx context.Context, request NameRequest) (NameResponse, error)
 	}
 
-	NameHandlerFunc func(ctx context.Context, request NameRequest) (NameResponse, error)
+	NameQueryFunc func(ctx context.Context, request NameRequest) (NameResponse, error)
 
 	NameRequest struct {
 		XMLName             xml.Name `xml:"COMMAND"`
@@ -115,21 +116,20 @@ type (
 	Client struct {
 		*tigo.BaseClient
 		*Config
-		PayHandler  PayHandler
-		NameHandler NameHandler
+		PayHandler  PaymentHandler
+		NameHandler NameQueryHandler
 	}
 )
 
-func (handler PayHandlerFunc) Do(ctx context.Context, request PayRequest) (PayResponse, error) {
+func (handler PaymentHandleFunc) Do(ctx context.Context, request PayRequest) (PayResponse, error) {
 	return handler(ctx, request)
 }
 
-func (handler NameHandlerFunc) Do(ctx context.Context, request NameRequest) (NameResponse, error) {
+func (handler NameQueryFunc) Do(ctx context.Context, request NameRequest) (NameResponse, error) {
 	return handler(ctx, request)
 }
 
-func (client *Client) NameQueryHandler(writer http.ResponseWriter, request *http.Request) {
-
+func (client *Client) HandleNameQuery(writer http.ResponseWriter, request *http.Request) {
 	ctx, cancel := context.WithTimeout(client.Ctx, client.Timeout)
 	defer cancel()
 
@@ -161,11 +161,8 @@ func (client *Client) NameQueryHandler(writer http.ResponseWriter, request *http
 	go func(debugMode bool) {
 		if debugMode{
 			client.Log(request,nil)
+			client.LogPayload(internal.XmlPayload,"name query response",response)
 		}
-
-		//xmlResponse is not exactly *http.Response hence we passed nil
-		//on the tigo.Log() func. but for purpose of logging
-		_,_ = client.Logger.Write(xmlResponse)
 
 		return
 	}(client.DebugMode)
@@ -175,7 +172,7 @@ func (client *Client) NameQueryHandler(writer http.ResponseWriter, request *http
 
 }
 
-func (client *Client) PaymentHandler(writer http.ResponseWriter, request *http.Request) {
+func (client *Client) HandlePayment(writer http.ResponseWriter, request *http.Request) {
 	ctx, cancel := context.WithTimeout(client.Ctx, client.Timeout)
 	defer cancel()
 
@@ -198,7 +195,8 @@ func (client *Client) PaymentHandler(writer http.ResponseWriter, request *http.R
 	}
 
 
-	xmlResponse, err := xml.MarshalIndent(response, "", "  ")
+
+	xmlResponse, err := internal.MarshalPayload(internal.XmlPayload,response)
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 		return
@@ -208,12 +206,8 @@ func (client *Client) PaymentHandler(writer http.ResponseWriter, request *http.R
 	go func(debugMode bool) {
 		if client.DebugMode{
 			client.Log(request,nil)
+			client.LogPayload(internal.XmlPayload,"ussd payment response",response)
 		}
-
-		//xmlResponse is not exactly *http.Response hence we passed nil
-		//on the tigo.Log() func. but for purpose of logging
-		_,_ = client.Logger.Write(xmlResponse)
-
 		return
 	}(client.DebugMode)
 

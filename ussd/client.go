@@ -22,7 +22,7 @@ type (
 	// func (pkg *Client) HandleRequest(ctx context.Context, requestType RequestType) http.HandlerFunc {
 	//   return func(writer http.ResponseWriter, request *http.Request) {
 	//      switch requestType {
-	//      case SubscriberName:
+	//      case NameQuery:
 	//      // implementation logic
 	//
 	//      case WalletToAccount
@@ -105,8 +105,10 @@ type (
 )
 
 const (
-	SubscriberName RequestType = iota
+	NameQuery RequestType = iota
 	WalletToAccount
+	PushPay
+	Disbursement
 
 	//debugKey is the value that stores the debugging key is env file
 	debugKey = "DEBUG"
@@ -286,7 +288,7 @@ func (client *Client) HandleRequest(ctx context.Context, requestType RequestType
 	defer cancel()
 	return func(writer http.ResponseWriter, request *http.Request) {
 		switch requestType {
-		case SubscriberName:
+		case NameQuery:
 			client.SubscriberNameHandler(writer, request)
 		case WalletToAccount:
 			client.WalletToAccountHandler(writer, request)

@@ -31,19 +31,19 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"github.com/techcraftt/tigosdk/internal"
 	"github.com/techcraftt/tigosdk/pkg/tigo"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 	"time"
 )
 
 var (
-	JSONPayload PayloadType = "json"
-	XMLPayload  PayloadType = "xml"
+	//JSONPayload PayloadType = "json"
+	//XMLPayload  PayloadType = "xml"
 
 	_ Service = (*Client)(nil)
 	_ CallbackHandler = (*CallbackHandlerFunc)(nil)
@@ -62,7 +62,7 @@ type (
 		ReverseTransactionURL string
 		HealthCheckURL        string
 	}
-	PayloadType string
+	//PayloadType string
 
 	CallbackHandler interface {
 		Do(ctx context.Context, request CallbackRequest)(CallbackResponse,error)
@@ -70,9 +70,9 @@ type (
 
 	// CallbackHandleFunc check and reports the status of the transaction.
 	// if transaction status
-	CallbackHandleFunc func(context.Context, CallbackRequest) *PayResponse
+	CallbackHandleFunc func(context.Context, CallbackRequest) *CallbackResponse
 
-	// CallbackHandleFunc check and reports the status of the transaction.
+	// CallbackHandlerFunc check and reports the status of the transaction.
 	// if transaction status
 	CallbackHandlerFunc func(context.Context, CallbackRequest) (CallbackResponse,error)
 
@@ -107,7 +107,7 @@ func (c *Client) BillPay(ctx context.Context, billPaymentReq PayRequest) (*PayRe
 	var billPayResp = &PayResponse{}
 
 	billPaymentReq.BillerMSISDN = c.BillerMSISDN
-	req, err := c.NewRequest(http.MethodPost, c.PushPayURL, JSONPayload, &billPaymentReq)
+	req, err := c.NewRequest(http.MethodPost, c.PushPayURL, internal.JsonPayload, &billPaymentReq)
 	if err != nil {
 		return nil, err
 	}
@@ -123,19 +123,32 @@ func (c *Client) BillPayCallback(ctx context.Context) http.HandlerFunc {
 	var callbackRequest CallbackRequest
 
 	return func(w http.ResponseWriter, r *http.Request) {
+		var callbackResponse *CallbackResponse
+
+		defer func(debugMode bool) {
+			if debugMode{
+				c.Log(r,nil)
+				c.LogPayload(internal.JsonPayload,"Callback Response",&callbackResponse)
+			}
+		}(c.DebugMode)
+
 		w.Header().Set("Content-Type", "application/json")
 
 		err := json.NewDecoder(r.Body).Decode(&callbackRequest)
-		c.Log("Callback Request", JSONPayload, &callbackRequest)
-		defer r.Body.Close()
+
+		defer func(Body io.ReadCloser) {
+			err := Body.Close()
+			if err != nil {
+				return
+			}
+		}(r.Body)
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		callbackResponse := c.CallbackProvider(ctx, callbackRequest)
-		c.Log("Callback Response", JSONPayload, &callbackResponse)
+		callbackResponse = c.CallbackProvider(ctx, callbackRequest)
 
 		if err := json.NewEncoder(w).Encode(callbackResponse); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -148,7 +161,7 @@ func (c *Client) BillPayCallback(ctx context.Context) http.HandlerFunc {
 func (c *Client) RefundPayment(ctx context.Context, refundPaymentReq RefundRequest) (*RefundResponse, error) {
 	var refundPaymentResp = &RefundResponse{}
 
-	req, err := c.NewRequest(http.MethodPost, c.ReverseTransactionURL, JSONPayload, refundPaymentReq)
+	req, err := c.NewRequest(http.MethodPost, c.ReverseTransactionURL, internal.JsonPayload, refundPaymentReq)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +176,7 @@ func (c *Client) RefundPayment(ctx context.Context, refundPaymentReq RefundReque
 func (c *Client) HealthCheck(ctx context.Context, healthCheckReq HealthCheckRequest) (*HealthCheckResponse, error) {
 	var healthCheckResp = &HealthCheckResponse{}
 
-	req, err := c.NewRequest(http.MethodPost, c.HealthCheckURL, JSONPayload, healthCheckReq)
+	req, err := c.NewRequest(http.MethodPost, c.HealthCheckURL, internal.JsonPayload, healthCheckReq)
 	if err != nil {
 		return nil, err
 	}
@@ -189,14 +202,14 @@ func NewClient(bc *tigo.BaseClient, provider CallbackHandleFunc) *Client {
 	return client
 }
 
-func (c *Client) NewRequest(method, url string, payloadType PayloadType, payload interface{}) (*http.Request, error) {
+func (c *Client) NewRequest(method, url string, payloadType internal.PayloadType, payload interface{}) (*http.Request, error) {
 	var (
 		buffer io.Reader
 		ctx, _ = context.WithTimeout(context.Background(), 60*time.Second)
 	)
 
 	if payload != nil {
-		buf, err := marshalPayload(payloadType, payload)
+		buf, err := internal.MarshalPayload(payloadType, payload)
 		if err != nil {
 			return nil, err
 		}
@@ -339,29 +352,29 @@ func (c *Client) SendWithAuth(ctx context.Context, req *http.Request, v interfac
 //	}
 //}
 
-// marshalPayload returns the JSON/XML encoding of payload.
-func marshalPayload(payloadType PayloadType, payload interface{}) (buf []byte, err error) {
-	switch payloadType {
-	case JSONPayload:
-		buf, err = json.Marshal(payload)
-		if err != nil {
-			return nil, err
-		}
-	case XMLPayload:
-		buf, err = xml.MarshalIndent(payload, "", "  ")
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return
-}
-
-// Log write v into logger.
-func (c *Client) Log(prefix string, payloadType PayloadType, payload interface{}) {
-	if c.Logger != nil && os.Getenv("DEBUG") == "true" {
-		buf, _ := marshalPayload(payloadType, payload)
-
-		c.Logger.Write([]byte(fmt.Sprintf("%s: %s\n\n", prefix, string(buf))))
-	}
-}
+//// marshalPayload returns the JSON/XML encoding of payload.
+//func marshalPayload(payloadType PayloadType, payload interface{}) (buf []byte, err error) {
+//	switch payloadType {
+//	case JSONPayload:
+//		buf, err = json.Marshal(payload)
+//		if err != nil {
+//			return nil, err
+//		}
+//	case XMLPayload:
+//		buf, err = xml.MarshalIndent(payload, "", "  ")
+//		if err != nil {
+//			return nil, err
+//		}
+//	}
+//
+//	return
+//}
+//
+//// Log write v into logger.
+//func (c *Client) Log(prefix string, payloadType PayloadType, payload interface{}) {
+//	if c.Logger != nil && os.Getenv("DEBUG") == "true" {
+//		buf, _ := marshalPayload(payloadType, payload)
+//
+//		c.Logger.Write([]byte(fmt.Sprintf("%s: %s\n\n", prefix, string(buf))))
+//	}
+//}

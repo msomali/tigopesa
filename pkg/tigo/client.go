@@ -3,6 +3,7 @@ package tigo
 import (
 	"context"
 	"fmt"
+	"github.com/techcraftt/tigosdk/internal"
 	"io"
 	"net/http"
 	"net/http/httputil"
@@ -199,6 +200,35 @@ func NewBaseClient(opts ...ClientOption) *BaseClient {
 	}
 
 	return client
+}
+
+func (client *BaseClient)LogPayload(t internal.PayloadType,prefix string,payload interface{}){
+
+	errors := make(chan error)
+	done := make(chan bool)
+
+	go func() {
+		buf, err := internal.MarshalPayload(t, payload)
+		if err != nil {
+			errors <- fmt.Errorf("could not marshal the payload: %s\n", err.Error())
+		}
+		_, err = client.Logger.Write([]byte(fmt.Sprintf("%s: %s\n\n", prefix, string(buf))))
+		if err != nil {
+			errors <- fmt.Errorf("could not print the payload: %s\n", err.Error())
+		}
+
+		done <- true
+	}()
+
+	select {
+	case err := <-errors:
+		fmt.Printf("error encountered: %s\n", err)
+		return
+
+	case <-done:
+		fmt.Printf("done logging\n")
+		return
+	}
 }
 
 func (client *BaseClient)Log(request *http.Request, response *http.Response) {

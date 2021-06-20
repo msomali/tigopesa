@@ -5,8 +5,13 @@ const (
 	ErrCodeCallbackFailed  = "BILLER-30-3030-E"
 )
 
-
 type (
+	TokenResponse struct {
+		AccessToken string `json:"access_token"`
+		TokenType   string `json:"token_type"`
+		ExpiresIn   int    `json:"expires_in"`
+	}
+
 	PayRequest struct {
 		CustomerMSISDN string `json:"CustomerMSISDN"`
 		BillerMSISDN   string `json:"BillerMSISDN"`
@@ -32,7 +37,10 @@ type (
 	}
 
 	CallbackResponse struct {
-
+		ResponseCode        string `json:"ResponseCode"`
+		ResponseDescription string `json:"ResponseDescription"`
+		ResponseStatus      bool   `json:"ResponseStatus"`
+		ReferenceID         string `json:"ReferenceID"`
 	}
 
 	RefundRequest struct {

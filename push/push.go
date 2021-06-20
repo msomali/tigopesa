@@ -12,6 +12,10 @@ import (
 	"time"
 )
 
+var (
+	_ PService = (*PClient)(nil)
+)
+
 type (
 
 	//PClient is the client for making push pay requests
@@ -36,13 +40,30 @@ type (
 	}
 )
 
-func (client *PClient) Token() (string,error) {
+
+func (client *PClient) Pay(ctx context.Context, request PayRequest) (PayResponse, error) {
+	panic("implement me")
+}
+
+func (client *PClient) Callback(writer http.ResponseWriter, r *http.Request) {
+	panic("implement me")
+}
+
+func (client *PClient) Refund(ctx context.Context, request RefundRequest) (RefundResponse, error) {
+	panic("implement me")
+}
+
+func (client *PClient) HeartBeat(ctx context.Context, request HealthCheckRequest) (HealthCheckResponse, error) {
+	panic("implement me")
+}
+
+func (client *PClient) Token(ctx context.Context) (string,error) {
 	var form = url.Values{}
 	form.Set("username",client.Username)
 	form.Set("password", client.Password)
 	form.Set("grant_type", client.PasswordGrantType)
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, time.Minute)
 	defer cancel()
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, client.ApiBaseURL+client.GetTokenURL, strings.NewReader(form.Encode()))
 	if err != nil {

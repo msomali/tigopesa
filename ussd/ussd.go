@@ -1,13 +1,25 @@
 package ussd
 
 import (
+	"context"
 	"github.com/techcraftt/tigosdk/pkg/tigo"
 	"github.com/techcraftt/tigosdk/push"
 	"github.com/techcraftt/tigosdk/ussd/aw"
 	"github.com/techcraftt/tigosdk/ussd/wa"
+	"net/http"
+)
+
+var (
+	_ BigService = (*BigClient)(nil)
 )
 
 type (
+
+	BigService interface {
+		aw.DisburseHandler
+		wa.Service
+		push.PService
+	}
 	BigClient struct {
 		*tigo.BaseClient
 		*tigo.Config
@@ -16,9 +28,41 @@ type (
 		CallbackHandler  push.CallbackHandler
 		waClient         *wa.Client
 		awClient         *aw.Client
-		pushClient       *push.Client
+		pushClient       *push.PClient
 	}
 )
+
+func (b *BigClient) Disburse(ctx context.Context, request aw.DisburseRequest) (aw.DisburseResponse, error) {
+	return b.awClient.Disburse(ctx,request)
+}
+
+func (b *BigClient) HandleNameQuery(writer http.ResponseWriter, request *http.Request) {
+	b.waClient.HandleNameQuery(writer,request)
+}
+
+func (b *BigClient) HandlePayment(writer http.ResponseWriter, request *http.Request) {
+	b.waClient.HandlePayment(writer,request)
+}
+
+func (b *BigClient) Token(ctx context.Context) (string, error) {
+	return b.pushClient.Token(ctx)
+}
+
+func (b *BigClient) Pay(ctx context.Context, request push.PayRequest) (push.PayResponse, error) {
+	return b.pushClient.Pay(ctx,request)
+}
+
+func (b *BigClient) Callback(writer http.ResponseWriter, r *http.Request) {
+	b.pushClient.Callback(writer,r)
+}
+
+func (b *BigClient) Refund(ctx context.Context, request push.RefundRequest) (push.RefundResponse, error) {
+	return b.Refund(ctx,request)
+}
+
+func (b *BigClient) HeartBeat(ctx context.Context, request push.HealthCheckRequest) (push.HealthCheckResponse, error) {
+	return b.HeartBeat(ctx,request)
+}
 
 func deriveConfigs(config *tigo.Config) (pushConf *push.Config, pay *wa.Config, disburse *aw.Config) {
 	pushConf = &push.Config{
@@ -59,7 +103,7 @@ func NewPClient(config *tigo.Config, base *tigo.BaseClient,
 
 	pushConf, payConf, disburseConf := deriveConfigs(config)
 
-	pushClient := &push.Client{
+	pushClient := &push.PClient{
 		Config:          pushConf,
 		BaseClient:      base,
 		CallbackHandler: callbackHandler,

@@ -88,7 +88,7 @@ func main() {
 			return ussd.WalletToAccountResponse{}, nil
 		}
 	}
-	var provider push.CallbackProvider
+	var provider push.CallbackHandleFunc
 	{
 		provider = func(ctx context.Context, request push.CallbackRequest) *push.PayResponse {
 			return nil

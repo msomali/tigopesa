@@ -77,7 +77,7 @@ func (c *Client) HealthCheck(ctx context.Context, request push.HealthCheckReques
 
 func NewClient(bc *tigo.BaseClient, namesHandler ussd.QuerySubscriberFunc,
 	collectionHandler ussd.WalletToAccountFunc,
-	provider push.CallbackProvider) *Client {
+	provider push.CallbackHandleFunc) *Client {
 
 	//todo: set push client avoid returning error in constructor
 	client := &Client{

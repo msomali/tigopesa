@@ -46,6 +46,7 @@ var (
 	XMLPayload  PayloadType = "xml"
 
 	_ Service = (*Client)(nil)
+	_ CallbackHandler = (*CallbackHandlerFunc)(nil)
 )
 
 type (
@@ -63,9 +64,17 @@ type (
 	}
 	PayloadType string
 
-	// CallbackProvider check and reports the status of the transaction.
+	CallbackHandler interface {
+		Do(ctx context.Context, request CallbackRequest)(CallbackResponse,error)
+	}
+
+	// CallbackHandleFunc check and reports the status of the transaction.
 	// if transaction status
-	CallbackProvider func(context.Context, CallbackRequest) *PayResponse
+	CallbackHandleFunc func(context.Context, CallbackRequest) *PayResponse
+
+	// CallbackHandleFunc check and reports the status of the transaction.
+	// if transaction status
+	CallbackHandlerFunc func(context.Context, CallbackRequest) (CallbackResponse,error)
 
 	Service interface {
 		// BillPay initiate Service payment flow to deduct a specific amount from customer's Tigo pesa wallet.
@@ -82,13 +91,17 @@ type (
 	}
 
 	Client struct {
-		Config
+		*Config
 		*tigo.BaseClient
 		authToken          string
 		authTokenExpiresAt time.Time
-		CallbackProvider   CallbackProvider
+		CallbackProvider   CallbackHandleFunc
 	}
 )
+
+func (handler CallbackHandlerFunc) Do(ctx context.Context, request CallbackRequest) (CallbackResponse, error) {
+	return handler(ctx, request)
+}
 
 func (c *Client) BillPay(ctx context.Context, billPaymentReq PayRequest) (*PayResponse, error) {
 	var billPayResp = &PayResponse{}
@@ -163,7 +176,7 @@ func (c *Client) HealthCheck(ctx context.Context, healthCheckReq HealthCheckRequ
 }
 
 // NewClient acts as a constructor of Push Pay Client.
-func NewClient(bc *tigo.BaseClient, provider CallbackProvider) *Client {
+func NewClient(bc *tigo.BaseClient, provider CallbackHandleFunc) *Client {
 	client := &Client{
 		BaseClient:       bc,
 		CallbackProvider: provider,

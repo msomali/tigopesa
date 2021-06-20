@@ -95,7 +95,7 @@ type (
 		*tigo.BaseClient
 		authToken          string
 		authTokenExpiresAt time.Time
-		CallbackProvider   CallbackHandleFunc
+		CallbackHandler CallbackHandler
 	}
 )
 

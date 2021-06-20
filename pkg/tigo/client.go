@@ -50,23 +50,29 @@ var (
 
 type (
 	Config struct {
-		//Username                     string
-		//Password                     string
-		//PasswordGrantType            string
-		//AccountName                  string
-		//AccountMSISDN                string
-		//BrandID                      string
-		//BillerCode                   string
-		//BillerMSISDN                 string
-		//ApiBaseURL                   string
-		//GetTokenRequestURL           string
-		//PushPayBillRequestURL        string
-		//PushPayReverseTransactionURL string
-		//PushPayHealthCheckURL        string
-		//AccountToWalletRequestURL    string
-		//AccountToWalletRequestPIN    string
-		//WalletToAccountRequestURL    string
-		//NameCheckRequestURL          string
+		PayAccountName   string
+		PayAccountMSISDN string
+		PayBillerNumber  string
+		PayRequestURL    string
+		PayNamecheckURL  string
+
+
+		DisburseAccountName   string
+		DisburseAccountMSISDN string
+		DisburseBrandID       string
+		DisbursePIN           string
+		DisburseRequestURL    string
+
+		PushUsername              string
+		PushPassword              string
+		PushPasswordGrantType     string
+		PushApiBaseURL            string
+		PushGetTokenURL           string
+		PushBillerMSISDN          string
+		PushBillerCode            string
+		PushPushPayURL            string
+		PushReverseTransactionURL string
+		PushHealthCheckURL        string
 	}
 
 	//loggingTransport struct {

@@ -116,8 +116,8 @@ type (
 	Client struct {
 		*tigo.BaseClient
 		*Config
-		PayHandler  PaymentHandler
-		NameHandler NameQueryHandler
+		PaymentHandler   PaymentHandler
+		NameQueryHandler NameQueryHandler
 	}
 )
 
@@ -145,7 +145,7 @@ func (client *Client) HandleNameQuery(writer http.ResponseWriter, request *http.
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
 
-	response, err := client.NameHandler.Do(ctx, req)
+	response, err := client.NameQueryHandler.Do(ctx, req)
 
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
@@ -188,7 +188,7 @@ func (client *Client) HandlePayment(writer http.ResponseWriter, request *http.Re
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
 
-	response, err := client.PayHandler.Do(ctx, req)
+	response, err := client.PaymentHandler.Do(ctx, req)
 
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)

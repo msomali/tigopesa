@@ -161,7 +161,16 @@ func (c *Client) BillPayCallback(ctx context.Context) http.HandlerFunc {
 func (c *Client) RefundPayment(ctx context.Context, refundPaymentReq RefundRequest) (*RefundResponse, error) {
 	var refundPaymentResp = &RefundResponse{}
 
-	req, err := c.NewRequest(http.MethodPost, c.ReverseTransactionURL, internal.JsonPayload, refundPaymentReq)
+	request := tigo.Request{
+		Context:     ctx,
+		HttpMethod:  http.MethodPost,
+		URL:         c.ReverseTransactionURL,
+		PayloadType: internal.JsonPayload,
+		Payload:     refundPaymentReq,
+	}
+
+	req, err := request.Transform()
+	//req, err := c.NewRequest(http.MethodPost, c.ReverseTransactionURL, internal.JsonPayload, refundPaymentReq)
 	if err != nil {
 		return nil, err
 	}
@@ -201,24 +210,24 @@ func NewClient(bc *tigo.BaseClient, provider CallbackHandleFunc) *Client {
 
 	return client
 }
-
-func (c *Client) NewRequest(method, url string, payloadType internal.PayloadType, payload interface{}) (*http.Request, error) {
-	var (
-		buffer io.Reader
-		ctx, _ = context.WithTimeout(context.Background(), 60*time.Second)
-	)
-
-	if payload != nil {
-		buf, err := internal.MarshalPayload(payloadType, payload)
-		if err != nil {
-			return nil, err
-		}
-
-		buffer = bytes.NewBuffer(buf)
-	}
-
-	return http.NewRequestWithContext(ctx, method, c.ApiBaseURL+url, buffer)
-}
+//
+//func (c *Client) NewRequest(method, url string, payloadType internal.PayloadType, payload interface{}) (*http.Request, error) {
+//	var (
+//		buffer io.Reader
+//		ctx, _ = context.WithTimeout(context.Background(), 60*time.Second)
+//	)
+//
+//	if payload != nil {
+//		buf, err := internal.MarshalPayload(payloadType, payload)
+//		if err != nil {
+//			return nil, err
+//		}
+//
+//		buffer = bytes.NewBuffer(buf)
+//	}
+//
+//	return http.NewRequestWithContext(ctx, method, c.ApiBaseURL+url, buffer)
+//}
 
 func (c *Client) getAuthToken() (string, error) {
 	var form = url.Values{}

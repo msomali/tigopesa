@@ -1,6 +1,7 @@
 package tigo
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"github.com/techcraftt/tigosdk/internal"
@@ -26,21 +27,6 @@ var (
 	// WithLogger method this is used.
 	defaultWriter = os.Stderr
 
-	//// loggingTransport implements http.RoundTripper
-	//_ http.RoundTripper = (*loggingTransport)(nil)
-	//
-	//// Client implements Service
-	////_ Service = (*Client)(nil)
-	//
-	//// defaultLoggerTransport is a modified http.Transport that is responsible
-	//// for logging all requests and responses  that a HTTPClient owned by Client
-	//// sent and receives
-	//defaultLoggerTransport = loggingTransport{
-	//	debugMode: false,
-	//	logger: defaultWriter,
-	//	next:   http.DefaultTransport,
-	//}
-
 	// defaultHttpClient is the pkg used by library to send Http requests, specifically
 	// disbursement requests in case a user does not specify one
 	defaultHttpClient = &http.Client{
@@ -55,7 +41,6 @@ type (
 		PayBillerNumber  string
 		PayRequestURL    string
 		PayNamecheckURL  string
-
 
 		DisburseAccountName   string
 		DisburseAccountMSISDN string
@@ -75,12 +60,6 @@ type (
 		PushHealthCheckURL        string
 	}
 
-	//loggingTransport struct {
-	//	debugMode bool
-	//	logger io.Writer
-	//	next   http.RoundTripper
-	//}
-
 	// ClientOption is a setter func to set BaseClient details like
 	// Timeout, context, HttpClient and Logger
 	ClientOption func(client *BaseClient)
@@ -93,33 +72,42 @@ type (
 		Logger     io.Writer // for logging purposes
 		DebugMode  bool
 	}
+
+	Request struct {
+		Context     context.Context
+		HttpMethod  string
+		URL         string
+		PayloadType internal.PayloadType
+		Payload     interface{}
+	}
 )
 
-//func (l loggingTransport) RoundTrip(request *http.Request) (response *http.Response, err error) {
-//
-//	if l.debugMode && request != nil {
-//		reqDump, err := httputil.DumpRequestOut(request, true)
-//		if err != nil {
-//			return nil, err
-//		}
-//		_, err = fmt.Fprint(l.logger, fmt.Sprintf("Request %s\n", string(reqDump)))
-//		if err != nil {
-//			return nil, err
-//		}
-//
-//	}
-//	defer func() {
-//		if response != nil && l.debugMode{
-//			respDump, err := httputil.DumpResponse(response, true)
-//			_, err = l.logger.Write([]byte(fmt.Sprintf("Response %s\n", string(respDump))))
-//			if err != nil {
-//				return
-//			}
-//		}
-//	}()
-//	response, err = l.next.RoundTrip(request)
-//	return
-//}
+
+// SetContext gives ability to manipulate the value of context even after creating the Request instance (object)
+// it is useful when one wants to change the timeout especially in sending the request
+// but this should be done before Transform
+func (request *Request)SetContext(ctx context.Context)  {
+	request.Context = ctx
+}
+
+
+//Transform takes a Request and transform into http.Request with a context
+func (request *Request) Transform() (*http.Request, error) {
+	var (
+		buffer io.Reader
+	)
+
+	if request.Payload != nil {
+		buf, err := internal.MarshalPayload(request.PayloadType, request.Payload)
+		if err != nil {
+			return nil, err
+		}
+
+		buffer = bytes.NewBuffer(buf)
+	}
+
+	return http.NewRequestWithContext(request.Context, request.HttpMethod, request.URL, buffer)
+}
 
 // WithContext set the context to be used by Client in its ops
 // this unset the default value which is context.TODO()
@@ -208,7 +196,22 @@ func NewBaseClient(opts ...ClientOption) *BaseClient {
 	return client
 }
 
-func (client *BaseClient)LogPayload(t internal.PayloadType,prefix string,payload interface{}){
+func (client *BaseClient) NewRequest(method, url string, payloadType internal.PayloadType, payload interface{}) (*http.Request, error) {
+	var (
+		ctx, _ = context.WithTimeout(context.Background(), client.Timeout)
+	)
+
+	request := &Request{
+		Context:     ctx,
+		HttpMethod:  method,
+		URL:         url,
+		PayloadType: payloadType,
+		Payload:     payload,
+	}
+	return request.Transform()
+}
+
+func (client *BaseClient) LogPayload(t internal.PayloadType, prefix string, payload interface{}) {
 
 	errors := make(chan error)
 	done := make(chan bool)
@@ -237,7 +240,7 @@ func (client *BaseClient)LogPayload(t internal.PayloadType,prefix string,payload
 	}
 }
 
-func (client *BaseClient)Log(request *http.Request, response *http.Response) {
+func (client *BaseClient) Log(request *http.Request, response *http.Response) {
 
 	errors := make(chan error)
 	done := make(chan bool)

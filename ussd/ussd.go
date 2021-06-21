@@ -23,37 +23,37 @@ type (
 	BigClient struct {
 		*tigo.BaseClient
 		*tigo.Config
-		NameQueryHandler wa.NameQueryHandler
-		PaymentHandler   wa.PaymentHandler
-		CallbackHandler  push.CallbackHandler
-		waClient         *wa.Client
-		awClient         *aw.Client
-		pushClient       *push.PClient
+		//NameQueryHandler wa.NameQueryHandler
+		//PaymentHandler   wa.PaymentHandler
+		//CallbackHandler  push.CallbackHandler
+		wa   *wa.Client
+		aw   *aw.Client
+		push *push.PClient
 	}
 )
 
 func (b *BigClient) Disburse(ctx context.Context, request aw.DisburseRequest) (aw.DisburseResponse, error) {
-	return b.awClient.Disburse(ctx,request)
+	return b.aw.Disburse(ctx,request)
 }
 
 func (b *BigClient) HandleNameQuery(writer http.ResponseWriter, request *http.Request) {
-	b.waClient.HandleNameQuery(writer,request)
+	b.wa.HandleNameQuery(writer,request)
 }
 
 func (b *BigClient) HandlePayment(writer http.ResponseWriter, request *http.Request) {
-	b.waClient.HandlePayment(writer,request)
+	b.wa.HandlePayment(writer,request)
 }
 
 func (b *BigClient) Token(ctx context.Context) (string, error) {
-	return b.pushClient.Token(ctx)
+	return b.push.Token(ctx)
 }
 
 func (b *BigClient) Pay(ctx context.Context, request push.PayRequest) (push.PayResponse, error) {
-	return b.pushClient.Pay(ctx,request)
+	return b.push.Pay(ctx,request)
 }
 
 func (b *BigClient) Callback(writer http.ResponseWriter, r *http.Request) {
-	b.pushClient.Callback(writer,r)
+	b.push.Callback(writer,r)
 }
 
 func (b *BigClient) Refund(ctx context.Context, request push.RefundRequest) (push.RefundResponse, error) {
@@ -123,11 +123,11 @@ func NewPClient(config *tigo.Config, base *tigo.BaseClient,
 	return &BigClient{
 		BaseClient:       base,
 		Config:           config,
-		NameQueryHandler: handler,
-		PaymentHandler:   paymentHandler,
-		CallbackHandler:  callbackHandler,
-		waClient:         payClient,
-		awClient:         disburseClient,
-		pushClient:       pushClient,
+		//NameQueryHandler: handler,
+		//PaymentHandler:   paymentHandler,
+		//CallbackHandler:  callbackHandler,
+		wa:               payClient,
+		aw:               disburseClient,
+		push:             pushClient,
 	}
 }

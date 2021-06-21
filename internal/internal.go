@@ -8,7 +8,6 @@ import (
 const (
 	JsonPayload PayloadType = iota
 	XmlPayload
-	FormPayload
 )
 
 type (
@@ -31,6 +30,8 @@ func MarshalPayload(payloadType PayloadType, payload interface{}) (buf []byte, e
 	}
 	return
 }
+
+
 
 
 

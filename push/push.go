@@ -97,7 +97,7 @@ func (client *PClient) Token(ctx context.Context) (string, error) {
 		"Cache-Control": "no-cache",
 	}
 
-	payloadType := internal.JsonPayload
+	payloadType := internal.FormPayload
 
 	var requestOptions []tigo.RequestOption
 	ctxOption := tigo.WithRequestContext(ctx)

@@ -3,9 +3,13 @@ package tigo
 import (
 	"bytes"
 	"context"
+	"encoding/json"
+	"encoding/xml"
+	"errors"
 	"fmt"
 	"github.com/techcraftt/tigosdk/internal"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"os"
@@ -60,12 +64,9 @@ type (
 		PushHealthCheckURL        string
 	}
 
-	// ClientOption is a setter func to set BaseClient details like
-	// Timeout, context, HttpClient and Logger
-	ClientOption func(client *BaseClient)
+
 
 	BaseClient struct {
-		//Config
 		HttpClient *http.Client
 		Ctx        context.Context
 		Timeout    time.Duration
@@ -73,111 +74,9 @@ type (
 		DebugMode  bool
 	}
 
-	Request struct {
-		Context     context.Context
-		HttpMethod  string
-		URL         string
-		PayloadType internal.PayloadType
-		Payload     interface{}
-	}
 )
 
 
-// SetContext gives ability to manipulate the value of context even after creating the Request instance (object)
-// it is useful when one wants to change the timeout especially in sending the request
-// but this should be done before Transform
-func (request *Request)SetContext(ctx context.Context)  {
-	request.Context = ctx
-}
-
-
-//Transform takes a Request and transform into http.Request with a context
-func (request *Request) Transform() (*http.Request, error) {
-	var (
-		buffer io.Reader
-	)
-
-	if request.Payload != nil {
-		buf, err := internal.MarshalPayload(request.PayloadType, request.Payload)
-		if err != nil {
-			return nil, err
-		}
-
-		buffer = bytes.NewBuffer(buf)
-	}
-
-	return http.NewRequestWithContext(request.Context, request.HttpMethod, request.URL, buffer)
-}
-
-// WithContext set the context to be used by Client in its ops
-// this unset the default value which is context.TODO()
-// This context value is mostly used by Handlers
-func WithContext(ctx context.Context) ClientOption {
-	return func(client *BaseClient) {
-		client.Ctx = ctx
-	}
-}
-
-// WithTimeout used to set the Timeout used by handlers like sending requests to
-// Tigo Gateway and back in case of Disbursement or to set the max time for
-// handlers QuerySubscriberFunc and WalletToAccountFunc while handling requests from tigo
-// the default value is 1 minute
-func WithTimeout(timeout time.Duration) ClientOption {
-	return func(client *BaseClient) {
-		client.Timeout = timeout
-	}
-}
-
-// WithDebugMode set debug mode to true or false
-func WithDebugMode(debugMode bool) ClientOption {
-	return func(client *BaseClient) {
-		client.DebugMode = debugMode
-
-	}
-}
-
-// WithLogger set a Logger of user preference but of type io.Writer
-// that will be used for debugging use cases. A default value is os.Stderr
-// it can be replaced by any io.Writer unless its nil which in that case
-// it will be ignored
-func WithLogger(out io.Writer) ClientOption {
-	return func(client *BaseClient) {
-		if out == nil {
-			return
-		}
-		client.Logger = out
-	}
-}
-
-// WithHTTPClient when called unset the present http.Client and replace it
-// with c. In case user tries to pass a nil value referencing the pkg
-// i.e WithHTTPClient(nil), it will be ignored and the pkg wont be replaced
-// Note: the new pkg Transport will be modified. It will be wrapped by another
-// middleware that enables pkg to
-func WithHTTPClient(httpClient *http.Client) ClientOption {
-
-	// TODO check if its really necessary to set the default Timeout to 1 minute
-
-	return func(client *BaseClient) {
-		if httpClient == nil {
-			return
-		}
-
-		//lt := loggingTransport{
-		//	debugMode: client.DebugMode,
-		//	logger: client.Logger,
-		//	next:   c.Transport,
-		//}
-		//
-		//hc := &http.Client{
-		//	Transport:     lt,
-		//	CheckRedirect: c.CheckRedirect,
-		//	Jar:           c.Jar,
-		//	Timeout:       c.Timeout,
-		//}
-		client.HttpClient = httpClient
-	}
-}
 
 func NewBaseClient(opts ...ClientOption) *BaseClient {
 	client := &BaseClient{
@@ -213,24 +112,24 @@ func (client *BaseClient) NewRequest(method, url string, payloadType internal.Pa
 
 func (client *BaseClient) LogPayload(t internal.PayloadType, prefix string, payload interface{}) {
 
-	errors := make(chan error)
+	errs := make(chan error)
 	done := make(chan bool)
 
 	go func() {
 		buf, err := internal.MarshalPayload(t, payload)
 		if err != nil {
-			errors <- fmt.Errorf("could not marshal the payload: %s\n", err.Error())
+			errs <- fmt.Errorf("could not marshal the payload: %s\n", err.Error())
 		}
 		_, err = client.Logger.Write([]byte(fmt.Sprintf("%s: %s\n\n", prefix, string(buf))))
 		if err != nil {
-			errors <- fmt.Errorf("could not print the payload: %s\n", err.Error())
+			errs <- fmt.Errorf("could not print the payload: %s\n", err.Error())
 		}
 
 		done <- true
 	}()
 
 	select {
-	case err := <-errors:
+	case err := <-errs:
 		fmt.Printf("error encountered: %s\n", err)
 		return
 
@@ -242,18 +141,18 @@ func (client *BaseClient) LogPayload(t internal.PayloadType, prefix string, payl
 
 func (client *BaseClient) Log(request *http.Request, response *http.Response) {
 
-	errors := make(chan error)
+	errs := make(chan error)
 	done := make(chan bool)
 
 	go func() {
 		if request != nil {
 			reqDump, err := httputil.DumpRequestOut(request, true)
 			if err != nil {
-				errors <- fmt.Errorf("could not dump request due to: %s\n", err.Error())
+				errs <- fmt.Errorf("could not dump request due to: %s\n", err.Error())
 			}
 			_, err = fmt.Fprintf(client.Logger, "request %s\n", reqDump)
 			if err != nil {
-				errors <- fmt.Errorf("could not print  request due to: %s\n", err.Error())
+				errs <- fmt.Errorf("could not print  request due to: %s\n", err.Error())
 			}
 
 			if response == nil {
@@ -264,12 +163,12 @@ func (client *BaseClient) Log(request *http.Request, response *http.Response) {
 		if response != nil {
 			respDump, err := httputil.DumpResponse(response, true)
 			if err != nil {
-				errors <- fmt.Errorf("could not dump response due to: %s\n", err.Error())
+				errs <- fmt.Errorf("could not dump response due to: %s\n", err.Error())
 			}
 			_, err = fmt.Fprintf(client.Logger, "response:  %s\n", respDump)
 
 			if err != nil {
-				errors <- fmt.Errorf("could not print out response due to: %s\n", err.Error())
+				errs <- fmt.Errorf("could not print out response due to: %s\n", err.Error())
 			}
 
 			done <- true
@@ -278,7 +177,7 @@ func (client *BaseClient) Log(request *http.Request, response *http.Response) {
 	}()
 
 	select {
-	case err := <-errors:
+	case err := <-errs:
 		fmt.Printf("error encountered: %s\n", err)
 		return
 
@@ -287,4 +186,70 @@ func (client *BaseClient) Log(request *http.Request, response *http.Response) {
 		return
 	}
 
+}
+
+
+func (client *BaseClient) Send(_ context.Context, request *Request, v interface{}) error {
+	var bodyBytes []byte
+
+	//creates http request with context
+	req, err := request.Transform()
+
+	if err != nil{
+		return err
+	}
+
+	if req.Body != nil {
+		bodyBytes, _ = ioutil.ReadAll(req.Body)
+	}
+
+	// Restore the request body content.
+	req.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+
+	if v == nil {
+		return errors.New("v interface can not be empty")
+	}
+
+	//// sending json request by default
+	//if req.Header.Get("content-Type") == "" {
+	//	req.Header.Set("Content-Type", "application/json")
+	//	req.Header.Set("Cache-Control", "no-cache")
+	//	req.Header.Set("username", client.Username)
+	//	req.Header.Set("password", c.Password)
+	//}
+
+	resp, err := client.HttpClient.Do(req)
+
+	go func(debugMode bool) {
+		if debugMode{
+			client.Log(req,resp)
+		}
+	}(client.DebugMode)
+
+	if err != nil {
+		return err
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+
+		}
+	}(resp.Body)
+
+	switch resp.Header.Get("Content-Type") {
+	case "application/json", "application/json;charset=UTF-8":
+		if err := json.NewDecoder(resp.Body).Decode(v); err != nil {
+			if err != io.EOF {
+				return err
+			}
+		}
+	case "text/xml", "text/xml;charset=UTF-8":
+		if err := xml.NewDecoder(resp.Body).Decode(v); err != nil {
+			if err != io.EOF {
+				return err
+			}
+		}
+	}
+
+	return nil
 }

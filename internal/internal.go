@@ -8,6 +8,7 @@ import (
 const (
 	JsonPayload PayloadType = iota
 	XmlPayload
+	FormPayload
 )
 
 type (

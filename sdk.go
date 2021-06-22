@@ -2,6 +2,7 @@ package tigosdk
 
 import (
 	"context"
+	"fmt"
 	"github.com/techcraftt/tigosdk/aw"
 	"github.com/techcraftt/tigosdk/pkg/conf"
 	"github.com/techcraftt/tigosdk/pkg/tigo"
@@ -14,6 +15,11 @@ const (
 	NameQuery RequestType = iota
 	Payment
 	Callback
+	Token
+	Refund
+	PushPay
+	Heartbeat
+	Disburse
 )
 
 var (
@@ -101,20 +107,71 @@ func (client *Client) HeartBeat(ctx context.Context, request push.HealthCheckReq
 }
 
 // HandleRequest is experimental no guarantees
-// For reliability use SubscriberNameHandler and WalletToAccountHandler
 func (client *Client) HandleRequest(ctx context.Context, requestType RequestType) http.HandlerFunc {
 	ctx, cancel := context.WithTimeout(ctx, client.Timeout)
 	defer cancel()
 	return func(writer http.ResponseWriter, request *http.Request) {
 		switch requestType {
 		case NameQuery:
-			client.HandleNameQuery(writer, request)
+			client.wa.HandleNameQuery(writer, request)
 		case Payment:
-			client.HandlePayment(writer, request)
+			client.wa.HandlePayment(writer, request)
 		case Callback:
-			client.Callback(writer, request)
+			client.push.Callback(writer, request)
 		default:
 			http.Error(writer, "unknown request type", http.StatusInternalServerError)
 		}
 	}
+}
+
+//SendRequest like HandleRequest is experimental for neat and short API
+//the problem with this API is type checking and conversion that you have
+//to deal with while using it
+func (client *Client)SendRequest(ctx context.Context,requestType RequestType,
+	request interface{})(response interface{},err error){
+
+	if request == nil && requestType != Token{
+		return nil, fmt.Errorf("request can not be nil")
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, client.Timeout)
+	defer cancel()
+	switch requestType {
+	case Refund:
+		refundReq, ok := request.(push.RefundRequest)
+		if !ok{
+			err = fmt.Errorf("invalid refund request")
+			return nil, err
+		}
+		return client.push.Refund(ctx,refundReq)
+
+	case Disburse:
+		disburseReq, ok := request.(aw.DisburseRequest)
+		if !ok{
+			err = fmt.Errorf("invalid disburse request")
+			return nil, err
+		}
+		return client.aw.Disburse(ctx,disburseReq)
+
+	case PushPay:
+		payReq, ok := request.(push.PayRequest)
+		if !ok{
+			err = fmt.Errorf("invalid push pay request")
+			return nil, err
+		}
+		return client.push.Pay(ctx,payReq)
+
+	case Heartbeat:
+		healthReq, ok := request.(push.HealthCheckRequest)
+		if !ok{
+			err = fmt.Errorf("invalid health check request")
+			return nil, err
+		}
+		return client.push.HeartBeat(ctx,healthReq)
+
+	case Token:
+		return client.push.Token(ctx)
+	}
+
+	return nil, fmt.Errorf("unsupported request type")
 }

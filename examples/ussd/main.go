@@ -222,7 +222,7 @@ func (c checker) HandlePaymentRequest(ctx context.Context, request wa.PayRequest
 	if !found {
 		resp := wa.PayResponse{
 
-			Type:             tigosdk.SyncBillPayResponse,
+			Type:             wa.SyncBillPayResponse,
 			TxnID:            request.TxnID,
 			RefID:            refid,
 			Result:           tigosdk.FailedTxnResult,
@@ -237,11 +237,11 @@ func (c checker) HandlePaymentRequest(ctx context.Context, request wa.PayRequest
 	} else {
 		if user.Status == 1 {
 			resp := wa.PayResponse{
-				Type:             tigosdk.SyncBillPayResponse,
+				Type:             wa.SyncBillPayResponse,
 				TxnID:            request.TxnID,
 				RefID:            refid,
 				Result:           "TF",
-				ErrorCode:        aw.ErrInvalidCustomerRefNumber,
+				ErrorCode:        wa.ErrInvalidCustomerRefNumber,
 				ErrorDescription: "Invalid Customer ref Number",
 				Msisdn:           request.Msisdn,
 				Flag:             "N",
@@ -254,7 +254,7 @@ func (c checker) HandlePaymentRequest(ctx context.Context, request wa.PayRequest
 				TxnID:            request.TxnID,
 				RefID:            refid,
 				Result:           "TF",
-				ErrorCode:        aw.ErrCustomerRefNumLocked,
+				ErrorCode:        wa.ErrCustomerRefNumLocked,
 				ErrorDescription: "Customer Locked",
 				Msisdn:           request.Msisdn,
 				Flag:             "N",
@@ -264,14 +264,14 @@ func (c checker) HandlePaymentRequest(ctx context.Context, request wa.PayRequest
 		}
 	}
 	resp := wa.PayResponse{
-		Type:             tigosdk.SyncBillPayResponse,
+		Type:             wa.SyncBillPayResponse,
 		TxnID:            request.TxnID,
 		RefID:            refid,
-		Result:           "TS",
-		ErrorCode:        "error000",
+		Result:           tigosdk.SucceededTxnResult,
+		ErrorCode:        wa.ErrSuccessTxn,
 		ErrorDescription: "Transaction Successful",
 		Msisdn:           request.Msisdn,
-		Flag:             "Y",
+		Flag:             tigosdk.YesFlag,
 		Content:          request.SenderName,
 	}
 	return resp, nil
@@ -282,7 +282,7 @@ func (c checker) HandleSubscriberNameQuery(ctx context.Context, request wa.NameR
 	user, found := c.checkUser(request.CustomerReferenceID)
 	if !found {
 		resp := wa.NameResponse{
-			Type:      tigosdk.SyncLookupResponse,
+			Type:      wa.SyncLookupResponse,
 			Result:    "TF",
 			ErrorCode: "error010",
 			ErrorDesc: "Not found",
@@ -296,7 +296,7 @@ func (c checker) HandleSubscriberNameQuery(ctx context.Context, request wa.NameR
 		if user.Status == 1 {
 
 			resp := wa.NameResponse{
-				Type:      tigosdk.SyncLookupResponse,
+				Type:      wa.SyncLookupResponse,
 				Result:    "TF",
 				ErrorCode: "error020",
 				ErrorDesc: "Transaction Failed: User Suspended",
@@ -310,7 +310,7 @@ func (c checker) HandleSubscriberNameQuery(ctx context.Context, request wa.NameR
 
 		if user.Status == 2 {
 			resp := wa.NameResponse{
-				Type:      tigosdk.SyncLookupResponse,
+				Type:      wa.SyncLookupResponse,
 				Result:    "TF",
 				ErrorCode: wa.ErrNameInvalidFormat,
 				ErrorDesc: "Transaction Failed: Format not known",
@@ -323,7 +323,7 @@ func (c checker) HandleSubscriberNameQuery(ctx context.Context, request wa.NameR
 		}
 
 		resp := wa.NameResponse{
-			Type:      tigosdk.SyncLookupResponse,
+			Type:      wa.SyncLookupResponse,
 			Result:    tigosdk.SucceededTxnResult,
 			ErrorCode: wa.NoNamecheckErr,
 			ErrorDesc: "Transaction Successfully",

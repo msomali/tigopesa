@@ -47,9 +47,6 @@ func MarshalPayload(payloadType PayloadType, payload interface{}) (buffer *bytes
 			err := fmt.Errorf("can not marshal the payload: invalid form has been submitted")
 			return nil, err
 		}
-		//buffer = strings.NewReader(form.Encode())
-
-		//buffer.WriteString(form.Encode())
 
 		buffer = bytes.NewBufferString(form.Encode())
 

@@ -8,7 +8,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
 	"time"
 )
 
@@ -142,7 +141,7 @@ func (client *PClient) Token(ctx context.Context) (string, error) {
 
 	request := tigo.NewRequest(http.MethodPost,
 		client.ApiBaseURL+client.GetTokenURL,
-		payloadType, strings.NewReader(form.Encode()),
+		payloadType, form,
 		requestOptions...,
 	)
 

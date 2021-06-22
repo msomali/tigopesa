@@ -103,10 +103,11 @@ func MakeHandler(client1 *wa.Client, client2 *aw.Client) http.Handler {
 	return router
 }
 
-func loadFromEnv() (conf *conf.Config, err error) {
+func loadFromEnv() (config *conf.Config, err error) {
 
 	err = env.Load("tigo.env")
-	conf = &conf.Config{
+
+	config = &conf.Config{
 		PayAccountName:            "",
 		PayAccountMSISDN:          "",
 		PayBillerNumber:           "",

@@ -15,7 +15,6 @@ const (
 )
 
 var (
-
 	defaultResponseHeader = map[string]string{
 		"Content-Type": ContentTypeXml,
 	}
@@ -32,14 +31,13 @@ type (
 	ResponseOption func(response *Response)
 )
 
-
-func ReceiveRequest(r *http.Request, payloadType internal.PayloadType,v interface{})error{
+func ReceiveRequest(r *http.Request, payloadType internal.PayloadType, v interface{}) error {
 	body, err := ioutil.ReadAll(r.Body)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
-	if v == nil{
+	if v == nil {
 		return fmt.Errorf("v can not be nil")
 	}
 
@@ -48,30 +46,30 @@ func ReceiveRequest(r *http.Request, payloadType internal.PayloadType,v interfac
 		return json.NewDecoder(r.Body).Decode(v)
 
 	case internal.XmlPayload:
-		return xml.Unmarshal(body,v)
+		return xml.Unmarshal(body, v)
 	}
 
 	return err
 }
 
-func (r *Response) Send(writer http.ResponseWriter) (err error){
+func (r *Response) Send(writer http.ResponseWriter) (err error) {
 	writer.WriteHeader(r.StatusCode)
 	for key, value := range r.Headers {
-		writer.Header().Add(key,value)
+		writer.Header().Add(key, value)
 	}
 	switch r.PayloadType {
 
 	case internal.XmlPayload:
 		payload, err := xml.MarshalIndent(r.Payload, "", "  ")
 
-		if err != nil{
+		if err != nil {
 			http.Error(writer, err.Error(), http.StatusInternalServerError)
 			return err
 		}
 
 		_, err = writer.Write(payload)
 
-		if err != nil{
+		if err != nil {
 			return err
 		}
 
@@ -103,7 +101,7 @@ func WithMoreResponseHeaders(headers map[string]string) ResponseOption {
 	}
 }
 
-func WithDefaultJsonHeader()ResponseOption{
+func WithDefaultJsonHeader() ResponseOption {
 	return func(response *Response) {
 		headers := map[string]string{
 			"Content-Type": ContentTypeJson,
@@ -112,7 +110,7 @@ func WithDefaultJsonHeader()ResponseOption{
 	}
 }
 
-func NewResponse(status int, payload interface{},payloadType internal.PayloadType, opts ...ResponseOption) *Response {
+func NewResponse(status int, payload interface{}, payloadType internal.PayloadType, opts ...ResponseOption) *Response {
 	response := &Response{
 		StatusCode:  status,
 		Payload:     payload,

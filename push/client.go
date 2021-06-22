@@ -45,7 +45,7 @@ var (
 	//JSONPayload PayloadType = "json"
 	//XMLPayload  PayloadType = "xml"
 
-	_ Service = (*Client)(nil)
+	_ Service         = (*Client)(nil)
 	_ CallbackHandler = (*CallbackHandlerFunc)(nil)
 )
 
@@ -65,7 +65,7 @@ type (
 	//PayloadType string
 
 	CallbackHandler interface {
-		Do(ctx context.Context, request CallbackRequest)(CallbackResponse,error)
+		Do(ctx context.Context, request CallbackRequest) (CallbackResponse, error)
 	}
 
 	// CallbackHandleFunc check and reports the status of the transaction.
@@ -74,7 +74,7 @@ type (
 
 	// CallbackHandlerFunc check and reports the status of the transaction.
 	// if transaction status
-	CallbackHandlerFunc func(context.Context, CallbackRequest) (CallbackResponse,error)
+	CallbackHandlerFunc func(context.Context, CallbackRequest) (CallbackResponse, error)
 
 	Service interface {
 		// BillPay initiate Service payment flow to deduct a specific amount from customer's Tigo pesa wallet.
@@ -95,7 +95,7 @@ type (
 		*tigo.BaseClient
 		authToken          string
 		authTokenExpiresAt time.Time
-		CallbackHandler CallbackHandler
+		CallbackHandler    CallbackHandler
 	}
 )
 
@@ -126,9 +126,9 @@ func (c *Client) BillPayCallback(ctx context.Context) http.HandlerFunc {
 		var callbackResponse *CallbackResponse
 
 		defer func(debugMode bool) {
-			if debugMode{
-				c.Log(r,nil)
-				c.LogPayload(internal.JsonPayload,"Callback Response",&callbackResponse)
+			if debugMode {
+				c.Log(r, nil)
+				c.LogPayload(internal.JsonPayload, "Callback Response", &callbackResponse)
 			}
 		}(c.DebugMode)
 
@@ -210,6 +210,7 @@ func NewClient(bc *tigo.BaseClient, provider CallbackHandleFunc) *Client {
 
 	return client
 }
+
 //
 //func (c *Client) NewRequest(method, url string, payloadType internal.PayloadType, payload interface{}) (*http.Request, error) {
 //	var (
@@ -289,14 +290,13 @@ func (c *Client) Send(ctx context.Context, req *http.Request, v interface{}) err
 		req.Header.Set("username", c.Username)
 		req.Header.Set("password", c.Password)
 	}
-	
+
 	resp, err := c.HttpClient.Do(req)
-	
-	
+
 	//todo log here
 	go func(debugMode bool) {
-		if debugMode{
-			c.BaseClient.Log(req,resp)
+		if debugMode {
+			c.BaseClient.Log(req, resp)
 		}
 	}(c.DebugMode)
 

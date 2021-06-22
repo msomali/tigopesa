@@ -39,7 +39,6 @@ var (
 )
 
 type (
-
 	BaseClient struct {
 		HttpClient *http.Client
 		Ctx        context.Context
@@ -47,10 +46,7 @@ type (
 		Logger     io.Writer // for logging purposes
 		DebugMode  bool
 	}
-
 )
-
-
 
 func NewBaseClient(opts ...ClientOption) *BaseClient {
 	client := &BaseClient{
@@ -171,7 +167,7 @@ func (client *BaseClient) Send(_ context.Context, request *Request, v interface{
 	//creates http request with context
 	req, err := request.Transform()
 
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
@@ -189,8 +185,8 @@ func (client *BaseClient) Send(_ context.Context, request *Request, v interface{
 	resp, err := client.HttpClient.Do(req)
 
 	go func(debugMode bool) {
-		if debugMode{
-			client.Log(req,resp)
+		if debugMode {
+			client.Log(req, resp)
 		}
 	}(client.DebugMode)
 

@@ -53,7 +53,6 @@ func (app *App) disburseHandler(writer http.ResponseWriter, request *http.Reques
 
 	refid := fmt.Sprintf("PCT%s", strconv.FormatInt(time.Now().UnixNano(), 10))
 
-
 	req := aw.DisburseRequest{
 		Type:        tigosdk.REQMFCI,
 		ReferenceID: refid,
@@ -168,7 +167,6 @@ func main() {
 
 	keeper := checker{usersMap}
 
-
 	var opts []tigo.ClientOption
 
 	opts = append(opts,
@@ -178,7 +176,7 @@ func main() {
 		tigo.WithHTTPClient(http.DefaultClient),
 	)
 
-	_ , pay, disburse:= conf.Split()
+	_, pay, disburse := conf.Split()
 
 	bc := tigo.NewBaseClient(tigo.WithDebugMode(true))
 
@@ -194,8 +192,7 @@ func main() {
 		BaseClient: bc,
 	}
 
-
-	handler := MakeHandler(waClient,awClient)
+	handler := MakeHandler(waClient, awClient)
 
 	server := http.Server{
 		Addr:              ":8090",

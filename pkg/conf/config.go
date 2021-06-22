@@ -47,7 +47,7 @@ func (conf *Config) Validate() error {
 	panic("implement me")
 }
 
-func (conf *Config)Split() (pushConf *push.Config, pay *wa.Config, disburse *aw.Config) {
+func (conf *Config) Split() (pushConf *push.Config, pay *wa.Config, disburse *aw.Config) {
 	pushConf = &push.Config{
 		Username:              conf.PushUsername,
 		Password:              conf.PushPassword,
@@ -80,6 +80,6 @@ func (conf *Config)Split() (pushConf *push.Config, pay *wa.Config, disburse *aw.
 	return
 }
 
-func Merge(pushConf *push.Config, waConf *wa.Config, awConf *aw.Config) (*Config,error) {
+func Merge(pushConf *push.Config, waConf *wa.Config, awConf *aw.Config) (*Config, error) {
 	return nil, nil
 }

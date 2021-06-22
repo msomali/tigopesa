@@ -39,11 +39,10 @@ func MarshalPayload(payloadType PayloadType, payload interface{}) (buffer *bytes
 		buffer = bytes.NewBuffer(buf)
 		return buffer, nil
 
-
 	case FormPayload:
 
 		form, ok := payload.(url.Values)
-		if !ok{
+		if !ok {
 			err := fmt.Errorf("can not marshal the payload: invalid form has been submitted")
 			return nil, err
 		}
@@ -58,8 +57,3 @@ func MarshalPayload(payloadType PayloadType, payload interface{}) (buffer *bytes
 	}
 
 }
-
-
-
-
-

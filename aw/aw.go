@@ -63,12 +63,12 @@ func (client *Client) Disburse(ctx context.Context, request DisburseRequest) (re
 	var reqOpts []tigo.RequestOption
 	ctxOpt := tigo.WithRequestContext(ctx)
 	headers := map[string]string{
-		"Content-Type":"application/xml",
+		"Content-Type": "application/xml",
 	}
 	headersOpt := tigo.WithRequestHeaders(headers)
-	reqOpts = append(reqOpts,ctxOpt,headersOpt)
+	reqOpts = append(reqOpts, ctxOpt, headersOpt)
 
-	req := tigo.NewRequest(http.MethodPost,client.RequestURL,internal.XmlPayload,request,reqOpts...)
+	req := tigo.NewRequest(http.MethodPost, client.RequestURL, internal.XmlPayload, request, reqOpts...)
 
 	err = client.Send(ctx, req, &response)
 

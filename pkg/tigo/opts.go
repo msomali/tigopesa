@@ -68,4 +68,3 @@ func WithHTTPClient(httpClient *http.Client) ClientOption {
 		client.HttpClient = httpClient
 	}
 }
-

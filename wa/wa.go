@@ -128,15 +128,14 @@ func (handler NameQueryFunc) HandleSubscriberNameQuery(ctx context.Context, requ
 	return handler(ctx, request)
 }
 
-
 func (client *Client) HandleNameQuery(writer http.ResponseWriter, request *http.Request) {
 	ctx, cancel := context.WithTimeout(client.Ctx, client.Timeout)
 	defer cancel()
 	var req NameRequest
 
-	err := tigo.ReceiveRequest(request,internal.XmlPayload,&req)
+	err := tigo.ReceiveRequest(request, internal.XmlPayload, &req)
 
-	if err != nil{
+	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
 
@@ -146,9 +145,8 @@ func (client *Client) HandleNameQuery(writer http.ResponseWriter, request *http.
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
 
-	resp := tigo.NewResponse(200,response,internal.XmlPayload)
+	resp := tigo.NewResponse(200, response, internal.XmlPayload)
 	_ = resp.Send(writer)
-
 
 }
 
@@ -158,7 +156,7 @@ func (client *Client) HandlePayment(writer http.ResponseWriter, request *http.Re
 
 	var req PayRequest
 
-	err := tigo.ReceiveRequest(request, internal.XmlPayload,&req)
+	err := tigo.ReceiveRequest(request, internal.XmlPayload, &req)
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
@@ -169,7 +167,7 @@ func (client *Client) HandlePayment(writer http.ResponseWriter, request *http.Re
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
 
-	resp := tigo.NewResponse(200,response,internal.XmlPayload)
+	resp := tigo.NewResponse(200, response, internal.XmlPayload)
 
 	_ = resp.Send(writer)
 

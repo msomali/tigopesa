@@ -44,40 +44,39 @@ func (client *PClient) Pay(ctx context.Context, request PayRequest) (PayResponse
 }
 
 func (client *PClient) Callback(w http.ResponseWriter, r *http.Request) {
-		var callbackRequest CallbackRequest
+	var callbackRequest CallbackRequest
 
-		var callbackResponse *CallbackResponse
+	var callbackResponse *CallbackResponse
 
-		defer func(debugMode bool) {
-			if debugMode {
-				client.Log(r, nil)
-				client.LogPayload(internal.JsonPayload, "Callback Response", &callbackResponse)
-			}
-		}(client.DebugMode)
+	defer func(debugMode bool) {
+		if debugMode {
+			client.Log(r, nil)
+			client.LogPayload(internal.JsonPayload, "Callback Response", &callbackResponse)
+		}
+	}(client.DebugMode)
 
-		w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json")
 
-		err := json.NewDecoder(r.Body).Decode(&callbackRequest)
+	err := json.NewDecoder(r.Body).Decode(&callbackRequest)
 
-		defer func(Body io.ReadCloser) {
-			err := Body.Close()
-			if err != nil {
-				return
-			}
-		}(r.Body)
-
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+	}(r.Body)
 
-		*callbackResponse, err = client.CallbackHandler.Do(client.Ctx, callbackRequest)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-		if err := json.NewEncoder(w).Encode(callbackResponse); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+	*callbackResponse, err = client.CallbackHandler.Do(client.Ctx, callbackRequest)
 
+	if err := json.NewEncoder(w).Encode(callbackResponse); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 }
 

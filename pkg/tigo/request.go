@@ -71,6 +71,10 @@ func WithAuthHeaders(username, password string) RequestOption {
 	}
 }
 
+func (request *Request) AddHeader(key, value string)  {
+	request.Headers[key] = value
+}
+
 //Transform takes a *Request and transform into *http.Request with a context
 func (request *Request) Transform() (*http.Request, error) {
 

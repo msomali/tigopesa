@@ -26,14 +26,14 @@ type (
 	Service interface {
 		aw.DisburseHandler
 		wa.Service
-		push.PService
+		push.Service
 	}
 	Client struct {
 		*tigo.BaseClient
 		*conf.Config
 		wa   *wa.Client
 		aw   *aw.Client
-		push *push.PClient
+		push *push.Client
 	}
 )
 
@@ -42,7 +42,7 @@ func NewClient(config *conf.Config, base *tigo.BaseClient,
 
 	pushConf, payConf, disburseConf := config.Split()
 
-	pushClient := &push.PClient{
+	pushClient := &push.Client{
 		Config:          pushConf,
 		BaseClient:      base,
 		CallbackHandler: callbackHandler,

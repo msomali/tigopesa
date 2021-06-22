@@ -2,6 +2,7 @@ package push
 
 import (
 	"context"
+	"fmt"
 	"github.com/techcraftt/tigosdk/internal"
 	"github.com/techcraftt/tigosdk/pkg/tigo"
 	"net/http"
@@ -10,13 +11,32 @@ import (
 )
 
 var (
-	_ PService = (*PClient)(nil)
+	_ Service = (*Client)(nil)
 )
 
 type (
 
-	//PClient is the client for making push pay requests
-	PClient struct {
+	Config struct {
+		Username              string
+		Password              string
+		PasswordGrantType     string
+		ApiBaseURL            string
+		GetTokenURL           string
+		BillerMSISDN          string
+		BillerCode            string
+		PushPayURL            string
+		ReverseTransactionURL string
+		HealthCheckURL        string
+	}
+
+	CallbackHandler interface {
+		Do(ctx context.Context, request CallbackRequest) (CallbackResponse, error)
+	}
+
+	CallbackHandlerFunc func(context.Context, CallbackRequest) (CallbackResponse, error)
+
+	//Client is the client for making push pay requests
+	Client struct {
 		*Config
 		*tigo.BaseClient
 		CallbackHandler CallbackHandler
@@ -24,7 +44,7 @@ type (
 		tokenExpires    time.Time
 	}
 
-	PService interface {
+	Service interface {
 		Token(ctx context.Context) (string, error)
 
 		Pay(ctx context.Context, request PayRequest) (PayResponse, error)
@@ -37,11 +57,47 @@ type (
 	}
 )
 
-func (client *PClient) Pay(ctx context.Context, request PayRequest) (PayResponse, error) {
-	panic("implement me")
+func (client *Client) Pay(ctx context.Context, request PayRequest) (PayResponse, error) {
+	var billPayResp = &PayResponse{}
+
+	var tokenStr string
+
+	//Add Auth Header
+	if *client.token != "" {
+		if !client.tokenExpires.IsZero() && time.Until(client.tokenExpires) < (60*time.Second) {
+			if _, err := client.Token(client.Ctx); err != nil {
+				return *billPayResp,err
+			}
+		}
+
+		tokenStr = fmt.Sprintf("bearer %s",*client.token)
+	}
+
+	authHeader := map[string]string{
+		"Authorization": tokenStr,
+	}
+	var requestOpts []tigo.RequestOption
+	moreHeaderOpt := tigo.WithMoreHeaders(authHeader)
+	ctxOpt := tigo.WithRequestContext(ctx)
+	requestOpts = append(requestOpts, moreHeaderOpt,ctxOpt)
+
+	req := tigo.NewRequest(http.MethodPost,
+		client.PushPayURL,
+		internal.JsonPayload, request,
+		requestOpts...,
+	)
+
+	err := client.Send(context.TODO(), req, billPayResp)
+
+	if err != nil {
+		return *billPayResp, err
+	}
+
+	return *billPayResp, nil
+
 }
 
-func (client *PClient) Callback(w http.ResponseWriter, r *http.Request) {
+func (client *Client) Callback(w http.ResponseWriter, r *http.Request) {
 	var callbackRequest CallbackRequest
 
 	err := tigo.ReceiveRequest(r,internal.JsonPayload, &callbackRequest)
@@ -66,7 +122,7 @@ func (client *PClient) Callback(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (client *PClient) Refund(ctx context.Context, refundReq RefundRequest) (RefundResponse, error) {
+func (client *Client) Refund(ctx context.Context, refundReq RefundRequest) (RefundResponse, error) {
 	var refundPaymentResp = &RefundResponse{}
 
 	var requestOptions []tigo.RequestOption
@@ -86,7 +142,7 @@ func (client *PClient) Refund(ctx context.Context, refundReq RefundRequest) (Ref
 	return *refundPaymentResp, nil
 }
 
-func (client *PClient) HeartBeat(ctx context.Context, request HealthCheckRequest) (HealthCheckResponse, error) {
+func (client *Client) HeartBeat(ctx context.Context, request HealthCheckRequest) (HealthCheckResponse, error) {
 	var healthCheckResp = &HealthCheckResponse{}
 
 	var requestOptions []tigo.RequestOption
@@ -103,7 +159,7 @@ func (client *PClient) HeartBeat(ctx context.Context, request HealthCheckRequest
 	return *healthCheckResp, nil
 }
 
-func (client *PClient) Token(ctx context.Context) (string, error) {
+func (client *Client) Token(ctx context.Context) (string, error) {
 	var form = url.Values{}
 	form.Set("username", client.Username)
 	form.Set("password", client.Password)

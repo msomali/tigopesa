@@ -51,18 +51,18 @@ package push
 //)
 //
 //type (
-	//Config struct {
-	//	Username              string
-	//	Password              string
-	//	PasswordGrantType     string
-	//	ApiBaseURL            string
-	//	GetTokenURL           string
-	//	BillerMSISDN          string
-	//	BillerCode            string
-	//	PushPayURL            string
-	//	ReverseTransactionURL string
-	//	HealthCheckURL        string
-	//}
+//Config struct {
+//	Username              string
+//	Password              string
+//	PasswordGrantType     string
+//	ApiBaseURL            string
+//	GetTokenURL           string
+//	BillerMSISDN          string
+//	BillerCode            string
+//	PushPayURL            string
+//	ReverseTransactionURL string
+//	HealthCheckURL        string
+//}
 //	//PayloadType string
 //
 //	CallbackHandler interface {
@@ -75,7 +75,7 @@ package push
 //
 //	// CallbackHandlerFunc check and reports the status of the transaction.
 //	// if transaction status
-	//CallbackHandlerFunc func(context.Context, CallbackRequest) (CallbackResponse, error)
+//CallbackHandlerFunc func(context.Context, CallbackRequest) (CallbackResponse, error)
 
 //)//
 //	Service interface {

@@ -15,7 +15,6 @@ var (
 )
 
 type (
-
 	Config struct {
 		Username              string
 		Password              string
@@ -66,11 +65,11 @@ func (client *Client) Pay(ctx context.Context, request PayRequest) (PayResponse,
 	if *client.token != "" {
 		if !client.tokenExpires.IsZero() && time.Until(client.tokenExpires) < (60*time.Second) {
 			if _, err := client.Token(client.Ctx); err != nil {
-				return *billPayResp,err
+				return *billPayResp, err
 			}
 		}
 
-		tokenStr = fmt.Sprintf("bearer %s",*client.token)
+		tokenStr = fmt.Sprintf("bearer %s", *client.token)
 	}
 
 	authHeader := map[string]string{
@@ -79,7 +78,7 @@ func (client *Client) Pay(ctx context.Context, request PayRequest) (PayResponse,
 	var requestOpts []tigo.RequestOption
 	moreHeaderOpt := tigo.WithMoreHeaders(authHeader)
 	ctxOpt := tigo.WithRequestContext(ctx)
-	requestOpts = append(requestOpts, moreHeaderOpt,ctxOpt)
+	requestOpts = append(requestOpts, moreHeaderOpt, ctxOpt)
 
 	req := tigo.NewRequest(http.MethodPost,
 		client.PushPayURL,
@@ -100,7 +99,7 @@ func (client *Client) Pay(ctx context.Context, request PayRequest) (PayResponse,
 func (client *Client) Callback(w http.ResponseWriter, r *http.Request) {
 	var callbackRequest CallbackRequest
 
-	err := tigo.ReceiveRequest(r,internal.JsonPayload, &callbackRequest)
+	err := tigo.ReceiveRequest(r, internal.JsonPayload, &callbackRequest)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -116,7 +115,7 @@ func (client *Client) Callback(w http.ResponseWriter, r *http.Request) {
 	headers := tigo.WithDefaultJsonHeader()
 
 	responseOpts = append(responseOpts, headers)
-	response := tigo.NewResponse(200, callbackResponse,internal.JsonPayload, responseOpts...)
+	response := tigo.NewResponse(200, callbackResponse, internal.JsonPayload, responseOpts...)
 
 	_ = response.Send(w)
 

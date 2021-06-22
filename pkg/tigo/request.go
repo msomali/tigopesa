@@ -71,7 +71,7 @@ func WithAuthHeaders(username, password string) RequestOption {
 	}
 }
 
-func (request *Request) AddHeader(key, value string)  {
+func (request *Request) AddHeader(key, value string) {
 	request.Headers[key] = value
 }
 

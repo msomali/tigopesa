@@ -122,6 +122,7 @@ func (c *Client) BillPay(ctx context.Context, billPaymentReq PayRequest) (*PayRe
 func (c *Client) BillPayCallback(ctx context.Context) http.HandlerFunc {
 	var callbackRequest CallbackRequest
 
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		var callbackResponse *CallbackResponse
 

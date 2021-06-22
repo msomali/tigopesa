@@ -2,10 +2,8 @@ package push
 
 import (
 	"context"
-	"encoding/json"
 	"github.com/techcraftt/tigosdk/internal"
 	"github.com/techcraftt/tigosdk/pkg/tigo"
-	"io"
 	"net/http"
 	"net/url"
 	"time"
@@ -46,37 +44,25 @@ func (client *PClient) Pay(ctx context.Context, request PayRequest) (PayResponse
 func (client *PClient) Callback(w http.ResponseWriter, r *http.Request) {
 	var callbackRequest CallbackRequest
 
-	var callbackResponse *CallbackResponse
-
-	defer func(debugMode bool) {
-		if debugMode {
-			client.Log(r, nil)
-			client.LogPayload(internal.JsonPayload, "Callback Response", &callbackResponse)
-		}
-	}(client.DebugMode)
-
-	w.Header().Set("Content-Type", "application/json")
-
-	err := json.NewDecoder(r.Body).Decode(&callbackRequest)
-
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			return
-		}
-	}(r.Body)
+	err := tigo.ReceiveRequest(r,internal.JsonPayload, &callbackRequest)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
 	}
 
-	*callbackResponse, err = client.CallbackHandler.Do(client.Ctx, callbackRequest)
+	callbackResponse, err := client.CallbackHandler.Do(client.Ctx, callbackRequest)
 
-	if err := json.NewEncoder(w).Encode(callbackResponse); err != nil {
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
 	}
+
+	var responseOpts []tigo.ResponseOption
+	headers := tigo.WithDefaultJsonHeader()
+
+	responseOpts = append(responseOpts, headers)
+	response := tigo.NewResponse(200, callbackResponse,internal.JsonPayload, responseOpts...)
+
+	_ = response.Send(w)
 
 }
 

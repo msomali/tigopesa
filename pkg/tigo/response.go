@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"github.com/techcraftt/tigosdk/internal"
+	"io"
 	"io/ioutil"
 	"net/http"
 )
@@ -31,6 +32,10 @@ type (
 	ResponseOption func(response *Response)
 )
 
+//ReceiveRequest takes *http.Request from Tigo like during push pay callback and name query
+//It then unmarshal the provided request into given interface v
+//The expected Content-Type should also be declared. If its application/json or
+//application/xml
 func ReceiveRequest(r *http.Request, payloadType internal.PayloadType, v interface{}) error {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -43,10 +48,26 @@ func ReceiveRequest(r *http.Request, payloadType internal.PayloadType, v interfa
 
 	switch payloadType {
 	case internal.JsonPayload:
-		return json.NewDecoder(r.Body).Decode(v)
+		err = json.NewDecoder(r.Body).Decode(v)
+		defer func(Body io.ReadCloser) {
+			err := Body.Close()
+			if err != nil {
+				return
+			}
+		}(r.Body)
+
+		return err
 
 	case internal.XmlPayload:
-		return xml.Unmarshal(body, v)
+		err = xml.Unmarshal(body, v)
+		defer func(Body io.ReadCloser) {
+			err := Body.Close()
+			if err != nil {
+				return
+			}
+		}(r.Body)
+
+		return err
 	}
 
 	return err

@@ -2,10 +2,10 @@ package tigosdk
 
 import (
 	"context"
+	"github.com/techcraftt/tigosdk/aw"
 	"github.com/techcraftt/tigosdk/pkg/tigo"
 	"github.com/techcraftt/tigosdk/push"
-	"github.com/techcraftt/tigosdk/ussd/aw"
-	"github.com/techcraftt/tigosdk/ussd/wa"
+	"github.com/techcraftt/tigosdk/wa"
 	"net/http"
 )
 
@@ -32,36 +32,36 @@ type (
 	}
 )
 
-func (b *BigClient) Disburse(ctx context.Context, request aw.DisburseRequest) (aw.DisburseResponse, error) {
-	return b.aw.Disburse(ctx,request)
+func (client *BigClient) Disburse(ctx context.Context, request aw.DisburseRequest) (aw.DisburseResponse, error) {
+	return client.aw.Disburse(ctx,request)
 }
 
-func (b *BigClient) HandleNameQuery(writer http.ResponseWriter, request *http.Request) {
-	b.wa.HandleNameQuery(writer,request)
+func (client *BigClient) HandleNameQuery(writer http.ResponseWriter, request *http.Request) {
+	client.wa.HandleNameQuery(writer,request)
 }
 
-func (b *BigClient) HandlePayment(writer http.ResponseWriter, request *http.Request) {
-	b.wa.HandlePayment(writer,request)
+func (client *BigClient) HandlePayment(writer http.ResponseWriter, request *http.Request) {
+	client.wa.HandlePayment(writer,request)
 }
 
-func (b *BigClient) Token(ctx context.Context) (string, error) {
-	return b.push.Token(ctx)
+func (client *BigClient) Token(ctx context.Context) (string, error) {
+	return client.push.Token(ctx)
 }
 
-func (b *BigClient) Pay(ctx context.Context, request push.PayRequest) (push.PayResponse, error) {
-	return b.push.Pay(ctx,request)
+func (client *BigClient) Pay(ctx context.Context, request push.PayRequest) (push.PayResponse, error) {
+	return client.push.Pay(ctx,request)
 }
 
-func (b *BigClient) Callback(writer http.ResponseWriter, r *http.Request) {
-	b.push.Callback(writer,r)
+func (client *BigClient) Callback(writer http.ResponseWriter, r *http.Request) {
+	client.push.Callback(writer,r)
 }
 
-func (b *BigClient) Refund(ctx context.Context, request push.RefundRequest) (push.RefundResponse, error) {
-	return b.Refund(ctx,request)
+func (client *BigClient) Refund(ctx context.Context, request push.RefundRequest) (push.RefundResponse, error) {
+	return client.Refund(ctx,request)
 }
 
-func (b *BigClient) HeartBeat(ctx context.Context, request push.HealthCheckRequest) (push.HealthCheckResponse, error) {
-	return b.HeartBeat(ctx,request)
+func (client *BigClient) HeartBeat(ctx context.Context, request push.HealthCheckRequest) (push.HealthCheckResponse, error) {
+	return client.HeartBeat(ctx,request)
 }
 
 func SplitConf(config *tigo.Config) (pushConf *push.Config, pay *wa.Config, disburse *aw.Config) {

@@ -37,7 +37,7 @@ const (
 	SyncBillPayResponse = "SYNC_BILLPAY_RESPONSE"
 	REQMFCI             = "REQMFCI"
 
-	// WalletToAccount error codes
+	// Payment error codes
 
 	ErrSuccessTxn               = "error000"
 	ErrServiceNotAvailable      = "error001"

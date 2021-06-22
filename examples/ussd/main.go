@@ -226,7 +226,7 @@ func (c checker) HandlePaymentRequest(ctx context.Context, request wa.PayRequest
 			TxnID:            request.TxnID,
 			RefID:            refid,
 			Result:           tigosdk.FailedTxnResult,
-			ErrorCode:        tigosdk.ErrInvalidCustomerRefNumber,
+			ErrorCode:        aw.ErrInvalidCustomerRefNumber,
 			ErrorDescription: "User Not Found",
 			Msisdn:           request.Msisdn,
 			Flag:             tigosdk.NoFlag,
@@ -241,7 +241,7 @@ func (c checker) HandlePaymentRequest(ctx context.Context, request wa.PayRequest
 				TxnID:            request.TxnID,
 				RefID:            refid,
 				Result:           "TF",
-				ErrorCode:        tigosdk.ErrInvalidCustomerRefNumber,
+				ErrorCode:        aw.ErrInvalidCustomerRefNumber,
 				ErrorDescription: "Invalid Customer ref Number",
 				Msisdn:           request.Msisdn,
 				Flag:             "N",
@@ -254,7 +254,7 @@ func (c checker) HandlePaymentRequest(ctx context.Context, request wa.PayRequest
 				TxnID:            request.TxnID,
 				RefID:            refid,
 				Result:           "TF",
-				ErrorCode:        tigosdk.ErrCustomerRefNumLocked,
+				ErrorCode:        aw.ErrCustomerRefNumLocked,
 				ErrorDescription: "Customer Locked",
 				Msisdn:           request.Msisdn,
 				Flag:             "N",
@@ -312,10 +312,10 @@ func (c checker) HandleSubscriberNameQuery(ctx context.Context, request wa.NameR
 			resp := wa.NameResponse{
 				Type:      tigosdk.SyncLookupResponse,
 				Result:    "TF",
-				ErrorCode: tigosdk.ErrNameInvalidFormat,
+				ErrorCode: wa.ErrNameInvalidFormat,
 				ErrorDesc: "Transaction Failed: Format not known",
 				Msisdn:    request.Msisdn,
-				Flag:      "N",
+				Flag:      tigosdk.NoFlag,
 				Content:   fmt.Sprintf("%s", user.Name),
 			}
 
@@ -325,7 +325,7 @@ func (c checker) HandleSubscriberNameQuery(ctx context.Context, request wa.NameR
 		resp := wa.NameResponse{
 			Type:      tigosdk.SyncLookupResponse,
 			Result:    tigosdk.SucceededTxnResult,
-			ErrorCode: tigosdk.NoNamecheckErr,
+			ErrorCode: wa.NoNamecheckErr,
 			ErrorDesc: "Transaction Successfully",
 			Msisdn:    request.Msisdn,
 			Flag:      tigosdk.YesFlag,

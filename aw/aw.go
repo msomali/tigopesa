@@ -8,6 +8,20 @@ import (
 	"net/http"
 )
 
+const (
+	ErrSuccessTxn               = "error000"
+	ErrServiceNotAvailable      = "error001"
+	ErrInvalidCustomerRefNumber = "error010"
+	ErrCustomerRefNumLocked     = "error011"
+	ErrInvalidAmount            = "error012"
+	ErrAmountInsufficient       = "error013"
+	ErrAmountTooHigh            = "error014"
+	ErrAmountTooLow             = "error015"
+	ErrInvalidPayment           = "error016"
+	ErrGeneralError             = "error100"
+	ErrRetryConditionNoResponse = "error111"
+)
+
 var (
 	_ DisburseHandler = (*DisburseHandlerFunc)(nil)
 	_ DisburseHandler = (*Client)(nil)

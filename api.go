@@ -23,10 +23,6 @@ const (
 	TXN_STATUS_60074 = "60074"
 	TXN_STATUS_100   = "100"
 
-	ErrNameNotRegistered = "error010"
-	ErrNameInvalidFormat = "error030"
-	ErrNameUserSuspended = "error030"
-	NoNamecheckErr       = "error000"
 
 	YesFlag            = "Y"
 	NoFlag             = "N"
@@ -36,20 +32,6 @@ const (
 	SyncLookupResponse  = "SYNC_LOOKUP_RESPONSE"
 	SyncBillPayResponse = "SYNC_BILLPAY_RESPONSE"
 	REQMFCI             = "REQMFCI"
-
-	// Payment error codes
-
-	ErrSuccessTxn               = "error000"
-	ErrServiceNotAvailable      = "error001"
-	ErrInvalidCustomerRefNumber = "error010"
-	ErrCustomerRefNumLocked     = "error011"
-	ErrInvalidAmount            = "error012"
-	ErrAmountInsufficient       = "error013"
-	ErrAmountTooHigh            = "error014"
-	ErrAmountTooLow             = "error015"
-	ErrInvalidPayment           = "error016"
-	ErrGeneralError             = "error100"
-	ErrRetryConditionNoResponse = "error111"
 )
 
 var (

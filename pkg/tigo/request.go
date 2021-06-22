@@ -1,10 +1,8 @@
 package tigo
 
 import (
-	"bytes"
 	"context"
 	"github.com/techcraftt/tigosdk/internal"
-	"io"
 	"net/http"
 )
 
@@ -59,7 +57,7 @@ func WithRequestHeaders(headers map[string]string) RequestOption {
 
 func WithMoreHeaders(headers map[string]string) RequestOption {
 	return func(request *Request) {
-		for key, value := range headers{
+		for key, value := range headers {
 			request.Headers[key] = value
 		}
 	}
@@ -72,28 +70,20 @@ func WithAuthHeaders(username, password string) RequestOption {
 	}
 }
 
-
 //Transform takes a *Request and transform into *http.Request with a context
 func (request *Request) Transform() (*http.Request, error) {
-	var (
-		buffer io.Reader
-	)
 
-	if request.Payload != nil {
-		buf, err := internal.MarshalPayload(request.PayloadType, request.Payload)
-		if err != nil {
-			return nil, err
-		}
-
-		buffer = bytes.NewBuffer(buf)
+	buffer, err := internal.MarshalPayload(request.PayloadType, request.Payload)
+	if err != nil {
+		return nil, err
 	}
 
 	req, err := http.NewRequestWithContext(request.Context, request.HttpMethod, request.URL, buffer)
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
-	for key, value := range request.Headers{
-		req.Header.Set(key,value)
+	for key, value := range request.Headers {
+		req.Header.Set(key, value)
 	}
 	return req, nil
 }

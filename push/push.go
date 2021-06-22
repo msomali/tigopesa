@@ -2,8 +2,10 @@ package push
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/techcraftt/tigosdk/internal"
 	"github.com/techcraftt/tigosdk/pkg/tigo"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -42,8 +44,45 @@ func (client *PClient) Pay(ctx context.Context, request PayRequest) (PayResponse
 	panic("implement me")
 }
 
-func (client *PClient) Callback(writer http.ResponseWriter, r *http.Request) {
-	panic("implement me")
+func (client *PClient) Callback(ctx context.Context) http.HandlerFunc{
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		var callbackRequest CallbackRequest
+
+		var callbackResponse *CallbackResponse
+
+		defer func(debugMode bool) {
+			if debugMode {
+				client.Log(r, nil)
+				client.LogPayload(internal.JsonPayload, "Callback Response", &callbackResponse)
+			}
+		}(client.DebugMode)
+
+		w.Header().Set("Content-Type", "application/json")
+
+		err := json.NewDecoder(r.Body).Decode(&callbackRequest)
+
+		defer func(Body io.ReadCloser) {
+			err := Body.Close()
+			if err != nil {
+				return
+			}
+		}(r.Body)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		*callbackResponse, err = client.CallbackHandler.Do(ctx, callbackRequest)
+
+		if err := json.NewEncoder(w).Encode(callbackResponse); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+	}
+
 }
 
 func (client *PClient) Refund(ctx context.Context, refundReq RefundRequest) (RefundResponse, error) {
@@ -51,11 +90,11 @@ func (client *PClient) Refund(ctx context.Context, refundReq RefundRequest) (Ref
 
 	var requestOptions []tigo.RequestOption
 	ctxOption := tigo.WithRequestContext(ctx)
-	requestOptions = append(requestOptions,ctxOption)
+	requestOptions = append(requestOptions, ctxOption)
 
 	request := tigo.NewRequest(http.MethodPost,
 		client.ApiBaseURL+client.GetTokenURL,
-		internal.JsonPayload,refundReq,
+		internal.JsonPayload, refundReq,
 		requestOptions...,
 	)
 
@@ -71,9 +110,9 @@ func (client *PClient) HeartBeat(ctx context.Context, request HealthCheckRequest
 
 	var requestOptions []tigo.RequestOption
 	ctxOption := tigo.WithRequestContext(ctx)
-	requestOptions = append(requestOptions,ctxOption)
+	requestOptions = append(requestOptions, ctxOption)
 
-	req:= tigo.NewRequest(http.MethodPost, client.HealthCheckURL,
+	req := tigo.NewRequest(http.MethodPost, client.HealthCheckURL,
 		internal.JsonPayload, request, requestOptions...)
 
 	if err := client.Send(ctx, req, healthCheckResp); err != nil {
@@ -102,13 +141,13 @@ func (client *PClient) Token(ctx context.Context) (string, error) {
 	var requestOptions []tigo.RequestOption
 	ctxOption := tigo.WithRequestContext(ctx)
 	headersOption := tigo.WithRequestHeaders(headers)
-	requestOptions = append(requestOptions,ctxOption,headersOption)
+	requestOptions = append(requestOptions, ctxOption, headersOption)
 
 	request := tigo.NewRequest(http.MethodPost,
 		client.ApiBaseURL+client.GetTokenURL,
-		payloadType,strings.NewReader(form.Encode()),
+		payloadType, strings.NewReader(form.Encode()),
 		requestOptions...,
-		)
+	)
 	//req, err := http.NewRequestWithContext(ctx, http.MethodPost, client.ApiBaseURL+client.GetTokenURL, strings.NewReader(form.Encode()))
 	//
 	//
@@ -137,7 +176,7 @@ func (client *PClient) Token(ctx context.Context) (string, error) {
 
 	var tokenResponse TokenResponse
 
-	err := client.Send(context.TODO(),request, &tokenResponse)
+	err := client.Send(context.TODO(), request, &tokenResponse)
 	//err = json.Unmarshal(body, &tokenResponse)
 	if err != nil {
 		return "", err

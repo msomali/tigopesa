@@ -117,10 +117,13 @@ func (client *BaseClient) LogPayload(t internal.PayloadType, prefix string, payl
 
 	go func() {
 		buf, err := internal.MarshalPayload(t, payload)
+
 		if err != nil {
 			errs <- fmt.Errorf("could not marshal the payload: %s\n", err.Error())
+			return
 		}
-		_, err = client.Logger.Write([]byte(fmt.Sprintf("%s: %s\n\n", prefix, string(buf))))
+
+		_, err = client.Logger.Write([]byte(fmt.Sprintf("%s: %s\n\n", prefix, buf.String())))
 		if err != nil {
 			errs <- fmt.Errorf("could not print the payload: %s\n", err.Error())
 		}

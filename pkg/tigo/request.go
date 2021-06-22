@@ -83,7 +83,7 @@ func (request *Request) Transform() (*http.Request, error) {
 		return nil, err
 	}
 	for key, value := range request.Headers {
-		req.Header.Set(key, value)
+		req.Header.Add(key, value)
 	}
 	return req, nil
 }

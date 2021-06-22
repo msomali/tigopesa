@@ -46,13 +46,13 @@ type (
 	}
 
 	PaymentHandler interface {
-		Do(ctx context.Context, request PayRequest) (PayResponse, error)
+		HandlePaymentRequest(ctx context.Context, request PayRequest) (PayResponse, error)
 	}
 
 	PaymentHandleFunc func(ctx context.Context, request PayRequest) (PayResponse, error)
 
 	NameQueryHandler interface {
-		Do(ctx context.Context, request NameRequest) (NameResponse, error)
+		HandleSubscriberNameQuery(ctx context.Context, request NameRequest) (NameResponse, error)
 	}
 
 	NameQueryFunc func(ctx context.Context, request NameRequest) (NameResponse, error)
@@ -120,11 +120,11 @@ type (
 	}
 )
 
-func (handler PaymentHandleFunc) Do(ctx context.Context, request PayRequest) (PayResponse, error) {
+func (handler PaymentHandleFunc) HandlePaymentRequest(ctx context.Context, request PayRequest) (PayResponse, error) {
 	return handler(ctx, request)
 }
 
-func (handler NameQueryFunc) Do(ctx context.Context, request NameRequest) (NameResponse, error) {
+func (handler NameQueryFunc) HandleSubscriberNameQuery(ctx context.Context, request NameRequest) (NameResponse, error) {
 	return handler(ctx, request)
 }
 
@@ -140,7 +140,7 @@ func (client *Client) HandleNameQuery(writer http.ResponseWriter, request *http.
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
 
-	response, err := client.NameQueryHandler.Do(ctx, req)
+	response, err := client.NameQueryHandler.HandleSubscriberNameQuery(ctx, req)
 
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
@@ -163,7 +163,7 @@ func (client *Client) HandlePayment(writer http.ResponseWriter, request *http.Re
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
 
-	response, err := client.PaymentHandler.Do(ctx, req)
+	response, err := client.PaymentHandler.HandlePaymentRequest(ctx, req)
 
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)

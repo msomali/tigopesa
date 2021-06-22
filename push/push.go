@@ -44,9 +44,7 @@ func (client *PClient) Pay(ctx context.Context, request PayRequest) (PayResponse
 	panic("implement me")
 }
 
-func (client *PClient) Callback(ctx context.Context) http.HandlerFunc{
-
-	return func(w http.ResponseWriter, r *http.Request) {
+func (client *PClient) Callback(w http.ResponseWriter, r *http.Request) {
 		var callbackRequest CallbackRequest
 
 		var callbackResponse *CallbackResponse
@@ -74,14 +72,13 @@ func (client *PClient) Callback(ctx context.Context) http.HandlerFunc{
 			return
 		}
 
-		*callbackResponse, err = client.CallbackHandler.Do(ctx, callbackRequest)
+		*callbackResponse, err = client.CallbackHandler.Do(client.Ctx, callbackRequest)
 
 		if err := json.NewEncoder(w).Encode(callbackResponse); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-	}
 
 }
 

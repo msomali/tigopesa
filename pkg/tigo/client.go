@@ -191,7 +191,6 @@ func (client *BaseClient) Log(request *http.Request, response *http.Response) {
 
 }
 
-
 func (client *BaseClient) Send(_ context.Context, request *Request, v interface{}) error {
 	var bodyBytes []byte
 

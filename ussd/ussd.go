@@ -64,7 +64,7 @@ func (b *BigClient) HeartBeat(ctx context.Context, request push.HealthCheckReque
 	return b.HeartBeat(ctx,request)
 }
 
-func deriveConfigs(config *tigo.Config) (pushConf *push.Config, pay *wa.Config, disburse *aw.Config) {
+func SplitConf(config *tigo.Config) (pushConf *push.Config, pay *wa.Config, disburse *aw.Config) {
 	pushConf = &push.Config{
 		Username:              config.PushUsername,
 		Password:              config.PushPassword,
@@ -101,7 +101,7 @@ func deriveConfigs(config *tigo.Config) (pushConf *push.Config, pay *wa.Config, 
 func NewPClient(config *tigo.Config, base *tigo.BaseClient,
 	handler wa.NameQueryHandler, paymentHandler wa.PaymentHandler, callbackHandler push.CallbackHandler) *BigClient {
 
-	pushConf, payConf, disburseConf := deriveConfigs(config)
+	pushConf, payConf, disburseConf := SplitConf(config)
 
 	pushClient := &push.PClient{
 		Config:          pushConf,
@@ -123,9 +123,6 @@ func NewPClient(config *tigo.Config, base *tigo.BaseClient,
 	return &BigClient{
 		BaseClient:       base,
 		Config:           config,
-		//NameQueryHandler: handler,
-		//PaymentHandler:   paymentHandler,
-		//CallbackHandler:  callbackHandler,
 		wa:               payClient,
 		aw:               disburseClient,
 		push:             pushClient,

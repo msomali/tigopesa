@@ -1,9 +1,5 @@
 package ussd
 
-import (
-	"encoding/xml"
-)
-
 const (
 	TXN_STATUS_200   = "200"
 	TXN_STATUS_00026 = "00026"
@@ -83,76 +79,76 @@ var (
 )
 
 type (
-	SubscriberNameRequest struct {
-		XMLName             xml.Name `xml:"COMMAND"`
-		Text                string   `xml:",chardata"`
-		Type                string   `xml:"TYPE"`
-		Msisdn              string   `xml:"MSISDN"`
-		CompanyName         string   `xml:"COMPANYNAME"`
-		CustomerReferenceID string   `xml:"CUSTOMERREFERENCEID"`
-	}
-
-	SubscriberNameResponse struct {
-		XMLName   xml.Name `xml:"COMMAND"`
-		Text      string   `xml:",chardata"`
-		Type      string   `xml:"TYPE"`
-		Result    string   `xml:"RESULT"`
-		ErrorCode string   `xml:"ERRORCODE"`
-		ErrorDesc string   `xml:"ERRORDESC"`
-		Msisdn    string   `xml:"MSISDN"`
-		Flag      string   `xml:"FLAG"`
-		Content   string   `xml:"CONTENT"`
-	}
-
-	AccountToWalletRequest struct {
-		XMLName     xml.Name `xml:"COMMAND"`
-		Text        string   `xml:",chardata"`
-		Type        string   `xml:"TYPE"`
-		ReferenceID string   `xml:"REFERENCEID"`
-		Msisdn      string   `xml:"MSISDN"`
-		PIN         string   `xml:"PIN"`
-		Msisdn1     string   `xml:"MSISDN1"`
-		Amount      float64  `xml:"AMOUNT"`
-		SenderName  string   `xml:"SENDERNAME"`
-		Language1   string   `xml:"LANGUAGE1"`
-		BrandID     string   `xml:"BRAND_ID"`
-	}
-
-	AccountToWalletResponse struct {
-		XMLName     xml.Name `xml:"COMMAND" json:"-"`
-		Text        string   `xml:",chardata" json:"-"`
-		Type        string   `xml:"TYPE" json:"type"`
-		ReferenceID string   `xml:"REFERENCEID" json:"reference_id"`
-		TxnID       string   `xml:"TXNID" json:"txnid"`
-		TxnStatus   string   `xml:"TXNSTATUS" json:"txn_status"`
-		Message     string   `xml:"MESSAGE" json:"message"`
-	}
-
-	WalletToAccountRequest struct {
-		XMLName             xml.Name `xml:"COMMAND"`
-		Text                string   `xml:",chardata"`
-		TYPE                string   `xml:"TYPE"`
-		TxnID               string   `xml:"TXNID"`
-		Msisdn              string   `xml:"MSISDN"`
-		Amount              float64  `xml:"AMOUNT"`
-		CompanyName         string   `xml:"COMPANYNAME"`
-		CustomerReferenceID string   `xml:"CUSTOMERREFERENCEID"`
-		SenderName          string   `xml:"SENDERNAME"`
-	}
-
-	WalletToAccountResponse struct {
-		XMLName          xml.Name `xml:"COMMAND"`
-		Text             string   `xml:",chardata"`
-		Type             string   `xml:"TYPE"`
-		TxnID            string   `xml:"TXNID"`
-		RefID            string   `xml:"REFID"`
-		Result           string   `xml:"RESULT"`
-		ErrorCode        string   `xml:"ERRORCODE"`
-		ErrorDescription string   `xml:"ERRORDESCRIPTION"`
-		Msisdn           string   `xml:"MSISDN"`
-		Flag             string   `xml:"FLAG"`
-		Content          string   `xml:"CONTENT"`
-	}
+	//SubscriberNameRequest struct {
+	//	XMLName             xml.Name `xml:"COMMAND"`
+	//	Text                string   `xml:",chardata"`
+	//	Type                string   `xml:"TYPE"`
+	//	Msisdn              string   `xml:"MSISDN"`
+	//	CompanyName         string   `xml:"COMPANYNAME"`
+	//	CustomerReferenceID string   `xml:"CUSTOMERREFERENCEID"`
+	//}
+	//
+	//SubscriberNameResponse struct {
+	//	XMLName   xml.Name `xml:"COMMAND"`
+	//	Text      string   `xml:",chardata"`
+	//	Type      string   `xml:"TYPE"`
+	//	Result    string   `xml:"RESULT"`
+	//	ErrorCode string   `xml:"ERRORCODE"`
+	//	ErrorDesc string   `xml:"ERRORDESC"`
+	//	Msisdn    string   `xml:"MSISDN"`
+	//	Flag      string   `xml:"FLAG"`
+	//	Content   string   `xml:"CONTENT"`
+	//}
+	//
+	//AccountToWalletRequest struct {
+	//	XMLName     xml.Name `xml:"COMMAND"`
+	//	Text        string   `xml:",chardata"`
+	//	Type        string   `xml:"TYPE"`
+	//	ReferenceID string   `xml:"REFERENCEID"`
+	//	Msisdn      string   `xml:"MSISDN"`
+	//	PIN         string   `xml:"PIN"`
+	//	Msisdn1     string   `xml:"MSISDN1"`
+	//	Amount      float64  `xml:"AMOUNT"`
+	//	SenderName  string   `xml:"SENDERNAME"`
+	//	Language1   string   `xml:"LANGUAGE1"`
+	//	BrandID     string   `xml:"BRAND_ID"`
+	//}
+	//
+	//AccountToWalletResponse struct {
+	//	XMLName     xml.Name `xml:"COMMAND" json:"-"`
+	//	Text        string   `xml:",chardata" json:"-"`
+	//	Type        string   `xml:"TYPE" json:"type"`
+	//	ReferenceID string   `xml:"REFERENCEID" json:"reference_id"`
+	//	TxnID       string   `xml:"TXNID" json:"txnid"`
+	//	TxnStatus   string   `xml:"TXNSTATUS" json:"txn_status"`
+	//	Message     string   `xml:"MESSAGE" json:"message"`
+	//}
+	//
+	//WalletToAccountRequest struct {
+	//	XMLName             xml.Name `xml:"COMMAND"`
+	//	Text                string   `xml:",chardata"`
+	//	TYPE                string   `xml:"TYPE"`
+	//	TxnID               string   `xml:"TXNID"`
+	//	Msisdn              string   `xml:"MSISDN"`
+	//	Amount              float64  `xml:"AMOUNT"`
+	//	CompanyName         string   `xml:"COMPANYNAME"`
+	//	CustomerReferenceID string   `xml:"CUSTOMERREFERENCEID"`
+	//	SenderName          string   `xml:"SENDERNAME"`
+	//}
+	//
+	//WalletToAccountResponse struct {
+	//	XMLName          xml.Name `xml:"COMMAND"`
+	//	Text             string   `xml:",chardata"`
+	//	Type             string   `xml:"TYPE"`
+	//	TxnID            string   `xml:"TXNID"`
+	//	RefID            string   `xml:"REFID"`
+	//	Result           string   `xml:"RESULT"`
+	//	ErrorCode        string   `xml:"ERRORCODE"`
+	//	ErrorDescription string   `xml:"ERRORDESCRIPTION"`
+	//	Msisdn           string   `xml:"MSISDN"`
+	//	Flag             string   `xml:"FLAG"`
+	//	Content          string   `xml:"CONTENT"`
+	//}
 )
 
 func TxnStatusDesc(errCode string) (string, bool) {

@@ -39,32 +39,6 @@ var (
 )
 
 type (
-	Config struct {
-		PayAccountName   string
-		PayAccountMSISDN string
-		PayBillerNumber  string
-		PayRequestURL    string
-		PayNamecheckURL  string
-
-		DisburseAccountName   string
-		DisburseAccountMSISDN string
-		DisburseBrandID       string
-		DisbursePIN           string
-		DisburseRequestURL    string
-
-		PushUsername              string
-		PushPassword              string
-		PushPasswordGrantType     string
-		PushApiBaseURL            string
-		PushGetTokenURL           string
-		PushBillerMSISDN          string
-		PushBillerCode            string
-		PushPushPayURL            string
-		PushReverseTransactionURL string
-		PushHealthCheckURL        string
-	}
-
-
 
 	BaseClient struct {
 		HttpClient *http.Client

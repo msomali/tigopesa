@@ -3,6 +3,7 @@ package tigosdk
 import (
 	"context"
 	"github.com/techcraftt/tigosdk/aw"
+	"github.com/techcraftt/tigosdk/pkg/config"
 	"github.com/techcraftt/tigosdk/pkg/tigo"
 	"github.com/techcraftt/tigosdk/push"
 	"github.com/techcraftt/tigosdk/wa"
@@ -22,10 +23,7 @@ type (
 	}
 	BigClient struct {
 		*tigo.BaseClient
-		*tigo.Config
-		//NameQueryHandler wa.NameQueryHandler
-		//PaymentHandler   wa.PaymentHandler
-		//CallbackHandler  push.CallbackHandler
+		*config.Config
 		wa   *wa.Client
 		aw   *aw.Client
 		push *push.PClient
@@ -57,14 +55,14 @@ func (client *BigClient) Callback(writer http.ResponseWriter, r *http.Request) {
 }
 
 func (client *BigClient) Refund(ctx context.Context, request push.RefundRequest) (push.RefundResponse, error) {
-	return client.Refund(ctx,request)
+	return client.push.Refund(ctx,request)
 }
 
 func (client *BigClient) HeartBeat(ctx context.Context, request push.HealthCheckRequest) (push.HealthCheckResponse, error) {
-	return client.HeartBeat(ctx,request)
+	return client.push.HeartBeat(ctx,request)
 }
 
-func SplitConf(config *tigo.Config) (pushConf *push.Config, pay *wa.Config, disburse *aw.Config) {
+func SplitConf(config *config.Config) (pushConf *push.Config, pay *wa.Config, disburse *aw.Config) {
 	pushConf = &push.Config{
 		Username:              config.PushUsername,
 		Password:              config.PushPassword,
@@ -73,7 +71,7 @@ func SplitConf(config *tigo.Config) (pushConf *push.Config, pay *wa.Config, disb
 		GetTokenURL:           config.PushGetTokenURL,
 		BillerMSISDN:          config.PushBillerMSISDN,
 		BillerCode:            config.PushBillerCode,
-		PushPayURL:            config.PushPushPayURL,
+		PushPayURL:            config.PushPayURL,
 		ReverseTransactionURL: config.PushReverseTransactionURL,
 		HealthCheckURL:        config.PushHealthCheckURL,
 	}
@@ -98,7 +96,7 @@ func SplitConf(config *tigo.Config) (pushConf *push.Config, pay *wa.Config, disb
 }
 
 
-func NewPClient(config *tigo.Config, base *tigo.BaseClient,
+func NewPClient(config *config.Config, base *tigo.BaseClient,
 	handler wa.NameQueryHandler, paymentHandler wa.PaymentHandler, callbackHandler push.CallbackHandler) *BigClient {
 
 	pushConf, payConf, disburseConf := SplitConf(config)

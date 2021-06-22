@@ -1,4 +1,4 @@
-package ussd
+package tigosdk
 
 const (
 	TXN_STATUS_200   = "200"

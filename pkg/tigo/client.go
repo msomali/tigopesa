@@ -54,7 +54,7 @@ type (
 
 func NewBaseClient(opts ...ClientOption) *BaseClient {
 	client := &BaseClient{
-		//Config:     config,
+		//Config:     conf,
 		HttpClient: defaultHttpClient,
 		Logger:     defaultWriter,
 		Timeout:    defaultTimeout,

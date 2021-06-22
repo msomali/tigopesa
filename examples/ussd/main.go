@@ -8,7 +8,7 @@ import (
 	env "github.com/joho/godotenv"
 	"github.com/techcraftt/tigosdk"
 	"github.com/techcraftt/tigosdk/aw"
-	"github.com/techcraftt/tigosdk/pkg/config"
+	"github.com/techcraftt/tigosdk/pkg/conf"
 	"github.com/techcraftt/tigosdk/pkg/tigo"
 	"github.com/techcraftt/tigosdk/wa"
 	"log"
@@ -104,10 +104,10 @@ func MakeHandler(client1 *wa.Client, client2 *aw.Client) http.Handler {
 	return router
 }
 
-func loadFromEnv() (conf *config.Config, err error) {
+func loadFromEnv() (conf *conf.Config, err error) {
 
 	err = env.Load("tigo.env")
-	conf = &config.Config{
+	conf = &conf.Config{
 		PayAccountName:            "",
 		PayAccountMSISDN:          "",
 		PayBillerNumber:           "",

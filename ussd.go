@@ -3,7 +3,7 @@ package tigosdk
 import (
 	"context"
 	"github.com/techcraftt/tigosdk/aw"
-	"github.com/techcraftt/tigosdk/pkg/config"
+	"github.com/techcraftt/tigosdk/pkg/conf"
 	"github.com/techcraftt/tigosdk/pkg/tigo"
 	"github.com/techcraftt/tigosdk/push"
 	"github.com/techcraftt/tigosdk/wa"
@@ -23,7 +23,7 @@ type (
 	}
 	BigClient struct {
 		*tigo.BaseClient
-		*config.Config
+		*conf.Config
 		wa   *wa.Client
 		aw   *aw.Client
 		push *push.PClient
@@ -62,7 +62,7 @@ func (client *BigClient) HeartBeat(ctx context.Context, request push.HealthCheck
 	return client.push.HeartBeat(ctx,request)
 }
 
-func SplitConf(config *config.Config) (pushConf *push.Config, pay *wa.Config, disburse *aw.Config) {
+func SplitConf(config *conf.Config) (pushConf *push.Config, pay *wa.Config, disburse *aw.Config) {
 	pushConf = &push.Config{
 		Username:              config.PushUsername,
 		Password:              config.PushPassword,
@@ -96,7 +96,7 @@ func SplitConf(config *config.Config) (pushConf *push.Config, pay *wa.Config, di
 }
 
 
-func NewPClient(config *config.Config, base *tigo.BaseClient,
+func NewPClient(config *conf.Config, base *tigo.BaseClient,
 	handler wa.NameQueryHandler, paymentHandler wa.PaymentHandler, callbackHandler push.CallbackHandler) *BigClient {
 
 	pushConf, payConf, disburseConf := SplitConf(config)

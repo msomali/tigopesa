@@ -1,4 +1,4 @@
-package config
+package conf
 
 import (
 	"github.com/techcraftt/tigosdk/aw"
@@ -80,6 +80,6 @@ func (conf *Config)Split() (pushConf *push.Config, pay *wa.Config, disburse *aw.
 	return
 }
 
-func Merge(config push.Config, config2 wa.Config, config3 aw.Config) (*Config,error) {
+func Merge(pushConf *push.Config, waConf *wa.Config, awConf *aw.Config) (*Config,error) {
 	return nil, nil
 }

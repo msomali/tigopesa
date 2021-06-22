@@ -59,15 +59,7 @@ func ReceiveRequest(r *http.Request, payloadType internal.PayloadType, v interfa
 		return err
 
 	case internal.XmlPayload:
-		err = xml.Unmarshal(body, v)
-		defer func(Body io.ReadCloser) {
-			err := Body.Close()
-			if err != nil {
-				return
-			}
-		}(r.Body)
-
-		return err
+		return xml.Unmarshal(body, v)
 	}
 
 	return err
@@ -100,9 +92,7 @@ func (r *Response) Send(writer http.ResponseWriter) (err error) {
 			http.Error(writer, err.Error(), http.StatusInternalServerError)
 			return err
 		}
-
 		return nil
-
 	}
 
 	return err

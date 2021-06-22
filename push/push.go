@@ -148,31 +148,6 @@ func (client *PClient) Token(ctx context.Context) (string, error) {
 		payloadType, strings.NewReader(form.Encode()),
 		requestOptions...,
 	)
-	//req, err := http.NewRequestWithContext(ctx, http.MethodPost, client.ApiBaseURL+client.GetTokenURL, strings.NewReader(form.Encode()))
-	//
-	//
-	//if err != nil {
-	//	return "", err
-	//}
-	//
-	//req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	//req.Header.Add("Cache-Control", "no-cache")
-	//
-	//res, err := client.HttpClient.Do(req)
-	//if err != nil {
-	//	return "", err
-	//}
-	//
-	//defer func(Body io.ReadCloser) {
-	//	err := Body.Close()
-	//	if err != nil {
-	//
-	//	}
-	//}(res.Body)
-	//body, err := ioutil.ReadAll(res.Body)
-	//if err != nil {
-	//	return "", err
-	//}
 
 	var tokenResponse TokenResponse
 

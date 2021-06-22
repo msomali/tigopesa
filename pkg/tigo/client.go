@@ -213,14 +213,6 @@ func (client *BaseClient) Send(_ context.Context, request *Request, v interface{
 		return errors.New("v interface can not be empty")
 	}
 
-	//// sending json request by default
-	//if req.Header.Get("content-Type") == "" {
-	//	req.Header.Set("Content-Type", "application/json")
-	//	req.Header.Set("Cache-Control", "no-cache")
-	//	req.Header.Set("username", client.Username)
-	//	req.Header.Set("password", c.Password)
-	//}
-
 	resp, err := client.HttpClient.Do(req)
 
 	go func(debugMode bool) {

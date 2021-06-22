@@ -1,12 +1,10 @@
 package aw
 
 import (
-	"bytes"
 	"context"
 	"encoding/xml"
+	"github.com/techcraftt/tigosdk/internal"
 	"github.com/techcraftt/tigosdk/pkg/tigo"
-	"io"
-	"io/ioutil"
 	"net/http"
 )
 
@@ -61,51 +59,19 @@ type (
 )
 
 func (client *Client) Disburse(ctx context.Context, request DisburseRequest) (response DisburseResponse, err error) {
-	// Marshal the request body into application/xml
-	xmlStr, err := xml.MarshalIndent(request, "", "    ")
-	if err != nil {
-		return
+
+	var reqOpts []tigo.RequestOption
+	ctxOpt := tigo.WithRequestContext(ctx)
+	headers := map[string]string{
+		"Content-Type":"application/xml",
 	}
-	xmlStr = []byte(xml.Header + string(xmlStr))
+	headersOpt := tigo.WithRequestHeaders(headers)
+	reqOpts = append(reqOpts,ctxOpt,headersOpt)
 
-	// Create a HTTP Post Request to be sent to Tigo gateway
-	req, err := http.NewRequest(http.MethodPost, client.RequestURL, bytes.NewBuffer(xmlStr)) // URL-encoded payload
-	if err != nil {
-		return
-	}
-	req.Header.Add("Content-Type", "application/xml")
+	req := tigo.NewRequest(http.MethodPost,client.RequestURL,internal.XmlPayload,request,reqOpts...)
 
-	// Create context with a timeout of 1 minute
-	ctx, cancel := context.WithTimeout(ctx, client.Timeout)
-	defer cancel()
+	err = client.Send(ctx, req, &response)
 
-	req = req.WithContext(ctx)
-
-	resp, err := client.HttpClient.Do(req)
-
-	if err != nil {
-		return
-	}
-
-	//todo: log here:
-	go func(debugMode bool) {
-		if debugMode{
-			client.Log(req,resp)
-		}
-	}(client.DebugMode)
-
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			return
-		}
-	}(resp.Body)
-	xmlBody, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return
-	}
-
-	err = xml.Unmarshal(xmlBody, &response)
 	if err != nil {
 		return
 	}

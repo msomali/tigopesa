@@ -5,7 +5,6 @@ import (
 	"encoding/xml"
 	"github.com/techcraftt/tigosdk/internal"
 	"github.com/techcraftt/tigosdk/pkg/tigo"
-	"io/ioutil"
 	"net/http"
 )
 
@@ -129,19 +128,15 @@ func (handler NameQueryFunc) Do(ctx context.Context, request NameRequest) (NameR
 	return handler(ctx, request)
 }
 
+
 func (client *Client) HandleNameQuery(writer http.ResponseWriter, request *http.Request) {
 	ctx, cancel := context.WithTimeout(client.Ctx, client.Timeout)
 	defer cancel()
-
 	var req NameRequest
-	xmlBody, err := ioutil.ReadAll(request.Body)
-	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-	}
-	// Try to decode the request body into the struct. If there is an error,
-	// respond to the Client with the error message and a 400 status code.
-	err = xml.Unmarshal(xmlBody, &req)
-	if err != nil {
+
+	err := tigo.ReceiveRequest(request,internal.XmlPayload,&req)
+
+	if err != nil{
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
 
@@ -151,24 +146,9 @@ func (client *Client) HandleNameQuery(writer http.ResponseWriter, request *http.
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
 
-	xmlResponse, err := xml.MarshalIndent(response, "", "  ")
-	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	resp := tigo.NewResponse(200,response,internal.XmlPayload)
+	_ = resp.Send(writer)
 
-	//todo: log here
-	go func(debugMode bool) {
-		if debugMode{
-			client.Log(request,nil)
-			client.LogPayload(internal.XmlPayload,"name query response",response)
-		}
-
-		return
-	}(client.DebugMode)
-
-	writer.Header().Set("Content-Type", "application/xml")
-	_, _ = writer.Write(xmlResponse)
 
 }
 
@@ -177,13 +157,8 @@ func (client *Client) HandlePayment(writer http.ResponseWriter, request *http.Re
 	defer cancel()
 
 	var req PayRequest
-	xmlBody, err := ioutil.ReadAll(request.Body)
-	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-	}
-	// Try to decode the request body into the struct. If there is an error,
-	// respond to the Client with the error message and a 400 status code.
-	err = xml.Unmarshal(xmlBody, &req)
+
+	err := tigo.ReceiveRequest(request, internal.XmlPayload,&req)
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
@@ -194,25 +169,8 @@ func (client *Client) HandlePayment(writer http.ResponseWriter, request *http.Re
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
 
+	resp := tigo.NewResponse(200,response,internal.XmlPayload)
 
-
-	xmlResponse, err := internal.MarshalPayload(internal.XmlPayload,response)
-	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	//todo: log here
-	go func(debugMode bool) {
-		if client.DebugMode{
-			client.Log(request,nil)
-			client.LogPayload(internal.XmlPayload,"ussd payment response",response)
-		}
-		return
-	}(client.DebugMode)
-
-
-	writer.Header().Set("Content-Type", "application/xml")
-	_, _ = writer.Write(xmlResponse)
+	_ = resp.Send(writer)
 
 }

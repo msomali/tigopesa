@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"net/url"
 )
@@ -12,6 +13,10 @@ const (
 	JsonPayload PayloadType = iota
 	XmlPayload
 	FormPayload
+)
+
+var (
+	ErrInvalidFormPayload = errors.New("invalid form submitted: type url.Values is expected")
 )
 
 type (
@@ -43,8 +48,7 @@ func MarshalPayload(payloadType PayloadType, payload interface{}) (buffer *bytes
 
 		form, ok := payload.(url.Values)
 		if !ok {
-			err := fmt.Errorf("can not marshal the payload: invalid form has been submitted")
-			return nil, err
+			return nil, ErrInvalidFormPayload
 		}
 
 		buffer = bytes.NewBufferString(form.Encode())

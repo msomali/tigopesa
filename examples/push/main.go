@@ -49,6 +49,12 @@ func pushPayCallbackHandler() push.CallbackHandlerFunc {
 	}
 }
 
+func pushHandler()func(ctx context.Context, request push.CallbackRequest) (push.CallbackResponse, error){
+	return func(ctx context.Context, request push.CallbackRequest) (push.CallbackResponse, error) {
+		return push.CallbackResponse{},nil
+	}
+}
+
 func main() {
 	config, err := loadFromEnv()
 	if err != nil {

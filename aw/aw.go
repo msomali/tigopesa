@@ -20,6 +20,9 @@ const (
 	ErrInvalidPayment           = "error016"
 	ErrGeneralError             = "error100"
 	ErrRetryConditionNoResponse = "error111"
+
+	requestType = "REQMFCI"
+	senderLanguage = "EN"
 )
 
 var (
@@ -29,10 +32,10 @@ var (
 
 type (
 	DisburseHandler interface {
-		Disburse(ctx context.Context, request DisburseRequest) (DisburseResponse, error)
+		Disburse(ctx context.Context, referenceId, msisdn string, amount float64) (DisburseResponse, error)
 	}
 
-	DisburseHandlerFunc func(ctx context.Context, request DisburseRequest) (DisburseResponse, error)
+	DisburseHandlerFunc func(ctx context.Context, referenceId, msisdn string, amount float64) (DisburseResponse, error)
 
 	Config struct {
 		AccountName   string
@@ -72,7 +75,7 @@ type (
 	}
 )
 
-func (client *Client) Disburse(ctx context.Context, request DisburseRequest) (response DisburseResponse, err error) {
+func (client *Client) Disburse(ctx context.Context, referenceId, msisdn string, amount float64) (response DisburseResponse, err error) {
 
 	var reqOpts []tigo.RequestOption
 	ctxOpt := tigo.WithRequestContext(ctx)
@@ -81,6 +84,18 @@ func (client *Client) Disburse(ctx context.Context, request DisburseRequest) (re
 	}
 	headersOpt := tigo.WithRequestHeaders(headers)
 	reqOpts = append(reqOpts, ctxOpt, headersOpt)
+
+	request := DisburseRequest{
+		Type:        requestType,
+		ReferenceID: referenceId,
+		Msisdn:      client.Config.AccountMSISDN,
+		PIN:         client.Config.PIN,
+		Msisdn1:     msisdn,
+		Amount:      amount,
+		SenderName:  client.Config.AccountName,
+		Language1:   senderLanguage,
+		BrandID:     client.Config.BrandID,
+	}
 
 	req := tigo.NewRequest(http.MethodPost, client.RequestURL, internal.XmlPayload, request, reqOpts...)
 
@@ -93,6 +108,6 @@ func (client *Client) Disburse(ctx context.Context, request DisburseRequest) (re
 	return
 }
 
-func (handler DisburseHandlerFunc) Disburse(ctx context.Context, request DisburseRequest) (DisburseResponse, error) {
-	return handler(ctx, request)
+func (handler DisburseHandlerFunc) Disburse(ctx context.Context, referenceId, msisdn string, amount float64) (DisburseResponse, error) {
+	return handler(ctx, referenceId,msisdn,amount)
 }

@@ -52,20 +52,20 @@ func (app *App) disburseHandler(writer http.ResponseWriter, request *http.Reques
 	}
 
 	refid := fmt.Sprintf("PCT%s", strconv.FormatInt(time.Now().UnixNano(), 10))
+	//
+	//req := aw.DisburseRequest{
+	//	Type:        tigosdk.REQMFCI,
+	//	ReferenceID: refid,
+	//	Msisdn:      app.aw.Config.AccountMSISDN,
+	//	PIN:         app.aw.Config.PIN,
+	//	Msisdn1:     info.Msisdn,
+	//	Amount:      info.Amount,
+	//	SenderName:  app.aw.Config.AccountName,
+	//	Language1:   "EN",
+	//	BrandID:     app.aw.Config.BrandID,
+	//}
 
-	req := aw.DisburseRequest{
-		Type:        tigosdk.REQMFCI,
-		ReferenceID: refid,
-		Msisdn:      app.aw.Config.AccountMSISDN,
-		PIN:         app.aw.Config.PIN,
-		Msisdn1:     info.Msisdn,
-		Amount:      info.Amount,
-		SenderName:  app.aw.Config.AccountName,
-		Language1:   "EN",
-		BrandID:     app.aw.Config.BrandID,
-	}
-
-	resp, err := app.aw.Disburse(context.TODO(), req)
+	resp, err := app.aw.Disburse(context.TODO(), refid,info.Msisdn,info.Amount)
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusBadRequest)
 		return

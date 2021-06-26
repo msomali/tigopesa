@@ -8,10 +8,10 @@ import (
 	env "github.com/joho/godotenv"
 	"github.com/techcraftt/tigosdk"
 	"github.com/techcraftt/tigosdk/aw"
+	"github.com/techcraftt/tigosdk/examples"
 	"github.com/techcraftt/tigosdk/pkg/conf"
 	"github.com/techcraftt/tigosdk/pkg/tigo"
 	"github.com/techcraftt/tigosdk/wa"
-	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -138,10 +138,10 @@ func loadFromEnv() (config *conf.Config, err error) {
 }
 
 func main() {
-	conf, err := loadFromEnv()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	//conf, err := loadFromEnv()
+	//if err != nil {
+	//	log.Fatal("Error loading .env file")
+	//}
 
 	usersMap := map[string]User{
 		"12345678": {
@@ -177,7 +177,7 @@ func main() {
 		tigo.WithHTTPClient(http.DefaultClient),
 	)
 
-	_, pay, disburse := conf.Split()
+	_, pay, disburse := examples.Config.Split()
 
 	bc := tigo.NewBaseClient(tigo.WithDebugMode(true))
 
@@ -203,7 +203,7 @@ func main() {
 		WriteTimeout:      30 * time.Second,
 	}
 
-	err = server.ListenAndServe()
+	err := server.ListenAndServe()
 	if err != nil {
 		return
 	}

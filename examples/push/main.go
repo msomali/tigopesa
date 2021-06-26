@@ -32,7 +32,7 @@ func pushPayCallbackHandler() push.CallbackHandlerFunc {
 	return func(ctx context.Context, request push.CallbackRequest) (push.CallbackResponse, error) {
 		if !request.Status {
 			return push.CallbackResponse{
-				ResponseCode:        "BILLER-18-3020-E",
+				ResponseCode:        push.FailureCode,
 				ResponseStatus:      false,
 				ResponseDescription: "Callback failed",
 				ReferenceID:         request.ReferenceID,
@@ -40,7 +40,7 @@ func pushPayCallbackHandler() push.CallbackHandlerFunc {
 		}
 
 		return push.CallbackResponse{
-			ResponseCode:        "BILLER-18-0000-S",
+			ResponseCode:        push.SuccessCode,
 			ResponseStatus:      true,
 			ResponseDescription: "Callback successful",
 			ReferenceID:         request.ReferenceID,

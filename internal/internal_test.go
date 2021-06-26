@@ -10,14 +10,13 @@ import (
 )
 
 const (
-	xmlStr =
-		`<COMMAND>
+	xmlStr = `<COMMAND>
   <NAME>Tigo Pesa Developer</NAME>
   <AGE>20</AGE>
   <WISE>true</WISE>
 </COMMAND>`
 
-	jsonStr=`{"name":"Tigo Pesa Developer","age":20,"wise":true}`
+	jsonStr = `{"name":"Tigo Pesa Developer","age":20,"wise":true}`
 )
 
 type (
@@ -74,8 +73,8 @@ func TestMarshalPayload(t *testing.T) {
 			wantErr:    false,
 		},
 		{
-			name:       "marshal wrong form type",
-			args:       args{
+			name: "marshal wrong form type",
+			args: args{
 				payloadType: FormPayload,
 				payload:     req,
 			},
@@ -83,8 +82,8 @@ func TestMarshalPayload(t *testing.T) {
 			wantErr:    true,
 		},
 		{
-			name:       "marshal form",
-			args:       args{
+			name: "marshal form",
+			args: args{
 				payloadType: FormPayload,
 				payload:     data,
 			},

@@ -12,6 +12,7 @@ import (
 
 var (
 	_ Service = (*Client)(nil)
+	_ CallbackHandler = (*CallbackHandlerFunc)(nil)
 )
 
 type (
@@ -55,6 +56,10 @@ type (
 		HeartBeat(ctx context.Context, request HealthCheckRequest) (HealthCheckResponse, error)
 	}
 )
+
+func (handler CallbackHandlerFunc) Do(ctx context.Context, request CallbackRequest) (CallbackResponse, error) {
+	return handler(ctx,request)
+}
 
 func (client *Client) Pay(ctx context.Context, request PayRequest) (PayResponse, error) {
 	var billPayResp = &PayResponse{}

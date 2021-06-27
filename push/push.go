@@ -107,6 +107,7 @@ type (
 
 	//Client is the client for making push pay requests
 	Client struct {
+
 		*Config
 		*tigo.BaseClient
 		CallbackHandler CallbackHandler

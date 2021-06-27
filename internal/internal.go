@@ -16,6 +16,8 @@ const (
 )
 
 var (
+	//ErrInvalidFormPayload is returned when the PayloadType passed is
+	// FormPayload but its not of type url.Values
 	ErrInvalidFormPayload = errors.New("invalid form submitted: type url.Values is expected")
 )
 

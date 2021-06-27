@@ -16,7 +16,17 @@ import (
 	"github.com/techcraftt/tigosdk/push"
 )
 
+var (
+	_ push.CallbackHandler = (*customCallbackHandler)(nil)
+)
+
 type (
+
+	customCallbackHandler struct {
+		Name string
+		DB map[string]string
+	}
+
 	pushpayInitiatorRequest struct {
 		CustomerMSSID int64  `json:"customer"`
 		Amount        int    `json:"amount"`
@@ -27,6 +37,10 @@ type (
 		push *push.Client
 	}
 )
+
+func (c customCallbackHandler) Do(ctx context.Context, request push.CallbackRequest) (push.CallbackResponse, error) {
+	panic("implement me")
+}
 
 func pushPayCallbackHandler() push.CallbackHandlerFunc {
 	return func(ctx context.Context, request push.CallbackRequest) (push.CallbackResponse, error) {
@@ -49,11 +63,6 @@ func pushPayCallbackHandler() push.CallbackHandlerFunc {
 	}
 }
 
-func pushHandler()func(ctx context.Context, request push.CallbackRequest) (push.CallbackResponse, error){
-	return func(ctx context.Context, request push.CallbackRequest) (push.CallbackResponse, error) {
-		return push.CallbackResponse{},nil
-	}
-}
 
 func main() {
 	config, err := loadFromEnv()
@@ -63,10 +72,16 @@ func main() {
 
 	sdk := tigo.NewBaseClient()
 
+	handler := customCallbackHandler{
+		Name: "Yes This is Custom type",
+		DB:   nil,
+	}
+
 	pushClient := &push.Client{
 		BaseClient:      sdk,
 		Config:          config,
-		CallbackHandler: pushPayCallbackHandler(),
+		CallbackHandler: handler,
+		//CallbackHandler: pushPayCallbackHandler(),
 	}
 
 	a := &app{

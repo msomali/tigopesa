@@ -11,6 +11,7 @@ import (
 	"github.com/techcraftt/tigosdk/examples"
 	"github.com/techcraftt/tigosdk/pkg/conf"
 	"github.com/techcraftt/tigosdk/pkg/tigo"
+	"github.com/techcraftt/tigosdk/push"
 	"github.com/techcraftt/tigosdk/wa"
 	"net/http"
 	"os"
@@ -39,6 +40,7 @@ const (
 type App struct {
 	wa *wa.Client
 	aw *aw.Client
+	push *push.Client
 }
 
 func (app *App) disburseHandler(writer http.ResponseWriter, request *http.Request) {

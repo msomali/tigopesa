@@ -21,7 +21,7 @@ const (
 	ErrGeneralError             = "error100"
 	ErrRetryConditionNoResponse = "error111"
 
-	requestType = "REQMFCI"
+	requestType    = "REQMFCI"
 	senderLanguage = "EN"
 )
 
@@ -109,5 +109,5 @@ func (client *Client) Disburse(ctx context.Context, referenceId, msisdn string, 
 }
 
 func (handler DisburseHandlerFunc) Disburse(ctx context.Context, referenceId, msisdn string, amount float64) (DisburseResponse, error) {
-	return handler(ctx, referenceId,msisdn,amount)
+	return handler(ctx, referenceId, msisdn, amount)
 }

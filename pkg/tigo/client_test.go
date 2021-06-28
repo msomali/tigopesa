@@ -13,7 +13,6 @@ import (
 	"time"
 )
 
-
 func TestBaseClient_LogPayload(t *testing.T) {
 	type fields struct {
 		HttpClient *http.Client
@@ -33,7 +32,7 @@ func TestBaseClient_LogPayload(t *testing.T) {
 		args   args
 	}{
 		{
-			name:   "Logging Normal Json Payload",
+			name: "Logging Normal Json Payload",
 			fields: fields{
 				HttpClient: http.DefaultClient,
 				Ctx:        context.Background(),
@@ -41,9 +40,9 @@ func TestBaseClient_LogPayload(t *testing.T) {
 				Logger:     os.Stderr,
 				DebugMode:  true,
 			},
-			args:   args{
-				t:       internal.JsonPayload,
-				prefix:  "disburse request",
+			args: args{
+				t:      internal.JsonPayload,
+				prefix: "disburse request",
 				payload: aw.DisburseRequest{
 					ReferenceID: "3673E67DDGVHSWHBJS89W89W",
 					MSISDN:      "0765xxxxxxxx",
@@ -52,7 +51,7 @@ func TestBaseClient_LogPayload(t *testing.T) {
 			},
 		},
 		{
-			name:   "Logging Nil Payload",
+			name: "Logging Nil Payload",
 			fields: fields{
 				HttpClient: http.DefaultClient,
 				Ctx:        context.Background(),
@@ -60,14 +59,14 @@ func TestBaseClient_LogPayload(t *testing.T) {
 				Logger:     os.Stderr,
 				DebugMode:  true,
 			},
-			args:   args{
+			args: args{
 				t:       internal.XmlPayload,
 				prefix:  "nil payload",
 				payload: nil,
 			},
 		},
 		{
-			name:   "Normal XML Payload",
+			name: "Normal XML Payload",
 			fields: fields{
 				HttpClient: http.DefaultClient,
 				Ctx:        context.Background(),
@@ -75,9 +74,9 @@ func TestBaseClient_LogPayload(t *testing.T) {
 				Logger:     os.Stdout,
 				DebugMode:  true,
 			},
-			args:   args{
-				t:       internal.XmlPayload,
-				prefix:  "xml payload",
+			args: args{
+				t:      internal.XmlPayload,
+				prefix: "xml payload",
 				payload: aw.DisburseResponse{
 					Type:        "RMFCI",
 					ReferenceID: "ABAYU89282892JH2B",
@@ -98,7 +97,7 @@ func TestBaseClient_LogPayload(t *testing.T) {
 				DebugMode:  tt.fields.DebugMode,
 			}
 
-			client.LogPayload(tt.args.t,tt.args.prefix, tt.args.payload)
+			client.LogPayload(tt.args.t, tt.args.prefix, tt.args.payload)
 		})
 	}
 }
@@ -110,7 +109,7 @@ func TestNewBaseClient(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want *tigo. BaseClient
+		want *tigo.BaseClient
 	}{
 		{
 			name: "Normal Base Client",
@@ -118,7 +117,7 @@ func TestNewBaseClient(t *testing.T) {
 				opts: []tigo.ClientOption{
 					tigo.WithHTTPClient(http.DefaultClient),
 					tigo.WithLogger(os.Stderr),
-					tigo.WithTimeout(10*time.Second),
+					tigo.WithTimeout(10 * time.Second),
 					tigo.WithDebugMode(true),
 					tigo.WithContext(context.TODO()),
 				},

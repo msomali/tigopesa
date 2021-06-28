@@ -46,9 +46,9 @@ type (
 	}
 
 	DisburseRequest struct {
-		ReferenceID string
-		MSISDN      string
-		Amount      float64
+		ReferenceID string `json:"reference_id"`
+		MSISDN      string `json:"msisdn"`
+		Amount      float64 `json:"amount"`
 	}
 
 	disburseRequest struct {

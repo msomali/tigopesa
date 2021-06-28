@@ -74,8 +74,8 @@ func NewClient(config *conf.Config, base *tigo.BaseClient,
 	}
 }
 
-func (client *Client) Disburse(ctx context.Context, request aw.DisburseRequest) (aw.DisburseResponse, error) {
-	return client.aw.Disburse(ctx, request)
+func (client *Client) Disburse(ctx context.Context, referenceId, msisdn string, amount float64) (aw.DisburseResponse, error) {
+	return client.aw.Disburse(ctx, referenceId,msisdn,amount)
 }
 
 func (client *Client) HandleNameQuery(writer http.ResponseWriter, request *http.Request) {
@@ -146,12 +146,15 @@ func (client *Client)SendRequest(ctx context.Context,requestType RequestType,
 		return client.push.Refund(ctx,refundReq)
 
 	case Disburse:
-		disburseReq, ok := request.(aw.DisburseRequest)
-		if !ok{
-			err = fmt.Errorf("invalid disburse request")
-			return nil, err
-		}
-		return client.aw.Disburse(ctx,disburseReq)
+		//FIXME
+		//TODO: Create an exported disburse request to fix this
+		//disburseReq, ok := request.(aw.DisburseRequest)
+		//if !ok{
+		//	err = fmt.Errorf("invalid disburse request")
+		//	return nil, err
+		//}
+		//return client.aw.Disburse(ctx,disburseReq)
+		return nil, err
 
 	case PushPay:
 		payReq, ok := request.(push.PayRequest)

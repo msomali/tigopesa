@@ -58,13 +58,13 @@ func (app *App) disburseHandler(writer http.ResponseWriter, request *http.Reques
 	//req := aw.DisburseRequest{
 	//	Type:        tigosdk.REQMFCI,
 	//	ReferenceID: refid,
-	//	Msisdn:      app.aw.Config.AccountMSISDN,
-	//	PIN:         app.aw.Config.PIN,
+	//	Msisdn:      app.aw.config.AccountMSISDN,
+	//	PIN:         app.aw.config.PIN,
 	//	Msisdn1:     info.Msisdn,
 	//	Amount:      info.Amount,
-	//	SenderName:  app.aw.Config.AccountName,
+	//	SenderName:  app.aw.config.AccountName,
 	//	Language1:   "EN",
-	//	BrandID:     app.aw.Config.BrandID,
+	//	BrandID:     app.aw.config.BrandID,
 	//}
 
 	resp, err := app.aw.Disburse(context.TODO(), refid,info.Msisdn,info.Amount)

@@ -16,7 +16,7 @@ const (
 )
 
 var (
-	_ Service = (*Client)(nil)
+	_ Service         = (*Client)(nil)
 	_ CallbackHandler = (*CallbackHandlerFunc)(nil)
 )
 
@@ -107,7 +107,6 @@ type (
 
 	//Client is the client for making push pay requests
 	Client struct {
-
 		*Config
 		*tigo.BaseClient
 		CallbackHandler CallbackHandler
@@ -129,7 +128,7 @@ type (
 )
 
 func (handler CallbackHandlerFunc) Do(ctx context.Context, request CallbackRequest) (CallbackResponse, error) {
-	return handler(ctx,request)
+	return handler(ctx, request)
 }
 
 func (client *Client) Pay(ctx context.Context, request PayRequest) (PayResponse, error) {

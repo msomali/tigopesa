@@ -75,7 +75,7 @@ func NewClient(config *conf.Config, base *tigo.BaseClient,
 }
 
 func (client *Client) Disburse(ctx context.Context, referenceId, msisdn string, amount float64) (aw.DisburseResponse, error) {
-	return client.aw.Disburse(ctx, referenceId,msisdn,amount)
+	return client.aw.Disburse(ctx, referenceId, msisdn, amount)
 }
 
 func (client *Client) HandleNameQuery(writer http.ResponseWriter, request *http.Request) {
@@ -127,10 +127,10 @@ func (client *Client) HandleRequest(ctx context.Context, requestType RequestType
 //SendRequest like HandleRequest is experimental for neat and short API
 //the problem with this API is type checking and conversion that you have
 //to deal with while using it
-func (client *Client)SendRequest(ctx context.Context,requestType RequestType,
-	request interface{})(response interface{},err error){
+func (client *Client) SendRequest(ctx context.Context, requestType RequestType,
+	request interface{}) (response interface{}, err error) {
 
-	if request == nil && requestType != Token{
+	if request == nil && requestType != Token {
 		return nil, fmt.Errorf("request can not be nil")
 	}
 
@@ -139,35 +139,35 @@ func (client *Client)SendRequest(ctx context.Context,requestType RequestType,
 	switch requestType {
 	case Refund:
 		refundReq, ok := request.(push.RefundRequest)
-		if !ok{
+		if !ok {
 			err = fmt.Errorf("invalid refund request")
 			return nil, err
 		}
-		return client.push.Refund(ctx,refundReq)
+		return client.push.Refund(ctx, refundReq)
 
 	case Disburse:
 		disburseReq, ok := request.(aw.DisburseRequest)
-		if !ok{
+		if !ok {
 			err = fmt.Errorf("invalid disburse request")
 			return nil, err
 		}
-		return client.aw.Disburse(ctx,disburseReq.ReferenceID, disburseReq.MSISDN, disburseReq.Amount)
+		return client.aw.Disburse(ctx, disburseReq.ReferenceID, disburseReq.MSISDN, disburseReq.Amount)
 
 	case PushPay:
 		payReq, ok := request.(push.PayRequest)
-		if !ok{
+		if !ok {
 			err = fmt.Errorf("invalid push pay request")
 			return nil, err
 		}
-		return client.push.Pay(ctx,payReq)
+		return client.push.Pay(ctx, payReq)
 
 	case Heartbeat:
 		healthReq, ok := request.(push.HealthCheckRequest)
-		if !ok{
+		if !ok {
 			err = fmt.Errorf("invalid health check request")
 			return nil, err
 		}
-		return client.push.HeartBeat(ctx,healthReq)
+		return client.push.HeartBeat(ctx, healthReq)
 
 	case Token:
 		return client.push.Token(ctx)

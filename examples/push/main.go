@@ -21,10 +21,9 @@ var (
 )
 
 type (
-
 	customCallbackHandler struct {
 		Name string
-		DB map[string]string
+		DB   map[string]string
 	}
 
 	pushpayInitiatorRequest struct {
@@ -62,7 +61,6 @@ func pushPayCallbackHandler() push.CallbackHandlerFunc {
 
 	}
 }
-
 
 func main() {
 	config, err := loadFromEnv()

@@ -68,7 +68,6 @@ func makeApp() *App {
 
 	keeper := checker{usersMap}
 
-
 	bc := &tigo.BaseClient{
 		HttpClient: http.DefaultClient,
 		Ctx:        context.Background(),
@@ -351,7 +350,7 @@ func (c *checker) checkUser(refid string) (User, bool) {
 	return user, found
 }
 
-func Server() *http.Server{
+func Server() *http.Server {
 
 	app := makeApp()
 	server := &http.Server{

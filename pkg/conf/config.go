@@ -83,13 +83,12 @@ func (conf *Config) Split() (pushConf *push.Config, pay *wa.Config, disburse *aw
 	return
 }
 
-
 // Merge combine configurations of different clients. It is usefully when they have been loaded from
 // different sources before being used:
 // returns error ErrConfigNil if any of the 3 config is nil
 func Merge(pushConf *push.Config, waConf *wa.Config, awConf *aw.Config) (*Config, error) {
 
-	if pushConf == nil || waConf == nil || awConf == nil{
+	if pushConf == nil || waConf == nil || awConf == nil {
 		return nil, ErrConfigNil
 	}
 

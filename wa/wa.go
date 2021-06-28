@@ -9,7 +9,6 @@ import (
 )
 
 const (
-
 	SyncLookupResponse  = "SYNC_LOOKUP_RESPONSE"
 	SyncBillPayResponse = "SYNC_BILLPAY_RESPONSE"
 

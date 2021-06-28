@@ -47,8 +47,8 @@ type (
 
 	DisburseRequest struct {
 		ReferenceID string
-		MSISDN string
-		Amount float64
+		MSISDN      string
+		Amount      float64
 	}
 
 	disburseRequest struct {

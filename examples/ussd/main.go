@@ -38,8 +38,8 @@ const (
 )
 
 type App struct {
-	wa *wa.Client
-	aw *aw.Client
+	wa   *wa.Client
+	aw   *aw.Client
 	push *push.Client
 }
 
@@ -67,7 +67,7 @@ func (app *App) disburseHandler(writer http.ResponseWriter, request *http.Reques
 	//	BrandID:     app.aw.config.BrandID,
 	//}
 
-	resp, err := app.aw.Disburse(context.TODO(), refid,info.Msisdn,info.Amount)
+	resp, err := app.aw.Disburse(context.TODO(), refid, info.Msisdn, info.Amount)
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusBadRequest)
 		return

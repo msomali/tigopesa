@@ -146,15 +146,12 @@ func (client *Client)SendRequest(ctx context.Context,requestType RequestType,
 		return client.push.Refund(ctx,refundReq)
 
 	case Disburse:
-		//FIXME
-		//TODO: Create an exported disburse request to fix this
-		//disburseReq, ok := request.(aw.DisburseRequest)
-		//if !ok{
-		//	err = fmt.Errorf("invalid disburse request")
-		//	return nil, err
-		//}
-		//return client.aw.Disburse(ctx,disburseReq)
-		return nil, err
+		disburseReq, ok := request.(aw.DisburseRequest)
+		if !ok{
+			err = fmt.Errorf("invalid disburse request")
+			return nil, err
+		}
+		return client.aw.Disburse(ctx,disburseReq.ReferenceID, disburseReq.MSISDN, disburseReq.Amount)
 
 	case PushPay:
 		payReq, ok := request.(push.PayRequest)

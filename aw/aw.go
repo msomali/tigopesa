@@ -46,6 +46,12 @@ type (
 	}
 
 	DisburseRequest struct {
+		ReferenceID string
+		MSISDN string
+		Amount float64
+	}
+
+	disburseRequest struct {
 		XMLName     xml.Name `xml:"COMMAND"`
 		Text        string   `xml:",chardata"`
 		Type        string   `xml:"TYPE"`
@@ -85,7 +91,7 @@ func (client *Client) Disburse(ctx context.Context, referenceId, msisdn string, 
 	headersOpt := tigo.WithRequestHeaders(headers)
 	reqOpts = append(reqOpts, ctxOpt, headersOpt)
 
-	request := DisburseRequest{
+	request := disburseRequest{
 		Type:        requestType,
 		ReferenceID: referenceId,
 		Msisdn:      client.Config.AccountMSISDN,

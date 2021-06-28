@@ -55,7 +55,7 @@ func (app *App) disburseHandler(writer http.ResponseWriter, request *http.Reques
 
 	refid := fmt.Sprintf("PCT%s", strconv.FormatInt(time.Now().UnixNano(), 10))
 	//
-	//req := aw.DisburseRequest{
+	//req := aw.disburseRequest{
 	//	Type:        tigosdk.REQMFCI,
 	//	ReferenceID: refid,
 	//	Msisdn:      app.aw.config.AccountMSISDN,

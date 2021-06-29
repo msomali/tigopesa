@@ -87,9 +87,9 @@ type (
 	}
 
 	Config struct {
-		Username              string
-		Password              string
-		PasswordGrantType     string
+		Username          string
+		Password          string
+		PasswordGrantType string
 		ApiBaseURL            string
 		GetTokenURL           string
 		BillerMSISDN          string
@@ -204,7 +204,7 @@ func (client *Client) Refund(ctx context.Context, refundReq RefundRequest) (Refu
 	requestOptions = append(requestOptions, ctxOption)
 
 	request := tigo.NewRequest(http.MethodPost,
-		client.ApiBaseURL+client.GetTokenURL,
+		client.GetTokenURL,
 		internal.JsonPayload, refundReq,
 		requestOptions...,
 	)
@@ -255,7 +255,7 @@ func (client *Client) Token(ctx context.Context) (string, error) {
 	requestOptions = append(requestOptions, ctxOption, headersOption)
 
 	request := tigo.NewRequest(http.MethodPost,
-		client.ApiBaseURL+client.GetTokenURL,
+		client.GetTokenURL,
 		payloadType, form,
 		requestOptions...,
 	)

@@ -87,9 +87,9 @@ type (
 	}
 
 	Config struct {
-		Username          string
-		Password          string
-		PasswordGrantType string
+		Username              string
+		Password              string
+		PasswordGrantType     string
 		ApiBaseURL            string
 		GetTokenURL           string
 		BillerMSISDN          string

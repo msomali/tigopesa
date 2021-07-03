@@ -198,7 +198,7 @@ func (a *App) pushPayHandler(w http.ResponseWriter, r *http.Request) {
 		CustomerMSISDN: strconv.FormatInt(req.CustomerMSSID, 10),
 		Amount:         req.Amount,
 		Remarks:        req.Remarks,
-		ReferenceID:    fmt.Sprintf("%s%d", os.Getenv("TIGO_BILLER_CODE"), time.Now().Local().Unix()),
+		ReferenceID:    fmt.Sprintf("%s%d", a.push.BillerCode, time.Now().Local().Unix()),
 	}
 
 	response, err := a.push.Pay(context.Background(), billRequest)

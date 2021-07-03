@@ -3,11 +3,12 @@ package push
 import (
 	"context"
 	"fmt"
-	"github.com/techcraftt/tigosdk/internal"
-	"github.com/techcraftt/tigosdk/pkg/tigo"
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/techcraftt/tigosdk/internal"
+	"github.com/techcraftt/tigosdk/pkg/tigo"
 )
 
 const (
@@ -110,7 +111,7 @@ type (
 		*Config
 		*tigo.BaseClient
 		CallbackHandler CallbackHandler
-		token           *string
+		token           string
 		tokenExpires    time.Time
 	}
 
@@ -137,14 +138,14 @@ func (client *Client) Pay(ctx context.Context, request PayRequest) (PayResponse,
 	var tokenStr string
 
 	//Add Auth Header
-	if *client.token != "" {
+	if client.token != "" {
 		if !client.tokenExpires.IsZero() && time.Until(client.tokenExpires) < (60*time.Second) {
 			if _, err := client.Token(client.Ctx); err != nil {
 				return *billPayResp, err
 			}
 		}
 
-		tokenStr = fmt.Sprintf("bearer %s", *client.token)
+		tokenStr = fmt.Sprintf("bearer %s", client.token)
 	}
 
 	authHeader := map[string]string{
@@ -270,7 +271,7 @@ func (client *Client) Token(ctx context.Context) (string, error) {
 
 	token := tokenResponse.AccessToken
 
-	client.token = &token
+	client.token = token
 
 	//This set the value to when a new token will set above will be expired
 	//the minus 10 is an overhead a margin for error.

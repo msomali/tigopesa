@@ -4,6 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"strconv"
+	"time"
+
 	"github.com/gorilla/mux"
 	"github.com/techcraftt/tigosdk"
 	"github.com/techcraftt/tigosdk/aw"
@@ -11,11 +17,6 @@ import (
 	"github.com/techcraftt/tigosdk/pkg/tigo"
 	"github.com/techcraftt/tigosdk/push"
 	"github.com/techcraftt/tigosdk/wa"
-	"log"
-	"net/http"
-	"os"
-	"strconv"
-	"time"
 )
 
 var Config = &conf.Config{

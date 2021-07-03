@@ -2,8 +2,9 @@ package tigo
 
 import (
 	"context"
-	"github.com/techcraftt/tigosdk/internal"
 	"net/http"
+
+	"github.com/techcraftt/tigosdk/internal"
 )
 
 var (

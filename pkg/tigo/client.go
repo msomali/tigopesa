@@ -7,13 +7,14 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"github.com/techcraftt/tigosdk/internal"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"os"
 	"time"
+
+	"github.com/techcraftt/tigosdk/internal"
 )
 
 const (
@@ -175,14 +176,14 @@ func (client *BaseClient) Send(_ context.Context, request *Request, v interface{
 		bodyBytes, _ = ioutil.ReadAll(req.Body)
 	}
 
-	// Restore the request body content.
-	req.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
-
 	if v == nil {
 		return errors.New("v interface can not be empty")
 	}
 
 	resp, err := client.HttpClient.Do(req)
+
+	// restore request body for logging
+	req.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
 
 	go func(debugMode bool) {
 		if debugMode {

@@ -2,15 +2,16 @@ package tigo_test
 
 import (
 	"context"
-	"github.com/techcraftt/tigosdk/aw"
-	"github.com/techcraftt/tigosdk/internal"
-	"github.com/techcraftt/tigosdk/pkg/tigo"
 	"io"
 	"net/http"
 	"os"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/techcraftt/tigosdk/aw"
+	"github.com/techcraftt/tigosdk/internal"
+	"github.com/techcraftt/tigosdk/pkg/tigo"
 )
 
 func TestBaseClient_LogPayload(t *testing.T) {

@@ -152,14 +152,14 @@ func (a *App) disburseHandler(writer http.ResponseWriter, request *http.Request)
 
 }
 
-func (app *App) makeHandler() http.Handler {
+func (a *App) makeHandler() http.Handler {
 	router := mux.NewRouter()
 
-	router.HandleFunc(app.ussd.NamecheckURL, app.ussd.HandleNameQuery).Methods(http.MethodPost, http.MethodGet)
-	router.HandleFunc(app.ussd.RequestURL, app.ussd.HandlePayment).Methods(http.MethodPost, http.MethodGet)
-	router.HandleFunc(app.disburse.RequestURL, app.disburseHandler).Methods(http.MethodPost)
-	router.HandleFunc("/tigopesa/pushpay", app.pushPayHandler).Methods(http.MethodPost)
-	router.HandleFunc("/tigopesa/pushpay/callback", app.push.Callback).Methods(http.MethodPost)
+	router.HandleFunc(a.ussd.NamecheckURL, a.ussd.HandleNameQuery).Methods(http.MethodPost, http.MethodGet)
+	router.HandleFunc(a.ussd.RequestURL, a.ussd.HandlePayment).Methods(http.MethodPost, http.MethodGet)
+	router.HandleFunc(a.disburse.RequestURL, a.disburseHandler).Methods(http.MethodPost)
+	router.HandleFunc("/tigopesa/pushpay", a.pushPayHandler).Methods(http.MethodPost)
+	router.HandleFunc("/tigopesa/pushpay/callback", a.push.Callback).Methods(http.MethodPost)
 
 	return router
 }
@@ -185,7 +185,7 @@ func pushPayCallbackHandler() push.CallbackHandlerFunc {
 	}
 }
 
-func (app *App) pushPayHandler(w http.ResponseWriter, r *http.Request) {
+func (a *App) pushPayHandler(w http.ResponseWriter, r *http.Request) {
 	var req pushpayInitiatorRequest
 
 	defer r.Body.Close()
@@ -200,7 +200,7 @@ func (app *App) pushPayHandler(w http.ResponseWriter, r *http.Request) {
 		ReferenceID:    fmt.Sprintf("%s%d", os.Getenv("TIGO_BILLER_CODE"), time.Now().Local().Unix()),
 	}
 
-	response, err := app.push.Pay(context.Background(), billRequest)
+	response, err := a.push.Pay(context.Background(), billRequest)
 	if err != nil {
 		log.Printf("PushBillPay request failed error: %s", err.Error())
 		return

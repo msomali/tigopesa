@@ -365,31 +365,3 @@ func Server() *http.Server {
 
 	return server
 }
-
-func loadConfigFromEnv() *conf.Config {
-
-	c := &conf.Config{
-		PayAccountName:            "",
-		PayAccountMSISDN:          "",
-		PayBillerNumber:           "",
-		PayRequestURL:             "",
-		PayNamecheckURL:           "",
-		DisburseAccountName:       "",
-		DisburseAccountMSISDN:     "",
-		DisburseBrandID:           "",
-		DisbursePIN:               "",
-		DisburseRequestURL:        "",
-		PushUsername:              "",
-		PushPassword:              "",
-		PushPasswordGrantType:     "",
-		PushApiBaseURL:            "",
-		PushGetTokenURL:           "",
-		PushBillerMSISDN:          "",
-		PushBillerCode:            "",
-		PushPayURL:                "",
-		PushReverseTransactionURL: "",
-		PushHealthCheckURL:        "",
-	}
-
-	return c
-}

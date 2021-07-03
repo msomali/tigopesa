@@ -197,7 +197,7 @@ func (client *BaseClient) Send(_ context.Context, request *Request, v interface{
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-
+			// log error encountered
 		}
 	}(resp.Body)
 

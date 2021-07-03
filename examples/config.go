@@ -27,7 +27,7 @@ const (
 	envPushPayURL            = "TIGO_PUSH_PAY_URL"
 )
 
-func LoadConfFromEnv()*conf.Config{
+func LoadConfFromEnv() *conf.Config {
 	err := godotenv.Load("tigo.env")
 	if err != nil {
 		log.Fatal("Error loading .env file")

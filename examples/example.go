@@ -366,8 +366,7 @@ func Server() *http.Server {
 	return server
 }
 
-
-func loadConfigFromEnv()*conf.Config{
+func loadConfigFromEnv() *conf.Config {
 
 	c := &conf.Config{
 		PayAccountName:            "",

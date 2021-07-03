@@ -157,7 +157,7 @@ func (client *Client) Pay(ctx context.Context, request PayRequest) (PayResponse,
 	requestOpts = append(requestOpts, moreHeaderOpt, ctxOpt)
 
 	req := tigo.NewRequest(http.MethodPost,
-		client.ApiBaseURL +client.PushPayURL,
+		client.ApiBaseURL+client.PushPayURL,
 		internal.JsonPayload, request,
 		requestOpts...,
 	)
@@ -205,7 +205,7 @@ func (client *Client) Refund(ctx context.Context, refundReq RefundRequest) (Refu
 	requestOptions = append(requestOptions, ctxOption)
 
 	request := tigo.NewRequest(http.MethodPost,
-		client.ApiBaseURL + client.GetTokenURL,
+		client.ApiBaseURL+client.GetTokenURL,
 		internal.JsonPayload, refundReq,
 		requestOptions...,
 	)
@@ -256,7 +256,7 @@ func (client *Client) Token(ctx context.Context) (string, error) {
 	requestOptions = append(requestOptions, ctxOption, headersOption)
 
 	request := tigo.NewRequest(http.MethodPost,
-		client.ApiBaseURL + client.GetTokenURL,
+		client.ApiBaseURL+client.GetTokenURL,
 		payloadType, form,
 		requestOptions...,
 	)

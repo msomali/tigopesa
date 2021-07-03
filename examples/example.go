@@ -19,28 +19,28 @@ import (
 	"github.com/techcraftt/tigosdk/wa"
 )
 
-var Config = &conf.Config{
-	PayAccountName:            "",
-	PayAccountMSISDN:          "",
-	PayBillerNumber:           "",
-	PayRequestURL:             "",
-	PayNamecheckURL:           "",
-	DisburseAccountName:       "",
-	DisburseAccountMSISDN:     "",
-	DisburseBrandID:           "",
-	DisbursePIN:               "",
-	DisburseRequestURL:        "",
-	PushUsername:              "",
-	PushPassword:              "",
-	PushPasswordGrantType:     "",
-	PushApiBaseURL:            "",
-	PushGetTokenURL:           "",
-	PushBillerMSISDN:          "",
-	PushBillerCode:            "",
-	PushPayURL:                "",
-	PushReverseTransactionURL: "",
-	PushHealthCheckURL:        "",
-}
+//var Config = &conf.Config{
+//	PayAccountName:            "",
+//	PayAccountMSISDN:          "",
+//	PayBillerNumber:           "",
+//	PayRequestURL:             "",
+//	PayNamecheckURL:           "",
+//	DisburseAccountName:       "",
+//	DisburseAccountMSISDN:     "",
+//	DisburseBrandID:           "",
+//	DisbursePIN:               "",
+//	DisburseRequestURL:        "",
+//	PushUsername:              "",
+//	PushPassword:              "",
+//	PushPasswordGrantType:     "",
+//	PushApiBaseURL:            "",
+//	PushGetTokenURL:           "",
+//	PushBillerMSISDN:          "",
+//	PushBillerCode:            "",
+//	PushPayURL:                "",
+//	PushReverseTransactionURL: "",
+//	PushHealthCheckURL:        "",
+//}
 
 func makeApp() *App {
 
@@ -77,7 +77,8 @@ func makeApp() *App {
 		DebugMode:  true,
 	}
 
-	pc, wc, ac := Config.Split()
+	confx := LoadConfFromEnv()
+	pc, wc, ac := confx.Split()
 
 	p := &push.Client{
 		Config:          pc,
@@ -98,7 +99,7 @@ func makeApp() *App {
 	}
 
 	app := &App{
-		Config:   Config,
+		Config:   confx,
 		push:     p,
 		disburse: a,
 		ussd:     w,

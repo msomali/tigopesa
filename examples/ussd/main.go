@@ -179,7 +179,7 @@ func main() {
 		tigo.WithHTTPClient(http.DefaultClient),
 	)
 
-	_, pay, disburse := examples.Config.Split()
+	_, pay, disburse := examples.LoadConfFromEnv().Split()
 
 	bc := tigo.NewBaseClient(tigo.WithDebugMode(true))
 

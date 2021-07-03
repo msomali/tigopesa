@@ -157,7 +157,7 @@ func (a *App) makeHandler() http.Handler {
 
 	router.HandleFunc(a.ussd.NamecheckURL, a.ussd.HandleNameQuery).Methods(http.MethodPost, http.MethodGet)
 	router.HandleFunc(a.ussd.RequestURL, a.ussd.HandlePayment).Methods(http.MethodPost, http.MethodGet)
-	router.HandleFunc(a.disburse.RequestURL, a.disburseHandler).Methods(http.MethodPost)
+	router.HandleFunc("/api/tigopesa/disburse", a.disburseHandler).Methods(http.MethodPost)
 	router.HandleFunc("/tigopesa/pushpay", a.pushPayHandler).Methods(http.MethodPost)
 	router.HandleFunc("/tigopesa/pushpay/callback", a.push.Callback).Methods(http.MethodPost)
 

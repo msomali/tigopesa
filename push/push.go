@@ -205,7 +205,7 @@ func (client *Client) Refund(ctx context.Context, refundReq RefundRequest) (Refu
 	requestOptions = append(requestOptions, ctxOption)
 
 	request := tigo.NewRequest(http.MethodPost,
-		client.GetTokenURL,
+		client.ApiBaseURL + client.GetTokenURL,
 		internal.JsonPayload, refundReq,
 		requestOptions...,
 	)

@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/http/httputil"
 	"os"
@@ -182,6 +183,9 @@ func (client *BaseClient) Send(_ context.Context, request *Request, v interface{
 
 	resp, err := client.HttpClient.Do(req)
 
+	//FIXME
+	log.Printf("%v\n",resp.Body)
+
 	// restore request body for logging
 	req.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
 
@@ -200,6 +204,7 @@ func (client *BaseClient) Send(_ context.Context, request *Request, v interface{
 			// log error encountered
 		}
 	}(resp.Body)
+
 
 	switch resp.Header.Get("Content-Type") {
 	case "application/json", "application/json;charset=UTF-8":

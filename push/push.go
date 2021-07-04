@@ -133,7 +133,7 @@ func (handler CallbackHandlerFunc) Do(ctx context.Context, request CallbackReque
 }
 
 func (client *Client) Pay(ctx context.Context, request PayRequest) (PayResponse, error) {
-	var billPayResp = &PayResponse{}
+	var billPayResp = PayResponse{}
 
 	var tokenStr string
 
@@ -141,7 +141,7 @@ func (client *Client) Pay(ctx context.Context, request PayRequest) (PayResponse,
 	if client.token != "" {
 		if !client.tokenExpires.IsZero() && time.Until(client.tokenExpires) < (60*time.Second) {
 			if _, err := client.Token(client.Ctx); err != nil {
-				return *billPayResp, err
+				return billPayResp, err
 			}
 		}
 
@@ -162,13 +162,13 @@ func (client *Client) Pay(ctx context.Context, request PayRequest) (PayResponse,
 		requestOpts...,
 	)
 
-	err := client.Send(context.TODO(), req, billPayResp)
+	err := client.Send(context.TODO(), req, &billPayResp)
 
 	if err != nil {
-		return *billPayResp, err
+		return billPayResp, err
 	}
 
-	return *billPayResp, nil
+	return billPayResp, nil
 
 }
 

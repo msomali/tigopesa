@@ -181,6 +181,9 @@ func (client *BaseClient) Send(_ context.Context, request *Request, v interface{
 		return errors.New("v interface can not be empty")
 	}
 
+	// restore request body for logging
+	req.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+
 	resp, err := client.HttpClient.Do(req)
 
 	//FIXME

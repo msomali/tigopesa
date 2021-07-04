@@ -2,9 +2,8 @@ package tigo
 
 import (
 	"context"
-	"net/http"
-
 	"github.com/techcraftt/tigosdk/internal"
+	"net/http"
 )
 
 var (
@@ -91,5 +90,6 @@ func (request *Request) Transform() (*http.Request, error) {
 	for key, value := range request.Headers {
 		req.Header.Add(key, value)
 	}
+
 	return req, nil
 }

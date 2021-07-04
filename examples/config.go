@@ -1,6 +1,7 @@
 package examples
 
 import (
+	"fmt"
 	"github.com/joho/godotenv"
 	"github.com/techcraftt/tigosdk/pkg/conf"
 	"log"
@@ -51,6 +52,24 @@ func LoadConfFromEnv() *conf.Config {
 	pushPayURL := os.Getenv(envPushPayURL)
 	pushMSISDN := os.Getenv(envPushBillerMSISDN)
 	pushBillerCode := os.Getenv(envPushBillerCode)
+
+	fmt.Printf("%s\n", payAccountName)
+	fmt.Printf("%s\n", payAccountMSISDN)
+	fmt.Printf("%s\n", payBillerNumber)
+	fmt.Printf("%s\n", payRequestURL)
+	fmt.Printf("%s\n", namecheckURL)
+	fmt.Printf("%s\n", disburseName)
+	fmt.Printf("%s\n", disburseMSISDN)
+	fmt.Printf("%s\n", disburseBrandID)
+	fmt.Printf("%s\n", disbursePIN)
+	fmt.Printf("%s\n", disburseURL)
+	fmt.Printf("%s\n", pushName)
+	fmt.Printf("%s\n", pushPassword)
+	fmt.Printf("%s\n", pushBaseURL)
+	fmt.Printf("%s\n", pushTokenURL)
+	fmt.Printf("%s\n", pushMSISDN)
+	fmt.Printf("%s\n", pushBillerCode)
+	fmt.Printf("%s\n", pushPayURL)
 
 	return &conf.Config{
 		PayAccountName:            payAccountName,

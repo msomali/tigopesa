@@ -190,6 +190,8 @@ func (client *Client) Callback(w http.ResponseWriter, r *http.Request) {
 
 	callbackResponse, err = client.CallbackHandler.Do(client.Ctx, callbackRequest)
 
+	//client.LogPayload(internal.JsonPayload, "callback response",&callbackResponse)
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}

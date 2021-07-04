@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -190,7 +191,12 @@ func pushPayCallbackHandler() push.CallbackHandlerFunc {
 func (a *App) pushPayHandler(w http.ResponseWriter, r *http.Request) {
 	var req pushpayInitiatorRequest
 
-	defer r.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			fmt.Printf("error while clossing the rwquest body: %s\n", err.Error())
+		}
+	}(r.Body)
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}

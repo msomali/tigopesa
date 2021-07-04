@@ -184,7 +184,7 @@ func (client *BaseClient) Send(_ context.Context, request *Request, v interface{
 	resp, err := client.HttpClient.Do(req)
 
 	//FIXME
-	log.Printf("%v\n",resp.Body)
+	log.Printf("%v\n",resp)
 
 	// restore request body for logging
 	req.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))

@@ -176,11 +176,11 @@ func (client *Client) Callback(w http.ResponseWriter, r *http.Request) {
 	var callbackRequest CallbackRequest
 	var callbackResponse CallbackResponse
 	var response *tigo.Response
-	//defer func(debug bool) {
-	//	client.Log(r, nil)
-	//	client.LogPayload(internal.JsonPayload,"callback from tigo",&callbackRequest)
-	//	client.LogPayload(internal.JsonPayload, "callback response", &callbackResponse)
-	//}(client.DebugMode)
+	defer func(debug bool) {
+		client.Log(r, nil)
+		client.LogPayload(internal.JsonPayload,"callback from tigo",&callbackRequest)
+		client.LogPayload(internal.JsonPayload, "callback response", &callbackResponse)
+	}(client.DebugMode)
 
 	err := tigo.ReceiveRequest(r, internal.JsonPayload, &callbackRequest)
 
@@ -190,7 +190,7 @@ func (client *Client) Callback(w http.ResponseWriter, r *http.Request) {
 
 	callbackResponse, err = client.CallbackHandler.Do(client.Ctx, callbackRequest)
 
-	//client.LogPayload(internal.JsonPayload, "callback response",&callbackResponse)
+	client.LogPayload(internal.JsonPayload, "callback response",&callbackResponse)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

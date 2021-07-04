@@ -199,6 +199,7 @@ func (a *App) pushPayHandler(w http.ResponseWriter, r *http.Request) {
 		CustomerMSISDN: strconv.FormatInt(req.CustomerMSSID, 10),
 		Amount:         req.Amount,
 		Remarks:        req.Remarks,
+		BillerMSISDN: a.Config.PushBillerMSISDN,
 		ReferenceID:    fmt.Sprintf("%s%d", a.Config.PushBillerCode, time.Now().Local().Unix()),
 	}
 

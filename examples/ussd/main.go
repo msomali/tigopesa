@@ -24,18 +24,6 @@ type disburseInfo struct {
 	Amount float64 `json:"amount"`
 }
 
-const (
-	TIGO_USERNAME         = "TIGO_USERNAME"
-	TIGO_PASSWORD         = "TIGO_PASSWORD"
-	TIGO_ACCOUNT_NAME     = "TIGO_ACCOUNT_NAME"
-	TIGO_ACCOUNT_MSISDN   = "TIGO_ACCOUNT_MSISDN"
-	TIGO_BRAND_ID         = "TIGO_BRAND_ID"
-	TIGO_BILLER_CODE      = "TIGO_BILLER_CODE"
-	TIGO_A2W_URL          = "TIGO_A2W_URL"
-	TIGO_NAMECHECK_URL    = "TIGO_NAMECHECK_URL"
-	TIGO_W2A_URL          = "TIGO_W2A_URL"
-	TIGO_DISBURSEMENT_PIN = "TIGO_DISBURSEMENT_PIN"
-)
 
 type App struct {
 	wa   *wa.Client

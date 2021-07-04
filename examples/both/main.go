@@ -1,9 +1,17 @@
 package main
 
-import "github.com/techcraftt/tigosdk/examples"
+import (
+	"github.com/joho/godotenv"
+	"github.com/techcraftt/tigosdk/examples"
+	"log"
+)
 
 func main() {
-	err := examples.Server().ListenAndServe()
+	err := godotenv.Load("tigo.env")
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+	err = examples.Server().ListenAndServe()
 	if err != nil {
 		panic(err)
 	}

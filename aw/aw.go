@@ -69,9 +69,9 @@ type (
 		XMLName     xml.Name `xml:"COMMAND" json:"-"`
 		Text        string   `xml:",chardata" json:"-"`
 		Type        string   `xml:"TYPE" json:"type"`
-		ReferenceID string   `xml:"REFERENCEID" json:"reference_id"`
-		TxnID       string   `xml:"TXNID" json:"txnid"`
-		TxnStatus   string   `xml:"TXNSTATUS" json:"txn_status"`
+		ReferenceID string   `xml:"REFERENCEID" json:"reference"`
+		TxnID       string   `xml:"TXNID" json:"id,omitempty"`
+		TxnStatus   string   `xml:"TXNSTATUS" json:"status"`
 		Message     string   `xml:"MESSAGE" json:"message"`
 	}
 

@@ -19,9 +19,9 @@ import (
 )
 
 const (
-	defaultTimeout = time.Minute
-	jsonContentTypeString = "application/json"
-	xmlContentTypeString = "text/xml"
+	defaultTimeout          = time.Minute
+	jsonContentTypeString   = "application/json"
+	xmlContentTypeString    = "text/xml"
 	appXMLContentTypeString = "application/xml"
 )
 
@@ -90,7 +90,6 @@ func (client *BaseClient) LogPayload(t internal.PayloadType, prefix string, payl
 	_, _ = client.Logger.Write([]byte(fmt.Sprintf("%s: %s\n\n", prefix, buf.String())))
 }
 
-
 func (client *BaseClient) Log(name string, request *http.Request, response *http.Response) {
 
 	if request != nil {
@@ -153,7 +152,7 @@ func (client *BaseClient) Send(_ context.Context, rn RequestName, request *Reque
 
 	contentType := resp.Header.Get("Content-Type")
 
-	if strings.Contains(contentType, jsonContentTypeString){
+	if strings.Contains(contentType, jsonContentTypeString) {
 		if err := json.NewDecoder(resp.Body).Decode(v); err != nil {
 			if err != io.EOF {
 				return err
@@ -162,7 +161,7 @@ func (client *BaseClient) Send(_ context.Context, rn RequestName, request *Reque
 	}
 
 	if strings.Contains(contentType, xmlContentTypeString) ||
-		strings.Contains(contentType, appXMLContentTypeString){
+		strings.Contains(contentType, appXMLContentTypeString) {
 		if err := xml.NewDecoder(resp.Body).Decode(v); err != nil {
 			if err != io.EOF {
 				return err

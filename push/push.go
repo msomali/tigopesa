@@ -156,11 +156,11 @@ func (client *Client) Pay(ctx context.Context, request PayRequest) (response Pay
 	var tokenStr string
 
 	if client.token == "" {
-		_, err := client.Token(ctx)
+		str, err := client.Token(ctx)
 		if err != nil {
 			return PayResponse{}, err
 		}
-		tokenStr = fmt.Sprintf("bearer %s", client.token)
+		tokenStr = fmt.Sprintf("bearer %s",str)
 	}
 	//Add Auth Header
 	if client.token != "" {

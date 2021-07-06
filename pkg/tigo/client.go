@@ -156,7 +156,7 @@ func (client *BaseClient) Log(request *http.Request, response *http.Response) {
 		return
 
 	case <-done:
-		fmt.Printf("done logging\n")
+		fmt.Printf("DONE LOGGING:\n")
 		return
 	}
 
@@ -185,14 +185,14 @@ func (client *BaseClient) Send(_ context.Context, request *Request, v interface{
 
 	resp, err := client.HttpClient.Do(req)
 
-	// restore request body for logging
-	req.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
-
-	go func(debugMode bool) {
-		if debugMode {
-			client.Log(req, resp)
-		}
-	}(client.DebugMode)
+	//// restore request body for logging
+	//req.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+	//
+	//go func(debugMode bool) {
+	//	if debugMode {
+	//		client.Log(req, resp)
+	//	}
+	//}(client.DebugMode)
 
 	if err != nil {
 		return err

@@ -65,6 +65,7 @@ func ReceiveRequest(r *http.Request, payloadType internal.PayloadType, v interfa
 	return err
 }
 
+//Send respond to Tigo requests like callback request and namecheck
 func (r *Response) Send(writer http.ResponseWriter) (err error) {
 	writer.WriteHeader(r.StatusCode)
 	for key, value := range r.Headers {

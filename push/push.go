@@ -273,7 +273,7 @@ func (client *Client) Token(ctx context.Context) (string, error) {
 	var tokenResponse TokenResponse
 
 	err := client.Send(context.TODO(), request, &tokenResponse)
-	//err = json.Unmarshal(body, &tokenResponse)
+
 	if err != nil {
 		return "", err
 	}

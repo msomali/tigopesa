@@ -13,8 +13,26 @@ var (
 	}
 )
 
+const (
+	PushPay RequestName = iota
+	Disbursement
+	GetToken
+	Refund
+	HealthCheck
+)
+
+func (rn RequestName) String() string {
+	states := [...]string{"PushPay", "Disbursement", "GetToken"}
+	if len(states) < int(rn) {
+		return ""
+	}
+
+	return states[rn]
+}
+
 type (
-	Request struct {
+	RequestName int
+	Request     struct {
 		Context     context.Context
 		HttpMethod  string
 		URL         string

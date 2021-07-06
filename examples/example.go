@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -191,12 +190,6 @@ func pushPayCallbackHandler() push.CallbackHandlerFunc {
 func (a *App) pushPayHandler(w http.ResponseWriter, r *http.Request) {
 	var req pushpayInitiatorRequest
 
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			fmt.Printf("error while clossing the rwquest body: %s\n", err.Error())
-		}
-	}(r.Body)
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
@@ -214,8 +207,9 @@ func (a *App) pushPayHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Printf("%v\n", response)
-	return
+	fmt.Printf("description of the response is \" %s \"\n", response.ResponseDescription)
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 type User struct {

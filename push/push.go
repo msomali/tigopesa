@@ -3,6 +3,7 @@ package push
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"time"
@@ -154,9 +155,9 @@ func (client *Client) Pay(ctx context.Context, request PayRequest) (response Pay
 
 	var tokenStr string
 
-	if client.token == ""{
+	if client.token == "" {
 		_, err := client.Token(ctx)
-		if err != nil{
+		if err != nil {
 			return PayResponse{}, err
 		}
 		tokenStr = fmt.Sprintf("bearer %s", client.token)
@@ -178,7 +179,7 @@ func (client *Client) Pay(ctx context.Context, request PayRequest) (response Pay
 	moreHeaderOpt := tigo.WithMoreHeaders(authHeader)
 	basicAuth := tigo.WithAuthHeaders(client.Username, client.Password)
 	ctxOpt := tigo.WithRequestContext(ctx)
-	requestOpts = append(requestOpts,ctxOpt,basicAuth,moreHeaderOpt)
+	requestOpts = append(requestOpts, ctxOpt, basicAuth, moreHeaderOpt)
 
 	tigoRequest := tigo.NewRequest(http.MethodPost,
 		client.ApiBaseURL+client.PushPayURL,
@@ -186,11 +187,14 @@ func (client *Client) Pay(ctx context.Context, request PayRequest) (response Pay
 		requestOpts...,
 	)
 
-	err = client.Send(context.TODO(), tigoRequest, &response)
+	err = client.Send(context.TODO(), tigo.PushPay, tigoRequest, &response)
 
 	if err != nil {
 		return response, err
 	}
+
+	//FIXME
+	log.Printf("the response description in pay method is %s\n", response.ResponseDescription)
 
 	return response, nil
 }
@@ -200,7 +204,7 @@ func (client *Client) Callback(w http.ResponseWriter, r *http.Request) {
 	var callbackResponse CallbackResponse
 	var response *tigo.Response
 	defer func(debug bool) {
-		client.Log(r, nil)
+		client.Log("CALLBACK REQUEST", r, nil)
 		client.LogPayload(internal.JsonPayload, "callback from tigo", &callbackRequest)
 		client.LogPayload(internal.JsonPayload, "callback response", &callbackResponse)
 	}(client.DebugMode)
@@ -242,7 +246,7 @@ func (client *Client) Refund(ctx context.Context, refundReq RefundRequest) (Refu
 		requestOptions...,
 	)
 
-	if err := client.Send(ctx, request, refundPaymentResp); err != nil {
+	if err := client.Send(ctx, tigo.Refund, request, refundPaymentResp); err != nil {
 		return RefundResponse{}, err
 	}
 
@@ -259,7 +263,7 @@ func (client *Client) HeartBeat(ctx context.Context, request HealthCheckRequest)
 	req := tigo.NewRequest(http.MethodPost, client.HealthCheckURL,
 		internal.JsonPayload, request, requestOptions...)
 
-	if err := client.Send(ctx, req, healthCheckResp); err != nil {
+	if err := client.Send(ctx, tigo.HealthCheck, req, healthCheckResp); err != nil {
 		return HealthCheckResponse{}, err
 	}
 
@@ -295,7 +299,7 @@ func (client *Client) Token(ctx context.Context) (string, error) {
 
 	var tokenResponse TokenResponse
 
-	err := client.Send(context.TODO(), request, &tokenResponse)
+	err := client.Send(context.TODO(), tigo.GetToken, request, &tokenResponse)
 
 	if err != nil {
 		return "", err

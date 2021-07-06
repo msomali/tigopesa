@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/techcraftt/tigosdk/internal"
@@ -19,6 +20,9 @@ import (
 
 const (
 	defaultTimeout = time.Minute
+	jsonContentTypeString = "application/json"
+	xmlContentTypeString = "text/xml"
+	appXMLContentTypeString = "application/xml"
 )
 
 var (
@@ -86,21 +90,22 @@ func (client *BaseClient) LogPayload(t internal.PayloadType, prefix string, payl
 	_, _ = client.Logger.Write([]byte(fmt.Sprintf("%s: %s\n\n", prefix, buf.String())))
 }
 
-func (client *BaseClient) Log(request *http.Request, response *http.Response) {
+
+func (client *BaseClient) Log(name string, request *http.Request, response *http.Response) {
 
 	if request != nil {
-		reqDump, _:= httputil.DumpRequestOut(request, true)
-		_, _ = fmt.Fprintf(client.Logger, "REQUEST: %s\n", reqDump)
+		reqDump, _ := httputil.DumpRequestOut(request, true)
+		_, _ = fmt.Fprintf(client.Logger, "%s REQUEST: %s\n", name, reqDump)
 	}
 
 	if response != nil {
 		respDump, _ := httputil.DumpResponse(response, true)
-		_, _ = fmt.Fprintf(client.Logger, "RESPONSE: %s\n", respDump)
+		_, _ = fmt.Fprintf(client.Logger, "%s RESPONSE: %s\n", name, respDump)
 	}
 
 }
 
-func (client *BaseClient) Send(_ context.Context, request *Request, v interface{}) error {
+func (client *BaseClient) Send(_ context.Context, rn RequestName, request *Request, v interface{}) error {
 	var bodyBytes []byte
 
 	//creates http request with context
@@ -135,29 +140,34 @@ func (client *BaseClient) Send(_ context.Context, request *Request, v interface{
 		respBodyBytes, _ = ioutil.ReadAll(resp.Body)
 	}
 
+	name := strings.ToUpper(rn.String())
+
 	go func(debugMode bool) {
 		if debugMode {
-			client.Log(req, resp)
+			client.Log(name, req, resp)
 		}
 	}(client.DebugMode)
 
 	// restore response http.Response.Body after debugging
 	resp.Body = ioutil.NopCloser(bytes.NewBuffer(respBodyBytes))
 
-	switch resp.Header.Get("Content-Type") {
-	case "application/json", "application/json;charset=UTF-8":
+	contentType := resp.Header.Get("Content-Type")
+
+	if strings.Contains(contentType, jsonContentTypeString){
 		if err := json.NewDecoder(resp.Body).Decode(v); err != nil {
-			if err != io.EOF {
-				return err
-			}
-		}
-	case "application/xml", "text/xml;charset=utf-8", "text/xml", "text/xml;charset=UTF-8":
-		if err := xml.NewDecoder(resp.Body).Decode(v); err != nil {
 			if err != io.EOF {
 				return err
 			}
 		}
 	}
 
+	if strings.Contains(contentType, xmlContentTypeString) ||
+		strings.Contains(contentType, appXMLContentTypeString){
+		if err := xml.NewDecoder(resp.Body).Decode(v); err != nil {
+			if err != io.EOF {
+				return err
+			}
+		}
+	}
 	return nil
 }

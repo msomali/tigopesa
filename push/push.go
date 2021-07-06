@@ -3,6 +3,7 @@ package push
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"time"
@@ -142,8 +143,7 @@ func (handler CallbackHandlerFunc) Do(ctx context.Context, request CallbackReque
 	return handler(ctx, request)
 }
 
-func (client *Client) Pay(ctx context.Context, request PayRequest) (PayResponse, error) {
-	var billPayResp = PayResponse{}
+func (client *Client) Pay(ctx context.Context, request PayRequest) (response PayResponse, err error) {
 
 	var billPayReq = payRequest{
 		CustomerMSISDN: request.CustomerMSISDN,
@@ -157,25 +157,20 @@ func (client *Client) Pay(ctx context.Context, request PayRequest) (PayResponse,
 
 	if client.token == ""{
 		_, err := client.Token(ctx)
-
 		if err != nil{
 			return PayResponse{}, err
 		}
-
 		tokenStr = fmt.Sprintf("bearer %s", client.token)
 	}
-
 	//Add Auth Header
 	if client.token != "" {
 		if !client.tokenExpires.IsZero() && time.Until(client.tokenExpires) < (60*time.Second) {
 			if _, err := client.Token(client.Ctx); err != nil {
-				return billPayResp, err
+				return response, err
 			}
 		}
-
 		tokenStr = fmt.Sprintf("bearer %s", client.token)
 	}
-
 
 	authHeader := map[string]string{
 		"Authorization": tokenStr,
@@ -186,23 +181,21 @@ func (client *Client) Pay(ctx context.Context, request PayRequest) (PayResponse,
 	ctxOpt := tigo.WithRequestContext(ctx)
 	requestOpts = append(requestOpts,ctxOpt,basicAuth,moreHeaderOpt)
 
-	req := tigo.NewRequest(http.MethodPost,
+	tigoRequest := tigo.NewRequest(http.MethodPost,
 		client.ApiBaseURL+client.PushPayURL,
 		internal.JsonPayload, billPayReq,
 		requestOpts...,
 	)
 
-	err := client.Send(context.TODO(), req, &billPayResp)
+	err = client.Send(context.TODO(), tigoRequest, &response)
 
 	if err != nil {
-		return billPayResp, err
+		return response, err
 	}
 
-	//FIXME:
-	client.LogPayload(internal.JsonPayload, "PUSH RESPONSE", billPayResp)
+	log.Printf("push response description: %s\n", response.ResponseDescription)
 
-	return billPayResp, nil
-
+	return response, nil
 }
 
 func (client *Client) Callback(w http.ResponseWriter, r *http.Request) {

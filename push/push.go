@@ -3,7 +3,6 @@ package push
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"time"
@@ -192,8 +191,6 @@ func (client *Client) Pay(ctx context.Context, request PayRequest) (response Pay
 	if err != nil {
 		return response, err
 	}
-
-	log.Printf("push response description: %s\n", response.ResponseDescription)
 
 	return response, nil
 }

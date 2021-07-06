@@ -82,82 +82,20 @@ func (client *BaseClient) NewRequest(method, url string, payloadType internal.Pa
 }
 
 func (client *BaseClient) LogPayload(t internal.PayloadType, prefix string, payload interface{}) {
-
-	errs := make(chan error)
-	done := make(chan bool)
-
-	go func() {
-		buf, err := internal.MarshalPayload(t, payload)
-
-		if err != nil {
-			errs <- fmt.Errorf("could not marshal the payload: %s\n", err.Error())
-			return
-		}
-
-		_, err = client.Logger.Write([]byte(fmt.Sprintf("%s: %s\n\n", prefix, buf.String())))
-		if err != nil {
-			errs <- fmt.Errorf("could not print the payload: %s\n", err.Error())
-		}
-
-		done <- true
-	}()
-
-	select {
-	case err := <-errs:
-		fmt.Printf("error encountered: %s\n", err)
-		return
-
-	case <-done:
-		fmt.Printf("done logging\n")
-		return
-	}
+	buf, _ := internal.MarshalPayload(t, payload)
+	_, _ = client.Logger.Write([]byte(fmt.Sprintf("%s: %s\n\n", prefix, buf.String())))
 }
 
 func (client *BaseClient) Log(request *http.Request, response *http.Response) {
 
-	errs := make(chan error)
-	done := make(chan bool)
+	if request != nil {
+		reqDump, _:= httputil.DumpRequestOut(request, true)
+		_, _ = fmt.Fprintf(client.Logger, "REQUEST: %s\n", reqDump)
+	}
 
-	go func() {
-		if request != nil {
-			reqDump, err := httputil.DumpRequestOut(request, true)
-			if err != nil {
-				errs <- fmt.Errorf("could not dump request due to: %s\n", err.Error())
-			}
-			_, err = fmt.Fprintf(client.Logger, "request %s\n", reqDump)
-			if err != nil {
-				errs <- fmt.Errorf("could not print  request due to: %s\n", err.Error())
-			}
-
-			if response == nil {
-				done <- true
-			}
-		}
-
-		if response != nil {
-			respDump, err := httputil.DumpResponse(response, true)
-			if err != nil {
-				errs <- fmt.Errorf("could not dump response due to: %s\n", err.Error())
-			}
-			_, err = fmt.Fprintf(client.Logger, "response:  %s\n", respDump)
-
-			if err != nil {
-				errs <- fmt.Errorf("could not print out response due to: %s\n", err.Error())
-			}
-
-			done <- true
-
-		}
-	}()
-
-	select {
-	case err := <-errs:
-		fmt.Printf("error encountered: %s\n", err)
-		return
-
-	case <-done:
-		fmt.Printf("DONE LOGGING:\n")
-		return
+	if response != nil {
+		respDump, _ := httputil.DumpResponse(response, true)
+		_, _ = fmt.Fprintf(client.Logger, "RESPONSE: %s\n", respDump)
 	}
 
 }
@@ -205,7 +143,6 @@ func (client *BaseClient) Send(_ context.Context, request *Request, v interface{
 
 	// restore response http.Response.Body after debugging
 	resp.Body = ioutil.NopCloser(bytes.NewBuffer(respBodyBytes))
-
 
 	switch resp.Header.Get("Content-Type") {
 	case "application/json", "application/json;charset=UTF-8":

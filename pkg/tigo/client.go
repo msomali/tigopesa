@@ -185,18 +185,27 @@ func (client *BaseClient) Send(_ context.Context, request *Request, v interface{
 
 	resp, err := client.HttpClient.Do(req)
 
-	//// restore request body for logging
-	//req.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
-	//
-	//go func(debugMode bool) {
-	//	if debugMode {
-	//		client.Log(req, resp)
-	//	}
-	//}(client.DebugMode)
-
 	if err != nil {
 		return err
 	}
+
+	//restore request body for logging
+	req.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+
+	var respBodyBytes []byte
+	if resp.Body != nil {
+		respBodyBytes, _ = ioutil.ReadAll(resp.Body)
+	}
+
+	go func(debugMode bool) {
+		if debugMode {
+			client.Log(req, resp)
+		}
+	}(client.DebugMode)
+
+	// restore response http.Response.Body after debugging
+	resp.Body = ioutil.NopCloser(bytes.NewBuffer(respBodyBytes))
+
 
 	switch resp.Header.Get("Content-Type") {
 	case "application/json", "application/json;charset=UTF-8":

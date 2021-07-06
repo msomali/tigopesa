@@ -155,6 +155,16 @@ func (client *Client) Pay(ctx context.Context, request PayRequest) (PayResponse,
 
 	var tokenStr string
 
+	if client.token == ""{
+		_, err := client.Token(ctx)
+
+		if err != nil{
+			return PayResponse{}, err
+		}
+
+		tokenStr = fmt.Sprintf("bearer %s", client.token)
+	}
+
 	//Add Auth Header
 	if client.token != "" {
 		if !client.tokenExpires.IsZero() && time.Until(client.tokenExpires) < (60*time.Second) {
@@ -166,13 +176,15 @@ func (client *Client) Pay(ctx context.Context, request PayRequest) (PayResponse,
 		tokenStr = fmt.Sprintf("bearer %s", client.token)
 	}
 
+
 	authHeader := map[string]string{
 		"Authorization": tokenStr,
 	}
 	var requestOpts []tigo.RequestOption
 	moreHeaderOpt := tigo.WithMoreHeaders(authHeader)
+	basicAuth := tigo.WithAuthHeaders(client.Username, client.Password)
 	ctxOpt := tigo.WithRequestContext(ctx)
-	requestOpts = append(requestOpts, moreHeaderOpt, ctxOpt)
+	requestOpts = append(requestOpts,ctxOpt,basicAuth,moreHeaderOpt)
 
 	req := tigo.NewRequest(http.MethodPost,
 		client.ApiBaseURL+client.PushPayURL,
@@ -185,6 +197,9 @@ func (client *Client) Pay(ctx context.Context, request PayRequest) (PayResponse,
 	if err != nil {
 		return billPayResp, err
 	}
+
+	//FIXME:
+	client.LogPayload(internal.JsonPayload, "PUSH RESPONSE", billPayResp)
 
 	return billPayResp, nil
 

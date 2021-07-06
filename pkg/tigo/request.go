@@ -66,8 +66,8 @@ func WithMoreHeaders(headers map[string]string) RequestOption {
 //WithAuthHeaders add password and username to request headers
 func WithAuthHeaders(username, password string) RequestOption {
 	return func(request *Request) {
-		request.Headers["username"] = username
-		request.Headers["password"] = password
+		request.Headers["Username"] = username
+		request.Headers["Password"] = password
 	}
 }
 

@@ -12,11 +12,14 @@ import (
 const (
 	pushUsername   = "TIGO_PUSH_USERNAME"
 	pushPassword   = "TIGO_PUSH_PASSWORD"
+	pushPasswordGrantType = "TIGO_PUSH_PASSWORD_GRANT_TYPE"
 	pushBaseUrl    = "TIGO_PUSH_BASE_URL"
 	pushTokenUrl   = "TIGO_PUSH_TOKEN_URL"
 	pushMSISDN     = "TIGO_PUSH_BILLER_MSISDN"
 	pushBillerCode = "TIGO_PUSH_BILLER_CODE"
 	pushPayURL     = "TIGO_PUSH_PAY_URL"
+	pushReverseURL = "TIGO_PUSH_REVERSE_URL"
+	pushHealthURL = "TIGO_PUSH_HEALTH_URL"
 )
 
 var PushConfig *Config
@@ -30,14 +33,14 @@ func TestMain(m *testing.M) {
 	PushConfig = &Config{
 		Username:              os.Getenv(pushUsername),
 		Password:              os.Getenv(pushPassword),
-		PasswordGrantType:     "password",
+		PasswordGrantType:     os.Getenv(pushPasswordGrantType),
 		ApiBaseURL:            os.Getenv(pushBaseUrl),
 		GetTokenURL:           os.Getenv(pushTokenUrl),
 		BillerMSISDN:          os.Getenv(pushMSISDN),
 		BillerCode:            os.Getenv(pushBillerCode),
 		PushPayURL:            os.Getenv(pushPayURL),
-		ReverseTransactionURL: "",
-		HealthCheckURL:        "",
+		ReverseTransactionURL: os.Getenv(pushReverseURL),
+		HealthCheckURL:        os.Getenv(pushHealthURL),
 	}
 	os.Exit(m.Run())
 }
@@ -70,7 +73,7 @@ func TestClient_Token(t *testing.T) {
 			args: args{
 				ctx: context.TODO(),
 			},
-			want:    "this is token",
+			want:    "",
 			wantErr: false,
 		},
 	}

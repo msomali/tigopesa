@@ -30,6 +30,16 @@ type (
 
 	PayRequest struct {
 		CustomerMSISDN string `json:"CustomerMSISDN"`
+		Amount         int    `json:"Amount"`
+		Remarks        string `json:"Remarks,omitempty"`
+		ReferenceID    string `json:"ReferenceID"`
+	}
+
+	// payRequest This is the request expected by tigo with BillerMSISDN hooked up
+	// from Config
+	// PayRequest is used by Client without the need to specify BillerMSISDN
+	payRequest struct {
+		CustomerMSISDN string `json:"CustomerMSISDN"`
 		BillerMSISDN   string `json:"BillerMSISDN"`
 		Amount         int    `json:"Amount"`
 		Remarks        string `json:"Remarks,omitempty"`
@@ -135,6 +145,14 @@ func (handler CallbackHandlerFunc) Do(ctx context.Context, request CallbackReque
 func (client *Client) Pay(ctx context.Context, request PayRequest) (PayResponse, error) {
 	var billPayResp = PayResponse{}
 
+	var billPayReq = payRequest{
+		CustomerMSISDN: request.CustomerMSISDN,
+		BillerMSISDN:   client.BillerMSISDN,
+		Amount:         request.Amount,
+		Remarks:        request.Remarks,
+		ReferenceID:    request.ReferenceID,
+	}
+
 	var tokenStr string
 
 	//Add Auth Header
@@ -158,7 +176,7 @@ func (client *Client) Pay(ctx context.Context, request PayRequest) (PayResponse,
 
 	req := tigo.NewRequest(http.MethodPost,
 		client.ApiBaseURL+client.PushPayURL,
-		internal.JsonPayload, request,
+		internal.JsonPayload, billPayReq,
 		requestOpts...,
 	)
 

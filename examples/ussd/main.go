@@ -24,7 +24,6 @@ type disburseInfo struct {
 	Amount float64 `json:"amount"`
 }
 
-
 type App struct {
 	wa   *wa.Client
 	aw   *aw.Client

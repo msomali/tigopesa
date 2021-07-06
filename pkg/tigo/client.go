@@ -205,7 +205,7 @@ func (client *BaseClient) Send(_ context.Context, request *Request, v interface{
 				return err
 			}
 		}
-	case "application/xml","text/xml;charset=utf-8","text/xml", "text/xml;charset=UTF-8":
+	case "application/xml", "text/xml;charset=utf-8", "text/xml", "text/xml;charset=UTF-8":
 		if err := xml.NewDecoder(resp.Body).Decode(v); err != nil {
 			if err != io.EOF {
 				return err

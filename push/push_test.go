@@ -10,16 +10,16 @@ import (
 )
 
 const (
-	pushUsername   = "TIGO_PUSH_USERNAME"
-	pushPassword   = "TIGO_PUSH_PASSWORD"
+	pushUsername          = "TIGO_PUSH_USERNAME"
+	pushPassword          = "TIGO_PUSH_PASSWORD"
 	pushPasswordGrantType = "TIGO_PUSH_PASSWORD_GRANT_TYPE"
-	pushBaseUrl    = "TIGO_PUSH_BASE_URL"
-	pushTokenUrl   = "TIGO_PUSH_TOKEN_URL"
-	pushMSISDN     = "TIGO_PUSH_BILLER_MSISDN"
-	pushBillerCode = "TIGO_PUSH_BILLER_CODE"
-	pushPayURL     = "TIGO_PUSH_PAY_URL"
-	pushReverseURL = "TIGO_PUSH_REVERSE_URL"
-	pushHealthURL = "TIGO_PUSH_HEALTH_URL"
+	pushBaseUrl           = "TIGO_PUSH_BASE_URL"
+	pushTokenUrl          = "TIGO_PUSH_TOKEN_URL"
+	pushMSISDN            = "TIGO_PUSH_BILLER_MSISDN"
+	pushBillerCode        = "TIGO_PUSH_BILLER_CODE"
+	pushPayURL            = "TIGO_PUSH_PAY_URL"
+	pushReverseURL        = "TIGO_PUSH_REVERSE_URL"
+	pushHealthURL         = "TIGO_PUSH_HEALTH_URL"
 )
 
 var PushConfig *Config
@@ -95,7 +95,7 @@ func TestClient_Token(t *testing.T) {
 				t.Errorf("Token() got = %v, want %v", got, tt.want)
 			}
 
-			if got == ""{
+			if got == "" {
 				t.Errorf("did not expect empty token to be returned\n")
 			}
 

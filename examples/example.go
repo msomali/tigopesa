@@ -123,7 +123,7 @@ type (
 	}
 
 	pushpayInitiatorRequest struct {
-		CustomerMSSID string  `json:"msisdn"`
+		CustomerMSSID string `json:"msisdn"`
 		Amount        int    `json:"amount"`
 		Remarks       string `json:"remarks,omitempty"`
 	}
@@ -205,7 +205,7 @@ func (a *App) pushPayHandler(w http.ResponseWriter, r *http.Request) {
 		CustomerMSISDN: req.CustomerMSSID,
 		Amount:         req.Amount,
 		Remarks:        req.Remarks,
-		BillerMSISDN: a.Config.PushBillerMSISDN,
+		BillerMSISDN:   a.Config.PushBillerMSISDN,
 		ReferenceID:    fmt.Sprintf("%s%d", a.Config.PushBillerCode, time.Now().Local().Unix()),
 	}
 

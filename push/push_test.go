@@ -2,10 +2,45 @@ package push
 
 import (
 	"context"
+	"github.com/joho/godotenv"
 	"github.com/techcraftt/tigosdk/pkg/tigo"
+	"os"
 	"testing"
 	"time"
 )
+
+const (
+	pushUsername   = "TIGO_PUSH_USERNAME"
+	pushPassword   = "TIGO_PUSH_PASSWORD"
+	pushBaseUrl    = "TIGO_PUSH_BASE_URL"
+	pushTokenUrl   = "TIGO_PUSH_TOKEN_URL"
+	pushMSISDN     = "TIGO_PUSH_BILLER_MSISDN"
+	pushBillerCode = "TIGO_PUSH_BILLER_CODE"
+	pushPayURL     = "TIGO_PUSH_PAY_URL"
+)
+
+var PushConfig *Config
+
+func TestMain(m *testing.M) {
+	err := godotenv.Load("push.env")
+	if err != nil {
+		return
+	}
+
+	PushConfig = &Config{
+		Username:              os.Getenv(pushUsername),
+		Password:              os.Getenv(pushPassword),
+		PasswordGrantType:     "password",
+		ApiBaseURL:            os.Getenv(pushBaseUrl),
+		GetTokenURL:           os.Getenv(pushTokenUrl),
+		BillerMSISDN:          os.Getenv(pushMSISDN),
+		BillerCode:            os.Getenv(pushBillerCode),
+		PushPayURL:            os.Getenv(pushPayURL),
+		ReverseTransactionURL: "",
+		HealthCheckURL:        "",
+	}
+	os.Exit(m.Run())
+}
 
 func TestClient_Token(t *testing.T) {
 	type fields struct {
@@ -25,28 +60,14 @@ func TestClient_Token(t *testing.T) {
 		want    string
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+
 		{
-			name:    "test token generation",
-			fields:  fields{
-				Config:          &Config{
-					Username:              "",
-					Password:              "",
-					PasswordGrantType:     "",
-					ApiBaseURL:            "",
-					GetTokenURL:           "",
-					BillerMSISDN:          "",
-					BillerCode:            "",
-					PushPayURL:            "",
-					ReverseTransactionURL: "",
-					HealthCheckURL:        "",
-				},
-				BaseClient:      tigo.NewBaseClient(),
-				CallbackHandler: nil,
-				token:           "",
-				tokenExpires:    time.Time{},
+			name: "test if token is returned",
+			fields: fields{
+				Config:     PushConfig,
+				BaseClient: tigo.NewBaseClient(),
 			},
-			args:    args{
+			args: args{
 				ctx: context.TODO(),
 			},
 			want:    "this is token",
@@ -67,9 +88,15 @@ func TestClient_Token(t *testing.T) {
 				t.Errorf("Token() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if got != client.token{
+			if got != client.token {
 				t.Errorf("Token() got = %v, want %v", got, tt.want)
 			}
+
+			if got == ""{
+				t.Errorf("did not expect empty token to be returned\n")
+			}
+
+			t.Logf("\ntoken: %s\nclient.token %s\n", got, client.token)
 		})
 	}
 }

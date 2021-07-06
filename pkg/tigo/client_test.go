@@ -14,6 +14,7 @@ import (
 	"github.com/techcraftt/tigosdk/pkg/tigo"
 )
 
+
 func TestBaseClient_LogPayload(t *testing.T) {
 	type fields struct {
 		HttpClient *http.Client

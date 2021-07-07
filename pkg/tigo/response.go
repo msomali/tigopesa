@@ -40,24 +40,15 @@ type (
 //application/xml
 func Receive(r *http.Request, payloadType internal.PayloadType, v interface{}) error {
 
-	var requestBodyBytes []byte
-
-	if r.Body != nil {
-		requestBodyBytes, _ = ioutil.ReadAll(r.Body)
-	}
-
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		return err
 	}
-
 	if v == nil {
 		return fmt.Errorf("v can not be nil")
 	}
-
 	// restore request body
-	r.Body = ioutil.NopCloser(bytes.NewBuffer(requestBodyBytes))
-
+	r.Body = ioutil.NopCloser(bytes.NewBuffer(body))
 
 	switch payloadType {
 	case internal.JsonPayload:
@@ -79,52 +70,55 @@ func Receive(r *http.Request, payloadType internal.PayloadType, v interface{}) e
 }
 
 //Reply respond to Tigo requests like callback request and namecheck
-func Reply(r *Response, writer http.ResponseWriter) (err error) {
+func Reply(r *Response, writer http.ResponseWriter) {
 
 	if r.Payload == nil{
 		writer.WriteHeader(r.StatusCode)
 		for key, value := range r.Headers {
 			writer.Header().Add(key, value)
+			_ , _ = writer.Write([]byte("ok"))
+
 		}
-		return nil
+		return
 	}
 
 	if r.Error != nil{
 		http.Error(writer, r.Error.Error(), http.StatusInternalServerError)
+		return
 	}
-
-	var payload []byte
-	errs := make(chan error)
-	done := make(chan bool)
+	//
+	//var payload []byte
+	//errs := make(chan error)
+	//done := make(chan bool)
 
 	switch r.PayloadType {
 	case internal.XmlPayload:
-		payload, err = xml.MarshalIndent(r.Payload, "", "  ")
+		payload, err := xml.MarshalIndent(r.Payload, "", "  ")
 		if err != nil {
-			errs <- err
+			http.Error(writer, err.Error(), http.StatusInternalServerError)
+			return
 		}
-		done <- true
-
-	case internal.JsonPayload:
-		payload, err = json.Marshal(r.Payload)
-		if err != nil {
-			errs <- err
-		}
-		<-done
-	}
-
-	select {
-	case err := <-errs:
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return err
-
-	case <-done:
 		writer.WriteHeader(r.StatusCode)
 		for key, value := range r.Headers {
-			writer.Header().Add(key, value)
+			writer.Header().Set(key, value)
 		}
 		_, err = writer.Write(payload)
-		return err
+		return
+
+
+	case internal.JsonPayload:
+		payload, err := json.Marshal(r.Payload)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		writer.WriteHeader(r.StatusCode)
+		for key, value := range r.Headers {
+			writer.Header().Set(key, value)
+		}
+		writer.Header().Set("Content-Type","application/json")
+		_, err = writer.Write(payload)
+		return
 	}
 
 }

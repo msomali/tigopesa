@@ -131,6 +131,10 @@ func (handler NameQueryFunc) HandleSubscriberNameQuery(ctx context.Context, requ
 }
 
 func (client *Client) HandleNameQuery(writer http.ResponseWriter, request *http.Request) {
+
+	if client.DebugMode {
+		client.Log("NAME QUERY", request)
+	}
 	ctx, cancel := context.WithTimeout(client.Ctx, client.Timeout)
 	defer cancel()
 	var req NameRequest
@@ -148,11 +152,15 @@ func (client *Client) HandleNameQuery(writer http.ResponseWriter, request *http.
 	}
 
 	resp := tigo.NewResponse(200, response, internal.XmlPayload)
-	tigo.Reply(resp,writer)
+	tigo.Reply(resp, writer)
 
 }
 
 func (client *Client) HandlePayment(writer http.ResponseWriter, request *http.Request) {
+
+	if client.DebugMode {
+		client.Log("USSD WA PAYMENT", request)
+	}
 	ctx, cancel := context.WithTimeout(client.Ctx, client.Timeout)
 	defer cancel()
 
@@ -171,6 +179,6 @@ func (client *Client) HandlePayment(writer http.ResponseWriter, request *http.Re
 
 	resp := tigo.NewResponse(200, response, internal.XmlPayload)
 
-	tigo.Reply(resp,writer)
+	tigo.Reply(resp, writer)
 
 }

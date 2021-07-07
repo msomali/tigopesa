@@ -91,7 +91,7 @@ func (r *Response) Reply(writer http.ResponseWriter) (err error) {
 	select {
 	case err := <-errs:
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
+		return err
 
 	case <-done:
 		writer.WriteHeader(r.StatusCode)
@@ -99,7 +99,7 @@ func (r *Response) Reply(writer http.ResponseWriter) (err error) {
 			writer.Header().Add(key, value)
 		}
 		_,err = writer.Write(payload)
-		return
+		return err
 	}
 
 }

@@ -67,40 +67,41 @@ func Receive(r *http.Request, payloadType internal.PayloadType, v interface{}) e
 
 //Reply respond to Tigo requests like callback request and namecheck
 func (r *Response) Reply(writer http.ResponseWriter) (err error) {
-	writer.WriteHeader(r.StatusCode)
-	for key, value := range r.Headers {
-		writer.Header().Add(key, value)
-	}
+
+	var payload []byte
+	errs := make(chan error)
+	done := make(chan bool)
+
 	switch r.PayloadType {
-
 	case internal.XmlPayload:
-		payload, err := xml.MarshalIndent(r.Payload, "", "  ")
-
+		payload, err = xml.MarshalIndent(r.Payload, "", "  ")
 		if err != nil {
-			http.Error(writer, err.Error(), http.StatusInternalServerError)
-			return err
+			errs <- err
 		}
-
-		_, err = writer.Write(payload)
-
-		if err != nil {
-			return err
-		}
+		done <- true
 
 	case internal.JsonPayload:
-		payload, err := json.Marshal(r.Payload)
+		payload, err = json.Marshal(r.Payload)
 		if err != nil {
-			http.Error(writer, err.Error(), http.StatusInternalServerError)
-			return err
+			errs <- err
 		}
-		_, err = writer.Write(payload)
-
-		if err != nil {
-			return err
-		}
+		<- done
 	}
 
-	return err
+	select {
+	case err := <-errs:
+		http.Error(writer, err.Error(), http.StatusInternalServerError)
+		return
+
+	case <-done:
+		writer.WriteHeader(r.StatusCode)
+		for key, value := range r.Headers {
+			writer.Header().Add(key, value)
+		}
+		_,err = writer.Write(payload)
+		return
+	}
+
 }
 
 func WithResponseHeaders(headers map[string]string) ResponseOption {

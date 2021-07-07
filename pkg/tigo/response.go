@@ -1,6 +1,7 @@
 package tigo
 
 import (
+	"bytes"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -27,6 +28,7 @@ type (
 		Payload     interface{}
 		PayloadType internal.PayloadType
 		Headers     map[string]string
+		Error       error
 	}
 
 	ResponseOption func(response *Response)
@@ -37,6 +39,13 @@ type (
 //The expected Content-Type should also be declared. If its application/json or
 //application/xml
 func Receive(r *http.Request, payloadType internal.PayloadType, v interface{}) error {
+
+	var requestBodyBytes []byte
+
+	if r.Body != nil {
+		requestBodyBytes, _ = ioutil.ReadAll(r.Body)
+	}
+
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		return err
@@ -46,9 +55,13 @@ func Receive(r *http.Request, payloadType internal.PayloadType, v interface{}) e
 		return fmt.Errorf("v can not be nil")
 	}
 
+	// restore request body
+	r.Body = ioutil.NopCloser(bytes.NewBuffer(requestBodyBytes))
+
+
 	switch payloadType {
 	case internal.JsonPayload:
-		err = json.NewDecoder(r.Body).Decode(v)
+		err := json.NewDecoder(r.Body).Decode(v)
 		defer func(Body io.ReadCloser) {
 			err := Body.Close()
 			if err != nil {
@@ -66,7 +79,19 @@ func Receive(r *http.Request, payloadType internal.PayloadType, v interface{}) e
 }
 
 //Reply respond to Tigo requests like callback request and namecheck
-func (r *Response) Reply(writer http.ResponseWriter) (err error) {
+func Reply(r *Response, writer http.ResponseWriter) (err error) {
+
+	if r.Payload == nil{
+		writer.WriteHeader(r.StatusCode)
+		for key, value := range r.Headers {
+			writer.Header().Add(key, value)
+		}
+		return nil
+	}
+
+	if r.Error != nil{
+		http.Error(writer, r.Error.Error(), http.StatusInternalServerError)
+	}
 
 	var payload []byte
 	errs := make(chan error)
@@ -85,7 +110,7 @@ func (r *Response) Reply(writer http.ResponseWriter) (err error) {
 		if err != nil {
 			errs <- err
 		}
-		<- done
+		<-done
 	}
 
 	select {
@@ -98,7 +123,7 @@ func (r *Response) Reply(writer http.ResponseWriter) (err error) {
 		for key, value := range r.Headers {
 			writer.Header().Add(key, value)
 		}
-		_,err = writer.Write(payload)
+		_, err = writer.Write(payload)
 		return err
 	}
 
@@ -124,6 +149,12 @@ func WithDefaultJsonHeader() ResponseOption {
 			"Content-Type": ContentTypeJson,
 		}
 		response.Headers = headers
+	}
+}
+
+func WithError(err error) ResponseOption {
+	return func(response *Response) {
+		response.Error = err
 	}
 }
 

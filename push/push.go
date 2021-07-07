@@ -203,6 +203,9 @@ func (client *Client) Callback(w http.ResponseWriter, r *http.Request) {
 	var callbackRequest CallbackRequest
 	var callbackResponse CallbackResponse
 	var response *tigo.Response
+	var statusCode int
+
+	statusCode = 200
 	defer func(debug bool) {
 		client.Log("CALLBACK REQUEST", r, nil)
 		client.LogPayload(internal.JsonPayload, "callback from tigo", &callbackRequest)
@@ -212,25 +215,22 @@ func (client *Client) Callback(w http.ResponseWriter, r *http.Request) {
 	err := tigo.Receive(r, internal.JsonPayload, &callbackRequest)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		statusCode = http.StatusInternalServerError
 	}
 
 	callbackResponse, err = client.CallbackHandler.Do(client.Ctx, callbackRequest)
 
-	client.LogPayload(internal.JsonPayload, "callback response", &callbackResponse)
-
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		statusCode = http.StatusInternalServerError
 	}
 
 	var responseOpts []tigo.ResponseOption
 	headers := tigo.WithDefaultJsonHeader()
 
 	responseOpts = append(responseOpts, headers)
-	response = tigo.NewResponse(200, callbackResponse, internal.JsonPayload, responseOpts...)
+	response = tigo.NewResponse(statusCode, callbackResponse, internal.JsonPayload, responseOpts...)
 
-	_ = response.Reply(w)
+	_ = tigo.Reply(response,w)
 
 }
 

@@ -148,7 +148,7 @@ func (client *Client) HandleNameQuery(writer http.ResponseWriter, request *http.
 	}
 
 	resp := tigo.NewResponse(200, response, internal.XmlPayload)
-	_ = resp.Reply(writer)
+	_ = tigo.Reply(resp,writer)
 
 }
 
@@ -171,6 +171,6 @@ func (client *Client) HandlePayment(writer http.ResponseWriter, request *http.Re
 
 	resp := tigo.NewResponse(200, response, internal.XmlPayload)
 
-	_ = resp.Reply(writer)
+	_ = tigo.Reply(resp,writer)
 
 }

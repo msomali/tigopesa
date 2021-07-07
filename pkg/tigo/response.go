@@ -72,24 +72,20 @@ func Receive(r *http.Request, payloadType internal.PayloadType, v interface{}) e
 //Reply respond to Tigo requests like callback request and namecheck
 func Reply(r *Response, writer http.ResponseWriter) {
 
-	if r.Payload == nil{
-		writer.WriteHeader(r.StatusCode)
+	if r.Payload == nil {
+
 		for key, value := range r.Headers {
 			writer.Header().Add(key, value)
-			_ , _ = writer.Write([]byte("ok"))
-
 		}
+		writer.WriteHeader(r.StatusCode)
+		_, _ = writer.Write([]byte("ok"))
 		return
 	}
 
-	if r.Error != nil{
+	if r.Error != nil {
 		http.Error(writer, r.Error.Error(), http.StatusInternalServerError)
 		return
 	}
-	//
-	//var payload []byte
-	//errs := make(chan error)
-	//done := make(chan bool)
 
 	switch r.PayloadType {
 	case internal.XmlPayload:
@@ -98,13 +94,14 @@ func Reply(r *Response, writer http.ResponseWriter) {
 			http.Error(writer, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		writer.WriteHeader(r.StatusCode)
+
 		for key, value := range r.Headers {
 			writer.Header().Set(key, value)
 		}
+
+		writer.WriteHeader(r.StatusCode)
 		_, err = writer.Write(payload)
 		return
-
 
 	case internal.JsonPayload:
 		payload, err := json.Marshal(r.Payload)
@@ -112,11 +109,11 @@ func Reply(r *Response, writer http.ResponseWriter) {
 			http.Error(writer, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		writer.WriteHeader(r.StatusCode)
 		for key, value := range r.Headers {
 			writer.Header().Set(key, value)
 		}
-		writer.Header().Set("Content-Type","application/json")
+		writer.Header().Set("Content-Type", "application/json")
+		writer.WriteHeader(r.StatusCode)
 		_, err = writer.Write(payload)
 		return
 	}

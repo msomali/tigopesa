@@ -90,7 +90,6 @@ func (client *BaseClient) LogPayload(t internal.PayloadType, prefix string, payl
 	_, _ = client.Logger.Write([]byte(fmt.Sprintf("%s: %s\n\n", prefix, buf.String())))
 }
 
-
 // Log is called to print the details of http.Request sent from Tigo during
 // callback, namecheck or ussd payment. It is used for debugging purposes
 func (client *BaseClient) Log(name string, request *http.Request) {
@@ -117,7 +116,7 @@ func (client *BaseClient) LogOut(name string, request *http.Request, response *h
 
 	if request != nil {
 		reqDump, _ := httputil.DumpRequestOut(request, true)
-		_,err := fmt.Fprintf(client.Logger, "%s REQUEST: %s\n", name, reqDump)
+		_, err := fmt.Fprintf(client.Logger, "%s REQUEST: %s\n", name, reqDump)
 		if err != nil {
 			fmt.Printf("error while logging %s request: %v\n",
 				strings.ToLower(name), err)
@@ -126,7 +125,7 @@ func (client *BaseClient) LogOut(name string, request *http.Request, response *h
 
 	if response != nil {
 		respDump, _ := httputil.DumpResponse(response, true)
-		_,err := fmt.Fprintf(client.Logger, "%s RESPONSE: %s\n", name, respDump)
+		_, err := fmt.Fprintf(client.Logger, "%s RESPONSE: %s\n", name, respDump)
 		if err != nil {
 			fmt.Printf("error while logging %s response: %v\n",
 				strings.ToLower(name), err)

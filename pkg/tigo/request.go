@@ -22,7 +22,7 @@ const (
 )
 
 func (rn RequestName) String() string {
-	states := [...]string{"PushPayRequest", "DisburseRequest", "GetTokenRequest","RefundRequest","Healthcheck"}
+	states := [...]string{"PushPayRequest", "DisburseRequest", "GetTokenRequest", "RefundRequest", "Healthcheck"}
 	if len(states) < int(rn) {
 		return ""
 	}

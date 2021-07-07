@@ -88,12 +88,16 @@ func (r *Response) Reply(writer http.ResponseWriter) (err error) {
 		}
 
 	case internal.JsonPayload:
-		err := json.NewEncoder(writer).Encode(r.Payload)
+		payload, err := json.Marshal(r.Payload)
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusInternalServerError)
 			return err
 		}
-		return nil
+		_, err = writer.Write(payload)
+
+		if err != nil {
+			return err
+		}
 	}
 
 	return err

@@ -160,7 +160,7 @@ func (client *Client) Pay(ctx context.Context, request PayRequest) (response Pay
 		if err != nil {
 			return PayResponse{}, err
 		}
-		tokenStr = fmt.Sprintf("bearer %s",str)
+		tokenStr = fmt.Sprintf("bearer %s", str)
 	}
 	//Add Auth Header
 	if client.token != "" {
@@ -221,6 +221,7 @@ func (client *Client) Callback(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	var responseOpts []tigo.ResponseOption

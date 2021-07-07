@@ -105,7 +105,7 @@ func (client *Client) Disburse(ctx context.Context, referenceId, msisdn string, 
 
 	req := tigo.NewRequest(http.MethodPost, client.RequestURL, internal.XmlPayload, request, reqOpts...)
 
-	err = client.Send(ctx, tigo.Disbursement, req, &response)
+	err = client.Send(ctx, tigo.DisburseRequest, req, &response)
 
 	if err != nil {
 		return

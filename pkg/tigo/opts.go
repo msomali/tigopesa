@@ -21,7 +21,7 @@ func WithContext(ctx context.Context) ClientOption {
 }
 
 // WithTimeout used to set the Timeout used by handlers like sending requests to
-// Tigo Gateway and back in case of Disbursement or to set the max time for
+// Tigo Gateway and back in case of DisburseRequest or to set the max time for
 // handlers QuerySubscriberFunc and WalletToAccountFunc while handling requests from tigo
 // the default value is 1 minute
 func WithTimeout(timeout time.Duration) ClientOption {

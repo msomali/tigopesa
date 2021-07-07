@@ -5,7 +5,6 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/techcraftt/tigosdk/pkg/tigo"
 	"os"
-	"reflect"
 	"testing"
 	"time"
 )
@@ -106,67 +105,6 @@ func TestClient_Token(t *testing.T) {
 			}
 
 			t.Logf("\ntoken: %s\nclient.token %s\n", got, client.token)
-		})
-	}
-}
-
-func TestClient_Pay(t *testing.T) {
-	type fields struct {
-		Config          *Config
-		BaseClient      *tigo.BaseClient
-		CallbackHandler CallbackHandler
-		token           string
-		tokenExpires    time.Time
-	}
-	type args struct {
-		ctx     context.Context
-		request PayRequest
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    PayResponse
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-		{
-			name: "testing push pay request",
-			fields: fields{
-				Config:     PushConfig,
-				BaseClient: tigo.NewBaseClient(tigo.WithDebugMode(true)),
-			},
-			args: args{
-				ctx: context.TODO(),
-				request: PayRequest{
-					CustomerMSISDN: "",
-					BillerMSISDN:   PushConfig.BillerMSISDN,
-					Amount:         1000,
-					Remarks:        "testing push pay",
-					ReferenceID:    "PCT27827733bnsbnsbnshjsyuyuwueuwuw",
-				},
-			},
-			want:    PayResponse{},
-			wantErr: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			client := &Client{
-				Config:          tt.fields.Config,
-				BaseClient:      tt.fields.BaseClient,
-				CallbackHandler: tt.fields.CallbackHandler,
-				token:           tt.fields.token,
-				tokenExpires:    tt.fields.tokenExpires,
-			}
-			got, err := client.Pay(tt.args.ctx, tt.args.request)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Pay() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Pay() got = %v, want %v", got, tt.want)
-			}
 		})
 	}
 }

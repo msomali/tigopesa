@@ -187,7 +187,7 @@ func (client *Client) Pay(ctx context.Context, request PayRequest) (response Pay
 		requestOpts...,
 	)
 
-	err = client.Send(context.TODO(), tigo.PushPay, tigoRequest, &response)
+	err = client.Send(context.TODO(), tigo.PushPayRequest, tigoRequest, &response)
 
 	if err != nil {
 		return response, err
@@ -229,7 +229,7 @@ func (client *Client) Callback(w http.ResponseWriter, r *http.Request) {
 	responseOpts = append(responseOpts, headers)
 	response = tigo.NewResponse(200, callbackResponse, internal.JsonPayload, responseOpts...)
 
-	_ = response.Send(w)
+	_ = response.Reply(w)
 
 }
 
@@ -246,7 +246,7 @@ func (client *Client) Refund(ctx context.Context, refundReq RefundRequest) (Refu
 		requestOptions...,
 	)
 
-	if err := client.Send(ctx, tigo.Refund, request, refundPaymentResp); err != nil {
+	if err := client.Send(ctx, tigo.RefundRequest, request, refundPaymentResp); err != nil {
 		return RefundResponse{}, err
 	}
 
@@ -263,7 +263,7 @@ func (client *Client) HeartBeat(ctx context.Context, request HealthCheckRequest)
 	req := tigo.NewRequest(http.MethodPost, client.HealthCheckURL,
 		internal.JsonPayload, request, requestOptions...)
 
-	if err := client.Send(ctx, tigo.HealthCheck, req, healthCheckResp); err != nil {
+	if err := client.Send(ctx, tigo.HealthCheckRequest, req, healthCheckResp); err != nil {
 		return HealthCheckResponse{}, err
 	}
 
@@ -299,7 +299,7 @@ func (client *Client) Token(ctx context.Context) (string, error) {
 
 	var tokenResponse TokenResponse
 
-	err := client.Send(context.TODO(), tigo.GetToken, request, &tokenResponse)
+	err := client.Send(context.TODO(), tigo.GetTokenRequest, request, &tokenResponse)
 
 	if err != nil {
 		return "", err

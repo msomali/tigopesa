@@ -14,15 +14,15 @@ var (
 )
 
 const (
-	PushPay RequestName = iota
-	Disbursement
-	GetToken
-	Refund
-	HealthCheck
+	PushPayRequest RequestName = iota
+	DisburseRequest
+	GetTokenRequest
+	RefundRequest
+	HealthCheckRequest
 )
 
 func (rn RequestName) String() string {
-	states := [...]string{"PushPay", "Disbursement", "GetToken"}
+	states := [...]string{"PushPayRequest", "DisburseRequest", "GetTokenRequest","RefundRequest","Healthcheck"}
 	if len(states) < int(rn) {
 		return ""
 	}

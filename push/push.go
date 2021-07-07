@@ -209,7 +209,7 @@ func (client *Client) Callback(w http.ResponseWriter, r *http.Request) {
 		client.LogPayload(internal.JsonPayload, "callback response", &callbackResponse)
 	}(client.DebugMode)
 
-	err := tigo.ReceiveRequest(r, internal.JsonPayload, &callbackRequest)
+	err := tigo.Receive(r, internal.JsonPayload, &callbackRequest)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

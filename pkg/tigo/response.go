@@ -32,11 +32,11 @@ type (
 	ResponseOption func(response *Response)
 )
 
-//ReceiveRequest takes *http.Request from Tigo like during push pay callback and name query
+//Receive takes *http.Request from Tigo like during push pay callback and name query
 //It then unmarshal the provided request into given interface v
 //The expected Content-Type should also be declared. If its application/json or
 //application/xml
-func ReceiveRequest(r *http.Request, payloadType internal.PayloadType, v interface{}) error {
+func Receive(r *http.Request, payloadType internal.PayloadType, v interface{}) error {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		return err

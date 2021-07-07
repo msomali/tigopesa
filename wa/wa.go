@@ -135,7 +135,7 @@ func (client *Client) HandleNameQuery(writer http.ResponseWriter, request *http.
 	defer cancel()
 	var req NameRequest
 
-	err := tigo.ReceiveRequest(request, internal.XmlPayload, &req)
+	err := tigo.Receive(request, internal.XmlPayload, &req)
 
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
@@ -158,7 +158,7 @@ func (client *Client) HandlePayment(writer http.ResponseWriter, request *http.Re
 
 	var req PayRequest
 
-	err := tigo.ReceiveRequest(request, internal.XmlPayload, &req)
+	err := tigo.Receive(request, internal.XmlPayload, &req)
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}

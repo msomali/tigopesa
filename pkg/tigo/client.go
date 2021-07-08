@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	defaultTimeout          = time.Minute
+	defaultTimeout          = 60*time.Second
 	jsonContentTypeString   = "application/json"
 	xmlContentTypeString    = "text/xml"
 	appXMLContentTypeString = "application/xml"
@@ -102,12 +102,9 @@ func (client *BaseClient) Log(name string, request *http.Request) {
 				strings.ToLower(name), err)
 			return
 		}
-
 		return
 	}
-
 	return
-
 }
 
 // LogOut is like Log except this is for outgoing client requests:
@@ -132,6 +129,7 @@ func (client *BaseClient) LogOut(name string, request *http.Request, response *h
 		}
 	}
 
+	return
 }
 
 func (client *BaseClient) Send(_ context.Context, rn RequestName, request *Request, v interface{}) error {

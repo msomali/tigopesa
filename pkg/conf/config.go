@@ -8,7 +8,6 @@ import (
 )
 
 var (
-	_ Validator = (*Config)(nil)
 
 	ErrConfigNil = errors.New("config can not be nil")
 )
@@ -37,16 +36,7 @@ type (
 		PushHealthCheckURL        string
 	}
 
-	//Validator validates the configurations and return nil if all
-	//is good or return an error
-	Validator interface {
-		Validate() error
-	}
 )
-
-func (conf *Config) Validate() error {
-	panic("implement me")
-}
 
 func (conf *Config) Split() (pushConf *push.Config, pay *wa.Config, disburse *aw.Config) {
 	pushConf = &push.Config{

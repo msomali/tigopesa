@@ -150,7 +150,7 @@ func (a *App) disburseHandler(writer http.ResponseWriter, request *http.Request)
 
 	writer.Header().Set("Content-Type", "application/json")
 
-	json.NewEncoder(writer).Encode(resp)
+	_ = json.NewEncoder(writer).Encode(resp)
 
 }
 

@@ -96,15 +96,18 @@ func TestClient_Token(t *testing.T) {
 				t.Errorf("Token() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if got != client.token {
-				t.Errorf("Token() got = %v, want %v", got, tt.want)
-			}
+			if err == nil {
+				if got.AccessToken != client.token {
+					t.Errorf("Token() got = %v, want = %v", got, tt.want)
+				}
 
-			if got == "" {
-				t.Errorf("did not expect empty token to be returned\n")
-			}
+				if got.AccessToken == "" {
+					t.Errorf("did not expect empty token to be returned\n")
+				}
 
-			t.Logf("\ntoken: %s\nclient.token %s\n", got, client.token)
+				t.Logf("\ntoken: %s\nclient.token %s\n", got.AccessToken, client.token)
+
+			}
 		})
 	}
 }

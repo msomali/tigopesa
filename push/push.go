@@ -3,7 +3,6 @@ package push
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"time"
@@ -127,7 +126,7 @@ type (
 	}
 
 	Service interface {
-		Token(ctx context.Context) (string, error)
+		Token(ctx context.Context) (TokenResponse, error)
 
 		Pay(ctx context.Context, request PayRequest) (PayResponse, error)
 
@@ -160,7 +159,7 @@ func (client *Client) Pay(ctx context.Context, request PayRequest) (response Pay
 		if err != nil {
 			return PayResponse{}, err
 		}
-		tokenStr = fmt.Sprintf("bearer %s", str)
+		tokenStr = fmt.Sprintf("bearer %s", str.AccessToken)
 	}
 	//Add Auth Header
 	if client.token != "" {
@@ -192,9 +191,6 @@ func (client *Client) Pay(ctx context.Context, request PayRequest) (response Pay
 	if err != nil {
 		return response, err
 	}
-
-	//FIXME
-	log.Printf("the response description in pay method is %s\n", response.ResponseDescription)
 
 	return response, nil
 }
@@ -281,7 +277,7 @@ func (client *Client) HeartBeat(ctx context.Context, request HealthCheckRequest)
 	return *healthCheckResp, nil
 }
 
-func (client *Client) Token(ctx context.Context) (string, error) {
+func (client *Client) Token(ctx context.Context) (TokenResponse, error) {
 	var form = url.Values{}
 	form.Set("username", client.Username)
 	form.Set("password", client.Password)
@@ -313,7 +309,7 @@ func (client *Client) Token(ctx context.Context) (string, error) {
 	err := client.Send(context.TODO(), tigo.GetTokenRequest, request, &tokenResponse)
 
 	if err != nil {
-		return "", err
+		return TokenResponse{}, err
 	}
 
 	token := tokenResponse.AccessToken
@@ -325,6 +321,6 @@ func (client *Client) Token(ctx context.Context) (string, error) {
 	tokenExpiresAt := time.Now().Add(time.Duration(tokenResponse.ExpiresIn-10) * time.Second)
 	client.tokenExpires = tokenExpiresAt
 
-	return token, nil
+	return tokenResponse, nil
 
 }

@@ -11,24 +11,11 @@ import (
 	"net/http"
 )
 
-const (
-	NameQuery RequestType = iota
-	Payment
-	Callback
-	Token
-	Refund
-	PushPay
-	Heartbeat
-	Disburse
-)
-
 var (
 	_ Service = (*Client)(nil)
 )
 
 type (
-	RequestType int
-
 	Service interface {
 		aw.DisburseHandler
 		wa.Service
@@ -86,7 +73,7 @@ func (client *Client) HandlePayment(writer http.ResponseWriter, request *http.Re
 	client.wa.HandlePayment(writer, request)
 }
 
-func (client *Client) Token(ctx context.Context) (string, error) {
+func (client *Client) Token(ctx context.Context) (push.TokenResponse, error) {
 	return client.push.Token(ctx)
 }
 
@@ -107,16 +94,16 @@ func (client *Client) HeartBeat(ctx context.Context, request push.HealthCheckReq
 }
 
 // HandleRequest is experimental no guarantees
-func (client *Client) HandleRequest(ctx context.Context, requestType RequestType) http.HandlerFunc {
+func (client *Client) HandleRequest(ctx context.Context, requestName tigo.RequestName) http.HandlerFunc {
 	ctx, cancel := context.WithTimeout(ctx, client.Timeout)
 	defer cancel()
 	return func(writer http.ResponseWriter, request *http.Request) {
-		switch requestType {
-		case NameQuery:
+		switch requestName {
+		case tigo.NameQueryRequest:
 			client.wa.HandleNameQuery(writer, request)
-		case Payment:
+		case tigo.PaymentRequest:
 			client.wa.HandlePayment(writer, request)
-		case Callback:
+		case tigo.CallbackRequest:
 			client.push.Callback(writer, request)
 		default:
 			http.Error(writer, "unknown request type", http.StatusInternalServerError)
@@ -127,17 +114,17 @@ func (client *Client) HandleRequest(ctx context.Context, requestType RequestType
 //SendRequest like HandleRequest is experimental for neat and short API
 //the problem with this API is type checking and conversion that you have
 //to deal with while using it
-func (client *Client) SendRequest(ctx context.Context, requestType RequestType,
+func (client *Client) SendRequest(ctx context.Context, requestName tigo.RequestName,
 	request interface{}) (response interface{}, err error) {
 
-	if request == nil && requestType != Token {
+	if request == nil && requestName != tigo.GetTokenRequest {
 		return nil, fmt.Errorf("request can not be nil")
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, client.Timeout)
 	defer cancel()
-	switch requestType {
-	case Refund:
+	switch requestName {
+	case tigo.RefundRequest:
 		refundReq, ok := request.(push.RefundRequest)
 		if !ok {
 			err = fmt.Errorf("invalid refund request")
@@ -145,7 +132,7 @@ func (client *Client) SendRequest(ctx context.Context, requestType RequestType,
 		}
 		return client.push.Refund(ctx, refundReq)
 
-	case Disburse:
+	case tigo.DisburseRequest:
 		disburseReq, ok := request.(aw.DisburseRequest)
 		if !ok {
 			err = fmt.Errorf("invalid disburse request")
@@ -153,7 +140,7 @@ func (client *Client) SendRequest(ctx context.Context, requestType RequestType,
 		}
 		return client.aw.Disburse(ctx, disburseReq.ReferenceID, disburseReq.MSISDN, disburseReq.Amount)
 
-	case PushPay:
+	case tigo.PushPayRequest:
 		payReq, ok := request.(push.PayRequest)
 		if !ok {
 			err = fmt.Errorf("invalid push pay request")
@@ -161,7 +148,7 @@ func (client *Client) SendRequest(ctx context.Context, requestType RequestType,
 		}
 		return client.push.Pay(ctx, payReq)
 
-	case Heartbeat:
+	case tigo.HealthCheckRequest:
 		healthReq, ok := request.(push.HealthCheckRequest)
 		if !ok {
 			err = fmt.Errorf("invalid health check request")
@@ -169,7 +156,7 @@ func (client *Client) SendRequest(ctx context.Context, requestType RequestType,
 		}
 		return client.push.HeartBeat(ctx, healthReq)
 
-	case Token:
+	case tigo.GetTokenRequest:
 		return client.push.Token(ctx)
 	}
 

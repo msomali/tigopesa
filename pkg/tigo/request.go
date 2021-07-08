@@ -19,10 +19,22 @@ const (
 	GetTokenRequest
 	RefundRequest
 	HealthCheckRequest
+	CallbackRequest
+	NameQueryRequest
+	PaymentRequest
 )
 
 func (rn RequestName) String() string {
-	states := [...]string{"PushPayRequest", "DisburseRequest", "GetTokenRequest", "RefundRequest", "Healthcheck"}
+	states := [...]string{
+		"PushPayRequest",
+		"DisburseRequest",
+		"GetTokenRequest",
+		"RefundRequest",
+		"Healthcheck",
+		"Callbackrequest",
+		"NameQueryRequest",
+		"PaymentRequest",
+	}
 	if len(states) < int(rn) {
 		return ""
 	}

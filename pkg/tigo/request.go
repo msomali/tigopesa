@@ -31,7 +31,12 @@ func (rn RequestName) String() string {
 }
 
 type (
+	//RequestName is used to identify the type of request being saved
+	// important in debugging or switch cases where a number of different
+	// requests can be served.
 	RequestName int
+
+	// Request encapsulate details of a request to be sent to Tigo.
 	Request     struct {
 		Context     context.Context
 		HttpMethod  string
@@ -93,8 +98,8 @@ func (request *Request) AddHeader(key, value string) {
 	request.Headers[key] = value
 }
 
-//Transform takes a *Request and transform into *http.Request with a context
-func (request *Request) Transform() (*http.Request, error) {
+//ToHTTPRequest takes a *Request and transform into *http.Request with a context
+func (request *Request) ToHTTPRequest() (*http.Request, error) {
 
 	buffer, err := internal.MarshalPayload(request.PayloadType, request.Payload)
 	if err != nil {

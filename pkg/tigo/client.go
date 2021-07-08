@@ -82,7 +82,7 @@ func (client *BaseClient) NewRequest(method, url string, payloadType internal.Pa
 		PayloadType: payloadType,
 		Payload:     payload,
 	}
-	return request.Transform()
+	return request.ToHTTPRequest()
 }
 
 func (client *BaseClient) LogPayload(t internal.PayloadType, prefix string, payload interface{}) {
@@ -138,7 +138,7 @@ func (client *BaseClient) Send(_ context.Context, rn RequestName, request *Reque
 	var bodyBytes []byte
 
 	//creates http request with context
-	req, err := request.Transform()
+	req, err := request.ToHTTPRequest()
 
 	if err != nil {
 		return err

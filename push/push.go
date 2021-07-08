@@ -233,7 +233,7 @@ func (client *Client) Callback(w http.ResponseWriter, r *http.Request) {
 	var responseOpts []tigo.ResponseOption
 	headers := tigo.WithDefaultJsonHeader()
 
-	responseOpts = append(responseOpts, headers, tigo.WithError(err))
+	responseOpts = append(responseOpts, headers, tigo.WithResponseError(err))
 	response = tigo.NewResponse(statusCode, callbackResponse, internal.JsonPayload, responseOpts...)
 
 	tigo.Reply(response, w)

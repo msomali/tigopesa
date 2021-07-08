@@ -295,7 +295,33 @@ func main() {
 	config := examples.LoadConfFromEnv()
 	base := tigo.NewBaseClient(tigo.WithDebugMode(true))
 
-	handler := Handler{}
+	usersMap := map[string]User{
+		"12345678": {
+			Name:   "Pius Alfred Shop",
+			RefID:  "12345678",
+			Status: 0,
+		},
+		"23456789": {
+			Name:   "St. Jane School",
+			RefID:  "23456789",
+			Status: 1,
+		},
+		"34567890": {
+			Name:   "Uhuru Stadium",
+			RefID:  "34567890",
+			Status: 2,
+		},
+		"22473478": {
+			Name:   "Jamesson Club",
+			RefID:  "22473478",
+			Status: 2,
+		},
+	}
+
+
+	handler := Handler{
+		Users: usersMap,
+	}
 
 	client := sdk.NewClient(config, base, handler, handler, handler)
 

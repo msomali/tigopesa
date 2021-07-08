@@ -163,10 +163,7 @@ func WithMoreResponseHeaders(headers map[string]string) ResponseOption {
 
 func WithDefaultJsonHeader() ResponseOption {
 	return func(response *Response) {
-		headers := map[string]string{
-			"Content-Type": ContentTypeJson,
-		}
-		response.Headers = headers
+		response.Headers["Content-Type"] = ContentTypeJson
 	}
 }
 

@@ -222,12 +222,16 @@ func (client *Client) Callback(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		statusCode = http.StatusInternalServerError
+		http.Error(w,err.Error(),statusCode)
+		return
 	}
 
 	callbackResponse, err = client.CallbackHandler.Do(client.Ctx, callbackRequest)
 
 	if err != nil {
 		statusCode = http.StatusInternalServerError
+		http.Error(w,err.Error(),statusCode)
+		return
 	}
 
 	var responseOpts []tigo.ResponseOption

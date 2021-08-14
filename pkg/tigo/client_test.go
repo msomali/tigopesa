@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/techcraftt/tigosdk/aw"
-	"github.com/techcraftt/tigosdk/internal"
-	"github.com/techcraftt/tigosdk/pkg/tigo"
+	"github.com/techcraftlabs/tigopesa/disburse"
+	"github.com/techcraftlabs/tigopesa/internal"
+	"github.com/techcraftlabs/tigopesa/pkg/tigo"
 )
 
 func TestBaseClient_LogPayload(t *testing.T) {
@@ -44,7 +44,7 @@ func TestBaseClient_LogPayload(t *testing.T) {
 			args: args{
 				t:      internal.JsonPayload,
 				prefix: "disburse request",
-				payload: aw.DisburseRequest{
+				payload: disburse.Request{
 					ReferenceID: "3673E67DDGVHSWHBJS89W89W",
 					MSISDN:      "0765xxxxxxxx",
 					Amount:      90000,
@@ -78,7 +78,7 @@ func TestBaseClient_LogPayload(t *testing.T) {
 			args: args{
 				t:      internal.XmlPayload,
 				prefix: "xml payload",
-				payload: aw.DisburseResponse{
+				payload: disburse.Response{
 					Type:        "RMFCI",
 					ReferenceID: "ABAYU89282892JH2B",
 					TxnID:       "NAJAIUIOWOWOWKS",

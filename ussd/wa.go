@@ -1,10 +1,10 @@
-package wa
+package ussd
 
 import (
 	"context"
 	"encoding/xml"
-	"github.com/techcraftt/tigosdk/internal"
-	"github.com/techcraftt/tigosdk/pkg/tigo"
+	"github.com/techcraftlabs/tigopesa/internal"
+	"github.com/techcraftlabs/tigopesa/pkg/tigo"
 	"net/http"
 )
 
@@ -48,13 +48,13 @@ type (
 	}
 
 	PaymentHandler interface {
-		HandlePaymentRequest(ctx context.Context, request PayRequest) (PayResponse, error)
+		PaymentRequest(ctx context.Context, request PayRequest) (PayResponse, error)
 	}
 
 	PaymentHandleFunc func(ctx context.Context, request PayRequest) (PayResponse, error)
 
 	NameQueryHandler interface {
-		HandleSubscriberNameQuery(ctx context.Context, request NameRequest) (NameResponse, error)
+		NameQuery(ctx context.Context, request NameRequest) (NameResponse, error)
 	}
 
 	NameQueryFunc func(ctx context.Context, request NameRequest) (NameResponse, error)
@@ -122,11 +122,11 @@ type (
 	}
 )
 
-func (handler PaymentHandleFunc) HandlePaymentRequest(ctx context.Context, request PayRequest) (PayResponse, error) {
+func (handler PaymentHandleFunc) PaymentRequest(ctx context.Context, request PayRequest) (PayResponse, error) {
 	return handler(ctx, request)
 }
 
-func (handler NameQueryFunc) HandleSubscriberNameQuery(ctx context.Context, request NameRequest) (NameResponse, error) {
+func (handler NameQueryFunc) NameQuery(ctx context.Context, request NameRequest) (NameResponse, error) {
 	return handler(ctx, request)
 }
 
@@ -145,7 +145,7 @@ func (client *Client) HandleNameQuery(writer http.ResponseWriter, request *http.
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
 
-	response, err := client.NameQueryHandler.HandleSubscriberNameQuery(ctx, req)
+	response, err := client.NameQueryHandler.NameQuery(ctx, req)
 
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
@@ -171,7 +171,7 @@ func (client *Client) HandlePayment(writer http.ResponseWriter, request *http.Re
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
 
-	response, err := client.PaymentHandler.HandlePaymentRequest(ctx, req)
+	response, err := client.PaymentHandler.PaymentRequest(ctx, req)
 
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)

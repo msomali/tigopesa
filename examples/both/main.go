@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/joho/godotenv"
-	"github.com/techcraftt/tigosdk/examples"
+	"github.com/techcraftlabs/tigopesa/examples"
 	"log"
 )
 

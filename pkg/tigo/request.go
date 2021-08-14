@@ -2,7 +2,7 @@ package tigo
 
 import (
 	"context"
-	"github.com/techcraftt/tigosdk/internal"
+	"github.com/techcraftlabs/tigopesa/internal"
 	"net/http"
 )
 

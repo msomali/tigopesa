@@ -3,7 +3,7 @@ package examples
 import (
 	"fmt"
 	"github.com/joho/godotenv"
-	"github.com/techcraftt/tigosdk/pkg/conf"
+	"github.com/techcraftlabs/tigopesa/pkg/conf"
 	"log"
 	"os"
 )

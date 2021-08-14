@@ -3,11 +3,11 @@ package tigosdk
 import (
 	"context"
 	"fmt"
-	"github.com/techcraftt/tigosdk/aw"
-	"github.com/techcraftt/tigosdk/pkg/conf"
-	"github.com/techcraftt/tigosdk/pkg/tigo"
-	"github.com/techcraftt/tigosdk/push"
-	"github.com/techcraftt/tigosdk/wa"
+	"github.com/techcraftlabs/tigopesa/disburse"
+	"github.com/techcraftlabs/tigopesa/pkg/conf"
+	"github.com/techcraftlabs/tigopesa/pkg/tigo"
+	"github.com/techcraftlabs/tigopesa/push"
+	"github.com/techcraftlabs/tigopesa/ussd"
 	"net/http"
 )
 
@@ -17,21 +17,21 @@ var (
 
 type (
 	Service interface {
-		aw.DisburseHandler
-		wa.Service
+		disburse.Handler
+		ussd.Service
 		push.Service
 	}
 	Client struct {
 		*tigo.BaseClient
 		*conf.Config
-		wa   *wa.Client
-		aw   *aw.Client
-		push *push.Client
+		ussd     *ussd.Client
+		disburse *disburse.Client
+		push     *push.Client
 	}
 )
 
 func NewClient(config *conf.Config, base *tigo.BaseClient,
-	handler wa.NameQueryHandler, paymentHandler wa.PaymentHandler, callbackHandler push.CallbackHandler) *Client {
+	handler ussd.NameQueryHandler, paymentHandler ussd.PaymentHandler, callbackHandler push.CallbackHandler) *Client {
 
 	pushConf, payConf, disburseConf := config.Split()
 
@@ -40,14 +40,14 @@ func NewClient(config *conf.Config, base *tigo.BaseClient,
 		BaseClient:      base,
 		CallbackHandler: callbackHandler,
 	}
-	payClient := &wa.Client{
+	payClient := &ussd.Client{
 		BaseClient:       base,
 		Config:           payConf,
 		PaymentHandler:   paymentHandler,
 		NameQueryHandler: handler,
 	}
 
-	disburseClient := &aw.Client{
+	disburseClient := &disburse.Client{
 		Config:     disburseConf,
 		BaseClient: base,
 	}
@@ -55,22 +55,22 @@ func NewClient(config *conf.Config, base *tigo.BaseClient,
 	return &Client{
 		BaseClient: base,
 		Config:     config,
-		wa:         payClient,
-		aw:         disburseClient,
+		ussd:       payClient,
+		disburse:   disburseClient,
 		push:       pushClient,
 	}
 }
 
-func (client *Client) Disburse(ctx context.Context, referenceId, msisdn string, amount float64) (aw.DisburseResponse, error) {
-	return client.aw.Disburse(ctx, referenceId, msisdn, amount)
+func (client *Client) Do(ctx context.Context, referenceId, msisdn string, amount float64) (disburse.Response, error) {
+	return client.disburse.Do(ctx, referenceId, msisdn, amount)
 }
 
 func (client *Client) HandleNameQuery(writer http.ResponseWriter, request *http.Request) {
-	client.wa.HandleNameQuery(writer, request)
+	client.ussd.HandleNameQuery(writer, request)
 }
 
 func (client *Client) HandlePayment(writer http.ResponseWriter, request *http.Request) {
-	client.wa.HandlePayment(writer, request)
+	client.ussd.HandlePayment(writer, request)
 }
 
 func (client *Client) Token(ctx context.Context) (push.TokenResponse, error) {
@@ -100,9 +100,9 @@ func (client *Client) HandleRequest(ctx context.Context, requestName tigo.Reques
 	return func(writer http.ResponseWriter, request *http.Request) {
 		switch requestName {
 		case tigo.NameQueryRequest:
-			client.wa.HandleNameQuery(writer, request)
+			client.ussd.HandleNameQuery(writer, request)
 		case tigo.PaymentRequest:
-			client.wa.HandlePayment(writer, request)
+			client.ussd.HandlePayment(writer, request)
 		case tigo.CallbackRequest:
 			client.push.Callback(writer, request)
 		default:
@@ -133,12 +133,12 @@ func (client *Client) SendRequest(ctx context.Context, requestName tigo.RequestN
 		return client.push.Refund(ctx, refundReq)
 
 	case tigo.DisburseRequest:
-		disburseReq, ok := request.(aw.DisburseRequest)
+		disburseReq, ok := request.(disburse.Request)
 		if !ok {
 			err = fmt.Errorf("invalid disburse request")
 			return nil, err
 		}
-		return client.aw.Disburse(ctx, disburseReq.ReferenceID, disburseReq.MSISDN, disburseReq.Amount)
+		return client.disburse.Do(ctx, disburseReq.ReferenceID, disburseReq.MSISDN, disburseReq.Amount)
 
 	case tigo.PushPayRequest:
 		payReq, ok := request.(push.PayRequest)

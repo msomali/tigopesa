@@ -11,12 +11,12 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/techcraftt/tigosdk"
-	"github.com/techcraftt/tigosdk/aw"
-	"github.com/techcraftt/tigosdk/pkg/conf"
-	"github.com/techcraftt/tigosdk/pkg/tigo"
-	"github.com/techcraftt/tigosdk/push"
-	"github.com/techcraftt/tigosdk/wa"
+	"github.com/techcraftlabs/tigopesa"
+	"github.com/techcraftlabs/tigopesa/disburse"
+	"github.com/techcraftlabs/tigopesa/pkg/conf"
+	"github.com/techcraftlabs/tigopesa/pkg/tigo"
+	"github.com/techcraftlabs/tigopesa/push"
+	"github.com/techcraftlabs/tigopesa/ussd"
 )
 
 //var Config = &conf.Config{
@@ -86,12 +86,12 @@ func makeApp() *App {
 		CallbackHandler: pushPayCallbackHandler(),
 	}
 
-	a := &aw.Client{
+	a := &disburse.Client{
 		Config:     ac,
 		BaseClient: bc,
 	}
 
-	w := &wa.Client{
+	w := &ussd.Client{
 		BaseClient:       bc,
 		Config:           wc,
 		PaymentHandler:   keeper,
@@ -117,8 +117,8 @@ type (
 	App struct {
 		Config   *conf.Config
 		push     *push.Client
-		disburse *aw.Client
-		ussd     *wa.Client
+		disburse *disburse.Client
+		ussd     *ussd.Client
 	}
 
 	pushpayInitiatorRequest struct {
@@ -140,7 +140,7 @@ func (a *App) disburseHandler(writer http.ResponseWriter, request *http.Request)
 
 	refid := fmt.Sprintf("PCT%s", strconv.FormatInt(time.Now().UnixNano(), 10))
 
-	resp, err := a.disburse.Disburse(context.TODO(), refid, info.Msisdn, info.Amount)
+	resp, err := a.disburse.Do(context.TODO(), refid, info.Msisdn, info.Amount)
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusBadRequest)
 		return
@@ -222,19 +222,19 @@ type checker struct {
 	Users map[string]User
 }
 
-func (c checker) HandlePaymentRequest(ctx context.Context, request wa.PayRequest) (wa.PayResponse, error) {
+func (c checker) PaymentRequest(ctx context.Context, request ussd.PayRequest) (ussd.PayResponse, error) {
 
 	user, found := c.checkUser(request.CustomerReferenceID)
 	refid := fmt.Sprintf("%s", strconv.FormatInt(time.Now().UnixNano(), 10))
 
 	if !found {
-		resp := wa.PayResponse{
+		resp := ussd.PayResponse{
 
-			Type:             wa.SyncBillPayResponse,
+			Type:             ussd.SyncBillPayResponse,
 			TxnID:            request.TxnID,
 			RefID:            refid,
 			Result:           tigosdk.FailedTxnResult,
-			ErrorCode:        aw.ErrInvalidCustomerRefNumber,
+			ErrorCode:        disburse.ErrInvalidCustomerRefNumber,
 			ErrorDescription: "User Not Found",
 			Msisdn:           request.Msisdn,
 			Flag:             tigosdk.NoFlag,
@@ -244,12 +244,12 @@ func (c checker) HandlePaymentRequest(ctx context.Context, request wa.PayRequest
 		return resp, nil
 	} else {
 		if user.Status == 1 {
-			resp := wa.PayResponse{
-				Type:             wa.SyncBillPayResponse,
+			resp := ussd.PayResponse{
+				Type:             ussd.SyncBillPayResponse,
 				TxnID:            request.TxnID,
 				RefID:            refid,
 				Result:           "TF",
-				ErrorCode:        wa.ErrInvalidCustomerRefNumber,
+				ErrorCode:        ussd.ErrInvalidCustomerRefNumber,
 				ErrorDescription: "Invalid Customer ref Number",
 				Msisdn:           request.Msisdn,
 				Flag:             "N",
@@ -257,12 +257,12 @@ func (c checker) HandlePaymentRequest(ctx context.Context, request wa.PayRequest
 			}
 			return resp, nil
 		} else if user.Status == 2 {
-			resp := wa.PayResponse{
+			resp := ussd.PayResponse{
 				Type:             tigosdk.SyncBillPayResponse,
 				TxnID:            request.TxnID,
 				RefID:            refid,
 				Result:           "TF",
-				ErrorCode:        wa.ErrCustomerRefNumLocked,
+				ErrorCode:        ussd.ErrCustomerRefNumLocked,
 				ErrorDescription: "Customer Locked",
 				Msisdn:           request.Msisdn,
 				Flag:             "N",
@@ -271,12 +271,12 @@ func (c checker) HandlePaymentRequest(ctx context.Context, request wa.PayRequest
 			return resp, nil
 		}
 	}
-	resp := wa.PayResponse{
-		Type:             wa.SyncBillPayResponse,
+	resp := ussd.PayResponse{
+		Type:             ussd.SyncBillPayResponse,
 		TxnID:            request.TxnID,
 		RefID:            refid,
 		Result:           tigosdk.SucceededTxnResult,
-		ErrorCode:        wa.ErrSuccessTxn,
+		ErrorCode:        ussd.ErrSuccessTxn,
 		ErrorDescription: "Transaction Successful",
 		Msisdn:           request.Msisdn,
 		Flag:             tigosdk.YesFlag,
@@ -285,12 +285,12 @@ func (c checker) HandlePaymentRequest(ctx context.Context, request wa.PayRequest
 	return resp, nil
 }
 
-func (c checker) HandleSubscriberNameQuery(ctx context.Context, request wa.NameRequest) (wa.NameResponse, error) {
+func (c checker) NameQuery(ctx context.Context, request ussd.NameRequest) (ussd.NameResponse, error) {
 
 	user, found := c.checkUser(request.CustomerReferenceID)
 	if !found {
-		resp := wa.NameResponse{
-			Type:      wa.SyncLookupResponse,
+		resp := ussd.NameResponse{
+			Type:      ussd.SyncLookupResponse,
 			Result:    "TF",
 			ErrorCode: "error010",
 			ErrorDesc: "Not found",
@@ -303,8 +303,8 @@ func (c checker) HandleSubscriberNameQuery(ctx context.Context, request wa.NameR
 	} else {
 		if user.Status == 1 {
 
-			resp := wa.NameResponse{
-				Type:      wa.SyncLookupResponse,
+			resp := ussd.NameResponse{
+				Type:      ussd.SyncLookupResponse,
 				Result:    "TF",
 				ErrorCode: "error020",
 				ErrorDesc: "Transaction Failed: User Suspended",
@@ -317,10 +317,10 @@ func (c checker) HandleSubscriberNameQuery(ctx context.Context, request wa.NameR
 		}
 
 		if user.Status == 2 {
-			resp := wa.NameResponse{
-				Type:      wa.SyncLookupResponse,
+			resp := ussd.NameResponse{
+				Type:      ussd.SyncLookupResponse,
 				Result:    "TF",
-				ErrorCode: wa.ErrNameInvalidFormat,
+				ErrorCode: ussd.ErrNameInvalidFormat,
 				ErrorDesc: "Transaction Failed: Format not known",
 				Msisdn:    request.Msisdn,
 				Flag:      tigosdk.NoFlag,
@@ -330,10 +330,10 @@ func (c checker) HandleSubscriberNameQuery(ctx context.Context, request wa.NameR
 			return resp, nil
 		}
 
-		resp := wa.NameResponse{
-			Type:      wa.SyncLookupResponse,
+		resp := ussd.NameResponse{
+			Type:      ussd.SyncLookupResponse,
 			Result:    tigosdk.SucceededTxnResult,
-			ErrorCode: wa.NoNamecheckErr,
+			ErrorCode: ussd.NoNamecheckErr,
 			ErrorDesc: "Transaction Successfully",
 			Msisdn:    request.Msisdn,
 			Flag:      tigosdk.YesFlag,

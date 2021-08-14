@@ -2,9 +2,9 @@ package conf
 
 import (
 	"errors"
-	"github.com/techcraftt/tigosdk/aw"
-	"github.com/techcraftt/tigosdk/push"
-	"github.com/techcraftt/tigosdk/wa"
+	"github.com/techcraftlabs/tigopesa/disburse"
+	"github.com/techcraftlabs/tigopesa/push"
+	"github.com/techcraftlabs/tigopesa/ussd"
 )
 
 var (
@@ -38,7 +38,7 @@ type (
 
 )
 
-func (conf *Config) Split() (pushConf *push.Config, pay *wa.Config, disburse *aw.Config) {
+func (conf *Config) Split() (pushConf *push.Config, pay *ussd.Config, disburse *disburse.Config) {
 	pushConf = &push.Config{
 		Username:              conf.PushUsername,
 		Password:              conf.PushPassword,
@@ -52,7 +52,7 @@ func (conf *Config) Split() (pushConf *push.Config, pay *wa.Config, disburse *aw
 		HealthCheckURL:        conf.PushHealthCheckURL,
 	}
 
-	pay = &wa.Config{
+	pay = &ussd.Config{
 		AccountName:   conf.PayAccountName,
 		AccountMSISDN: conf.PayAccountMSISDN,
 		BillerNumber:  conf.PayBillerNumber,
@@ -60,7 +60,7 @@ func (conf *Config) Split() (pushConf *push.Config, pay *wa.Config, disburse *aw
 		NamecheckURL:  conf.PayNamecheckURL,
 	}
 
-	disburse = &aw.Config{
+	disburse = &disburse.Config{
 		AccountName:   conf.DisburseAccountName,
 		AccountMSISDN: conf.DisburseAccountMSISDN,
 		BrandID:       conf.DisburseBrandID,
@@ -74,7 +74,7 @@ func (conf *Config) Split() (pushConf *push.Config, pay *wa.Config, disburse *aw
 // Merge combine configurations of different clients. It is usefully when they have been loaded from
 // different sources before being used:
 // returns error ErrConfigNil if any of the 3 config is nil
-func Merge(pushConf *push.Config, waConf *wa.Config, awConf *aw.Config) (*Config, error) {
+func Merge(pushConf *push.Config, waConf *ussd.Config, awConf *disburse.Config) (*Config, error) {
 
 	if pushConf == nil || waConf == nil || awConf == nil {
 		return nil, ErrConfigNil

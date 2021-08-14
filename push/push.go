@@ -7,8 +7,8 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/techcraftt/tigosdk/internal"
-	"github.com/techcraftt/tigosdk/pkg/tigo"
+	"github.com/techcraftlabs/tigopesa/internal"
+	"github.com/techcraftlabs/tigopesa/pkg/tigo"
 )
 
 const (

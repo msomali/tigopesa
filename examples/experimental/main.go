@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
-	sdk "github.com/techcraftt/tigosdk"
-	"github.com/techcraftt/tigosdk/aw"
-	"github.com/techcraftt/tigosdk/examples"
-	"github.com/techcraftt/tigosdk/pkg/tigo"
-	"github.com/techcraftt/tigosdk/push"
-	"github.com/techcraftt/tigosdk/wa"
+	sdk "github.com/techcraftlabs/tigopesa"
+	"github.com/techcraftlabs/tigopesa/disburse"
+	"github.com/techcraftlabs/tigopesa/examples"
+	"github.com/techcraftlabs/tigopesa/pkg/tigo"
+	"github.com/techcraftlabs/tigopesa/push"
+	"github.com/techcraftlabs/tigopesa/ussd"
 	"log"
 	"net/http"
 	"strconv"
@@ -19,9 +19,9 @@ import (
 )
 
 var (
-	_ push.CallbackHandler = (*Handler)(nil)
-	_ wa.NameQueryHandler  = (*Handler)(nil)
-	_ wa.PaymentHandler    = (*Handler)(nil)
+	_ push.CallbackHandler  = (*Handler)(nil)
+	_ ussd.NameQueryHandler = (*Handler)(nil)
+	_ ussd.PaymentHandler   = (*Handler)(nil)
 )
 
 type (
@@ -51,18 +51,18 @@ type (
 	}
 )
 
-func (h Handler) HandlePaymentRequest(ctx context.Context, request wa.PayRequest) (wa.PayResponse, error) {
+func (h Handler) PaymentRequest(ctx context.Context, request ussd.PayRequest) (ussd.PayResponse, error) {
 	user, found := h.checkUser(request.CustomerReferenceID)
 	refid := fmt.Sprintf("%s", strconv.FormatInt(time.Now().UnixNano(), 10))
 
 	if !found {
-		resp := wa.PayResponse{
+		resp := ussd.PayResponse{
 
-			Type:             wa.SyncBillPayResponse,
+			Type:             ussd.SyncBillPayResponse,
 			TxnID:            request.TxnID,
 			RefID:            refid,
 			Result:           sdk.FailedTxnResult,
-			ErrorCode:        aw.ErrInvalidCustomerRefNumber,
+			ErrorCode:        disburse.ErrInvalidCustomerRefNumber,
 			ErrorDescription: "User Not Found",
 			Msisdn:           request.Msisdn,
 			Flag:             sdk.NoFlag,
@@ -72,12 +72,12 @@ func (h Handler) HandlePaymentRequest(ctx context.Context, request wa.PayRequest
 		return resp, nil
 	} else {
 		if user.Status == 1 {
-			resp := wa.PayResponse{
-				Type:             wa.SyncBillPayResponse,
+			resp := ussd.PayResponse{
+				Type:             ussd.SyncBillPayResponse,
 				TxnID:            request.TxnID,
 				RefID:            refid,
 				Result:           "TF",
-				ErrorCode:        wa.ErrInvalidCustomerRefNumber,
+				ErrorCode:        ussd.ErrInvalidCustomerRefNumber,
 				ErrorDescription: "Invalid Customer ref Number",
 				Msisdn:           request.Msisdn,
 				Flag:             "N",
@@ -85,12 +85,12 @@ func (h Handler) HandlePaymentRequest(ctx context.Context, request wa.PayRequest
 			}
 			return resp, nil
 		} else if user.Status == 2 {
-			resp := wa.PayResponse{
+			resp := ussd.PayResponse{
 				Type:             sdk.SyncBillPayResponse,
 				TxnID:            request.TxnID,
 				RefID:            refid,
 				Result:           "TF",
-				ErrorCode:        wa.ErrCustomerRefNumLocked,
+				ErrorCode:        ussd.ErrCustomerRefNumLocked,
 				ErrorDescription: "Customer Locked",
 				Msisdn:           request.Msisdn,
 				Flag:             "N",
@@ -99,12 +99,12 @@ func (h Handler) HandlePaymentRequest(ctx context.Context, request wa.PayRequest
 			return resp, nil
 		}
 	}
-	resp := wa.PayResponse{
-		Type:             wa.SyncBillPayResponse,
+	resp := ussd.PayResponse{
+		Type:             ussd.SyncBillPayResponse,
 		TxnID:            request.TxnID,
 		RefID:            refid,
 		Result:           sdk.SucceededTxnResult,
-		ErrorCode:        wa.ErrSuccessTxn,
+		ErrorCode:        ussd.ErrSuccessTxn,
 		ErrorDescription: "Transaction Successful",
 		Msisdn:           request.Msisdn,
 		Flag:             sdk.YesFlag,
@@ -113,11 +113,11 @@ func (h Handler) HandlePaymentRequest(ctx context.Context, request wa.PayRequest
 	return resp, nil
 }
 
-func (h Handler) HandleSubscriberNameQuery(ctx context.Context, request wa.NameRequest) (wa.NameResponse, error) {
+func (h Handler) NameQuery(ctx context.Context, request ussd.NameRequest) (ussd.NameResponse, error) {
 	user, found := h.checkUser(request.CustomerReferenceID)
 	if !found {
-		resp := wa.NameResponse{
-			Type:      wa.SyncLookupResponse,
+		resp := ussd.NameResponse{
+			Type:      ussd.SyncLookupResponse,
 			Result:    "TF",
 			ErrorCode: "error010",
 			ErrorDesc: "Not found",
@@ -130,8 +130,8 @@ func (h Handler) HandleSubscriberNameQuery(ctx context.Context, request wa.NameR
 	} else {
 		if user.Status == 1 {
 
-			resp := wa.NameResponse{
-				Type:      wa.SyncLookupResponse,
+			resp := ussd.NameResponse{
+				Type:      ussd.SyncLookupResponse,
 				Result:    "TF",
 				ErrorCode: "error020",
 				ErrorDesc: "Transaction Failed: User Suspended",
@@ -144,10 +144,10 @@ func (h Handler) HandleSubscriberNameQuery(ctx context.Context, request wa.NameR
 		}
 
 		if user.Status == 2 {
-			resp := wa.NameResponse{
-				Type:      wa.SyncLookupResponse,
+			resp := ussd.NameResponse{
+				Type:      ussd.SyncLookupResponse,
 				Result:    "TF",
-				ErrorCode: wa.ErrNameInvalidFormat,
+				ErrorCode: ussd.ErrNameInvalidFormat,
 				ErrorDesc: "Transaction Failed: Format not known",
 				Msisdn:    request.Msisdn,
 				Flag:      sdk.NoFlag,
@@ -157,10 +157,10 @@ func (h Handler) HandleSubscriberNameQuery(ctx context.Context, request wa.NameR
 			return resp, nil
 		}
 
-		resp := wa.NameResponse{
-			Type:      wa.SyncLookupResponse,
+		resp := ussd.NameResponse{
+			Type:      ussd.SyncLookupResponse,
 			Result:    sdk.SucceededTxnResult,
-			ErrorCode: wa.NoNamecheckErr,
+			ErrorCode: ussd.NoNamecheckErr,
 			ErrorDesc: "Transaction Successfully",
 			Msisdn:    request.Msisdn,
 			Flag:      sdk.YesFlag,
@@ -223,7 +223,7 @@ func (app *App) DisburseHandler(writer http.ResponseWriter, r *http.Request) {
 
 	ref := fmt.Sprintf("PCT%s", strconv.FormatInt(time.Now().UnixNano(), 10))
 
-	disburseRequest := aw.DisburseRequest{
+	disburseRequest := disburse.Request{
 		ReferenceID: ref,
 		MSISDN:      info.Msisdn,
 		Amount:      info.Amount,

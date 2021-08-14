@@ -3,7 +3,7 @@ package push
 import (
 	"context"
 	"github.com/joho/godotenv"
-	"github.com/techcraftt/tigosdk/pkg/tigo"
+	"github.com/techcraftlabs/tigopesa/pkg/tigo"
 	"os"
 	"testing"
 	"time"

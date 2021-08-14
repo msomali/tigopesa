@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/techcraftt/tigosdk/internal"
+	"github.com/techcraftlabs/tigopesa/internal"
 )
 
 const (

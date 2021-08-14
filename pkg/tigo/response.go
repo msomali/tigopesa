@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"github.com/techcraftt/tigosdk/internal"
+	"github.com/techcraftlabs/tigopesa/internal"
 	"io"
 	"io/ioutil"
 	"net/http"

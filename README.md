@@ -13,13 +13,13 @@ tigosdk is open source fully compliant tigo pesa client written in golang
 ## usage
 ```bash
 
-go get https://github.com/techcraftt/tigosdk
+go get https://github.com/techcraftlabs/tigopesa
 
 ```
 
 ```go
 import (
-   "github.com/techcraftt/tigosdk"
+   "github.com/techcraftlabs/tigopesa"
 )
 ```
 

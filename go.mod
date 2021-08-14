@@ -1,4 +1,4 @@
-module github.com/techcraftt/tigosdk
+module github.com/techcraftlabs/tigopesa
 
 go 1.16
 

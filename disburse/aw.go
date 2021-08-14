@@ -1,10 +1,10 @@
-package aw
+package disburse
 
 import (
 	"context"
 	"encoding/xml"
-	"github.com/techcraftt/tigosdk/internal"
-	"github.com/techcraftt/tigosdk/pkg/tigo"
+	"github.com/techcraftlabs/tigopesa/internal"
+	"github.com/techcraftlabs/tigopesa/pkg/tigo"
 	"net/http"
 )
 
@@ -26,16 +26,16 @@ const (
 )
 
 var (
-	_ DisburseHandler = (*DisburseHandlerFunc)(nil)
-	_ DisburseHandler = (*Client)(nil)
+	_ Handler = (*HandlerFunc)(nil)
+	_ Handler = (*Client)(nil)
 )
 
 type (
-	DisburseHandler interface {
-		Disburse(ctx context.Context, referenceId, msisdn string, amount float64) (DisburseResponse, error)
+	Handler interface {
+		Do(ctx context.Context, referenceId, msisdn string, amount float64) (Response, error)
 	}
 
-	DisburseHandlerFunc func(ctx context.Context, referenceId, msisdn string, amount float64) (DisburseResponse, error)
+	HandlerFunc func(ctx context.Context, referenceId, msisdn string, amount float64) (Response, error)
 
 	Config struct {
 		AccountName   string
@@ -45,8 +45,8 @@ type (
 		RequestURL    string
 	}
 
-	DisburseRequest struct {
-		ReferenceID string  `json:"reference_id"`
+	Request struct {
+		ReferenceID string  `json:"reference"`
 		MSISDN      string  `json:"msisdn"`
 		Amount      float64 `json:"amount"`
 	}
@@ -65,7 +65,7 @@ type (
 		BrandID     string   `xml:"BRAND_ID"`
 	}
 
-	DisburseResponse struct {
+	Response struct {
 		XMLName     xml.Name `xml:"COMMAND" json:"-"`
 		Text        string   `xml:",chardata" json:"-"`
 		Type        string   `xml:"TYPE" json:"type"`
@@ -81,7 +81,7 @@ type (
 	}
 )
 
-func (client *Client) Disburse(ctx context.Context, referenceId, msisdn string, amount float64) (response DisburseResponse, err error) {
+func (client *Client) Do(ctx context.Context, referenceId, msisdn string, amount float64) (response Response, err error) {
 
 	var reqOpts []tigo.RequestOption
 	ctxOpt := tigo.WithRequestContext(ctx)
@@ -114,6 +114,6 @@ func (client *Client) Disburse(ctx context.Context, referenceId, msisdn string, 
 	return
 }
 
-func (handler DisburseHandlerFunc) Disburse(ctx context.Context, referenceId, msisdn string, amount float64) (DisburseResponse, error) {
+func (handler HandlerFunc) Do(ctx context.Context, referenceId, msisdn string, amount float64) (Response, error) {
 	return handler(ctx, referenceId, msisdn, amount)
 }

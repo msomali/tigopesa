@@ -132,7 +132,7 @@ func (client *Client) SendRequest(ctx context.Context, requestName internal.Requ
 		}
 		return client.push.Refund(ctx, refundReq)
 
-	case internal.DisburseRequest:
+	case internal.DISBURSE_REQUEST:
 		disburseReq, ok := request.(disburse.Request)
 		if !ok {
 			err = fmt.Errorf("invalid disburse request")

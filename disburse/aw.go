@@ -104,7 +104,7 @@ func (client *Client) Do(ctx context.Context, referenceId, msisdn string, amount
 
 	req := internal.NewRequest(http.MethodPost, client.RequestURL, internal.XmlPayload, request, reqOpts...)
 
-	err = client.Send(ctx, internal.DisburseRequest, req, &response)
+	err = client.Send(ctx, internal.DISBURSE_REQUEST, req, &response)
 
 	if err != nil {
 		return

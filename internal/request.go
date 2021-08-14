@@ -14,7 +14,7 @@ var (
 
 const (
 	PushPayRequest RequestName = iota
-	DisburseRequest
+	DISBURSE_REQUEST
 	GetTokenRequest
 	RefundRequest
 	HealthCheckRequest
@@ -26,7 +26,7 @@ const (
 func (rn RequestName) String() string {
 	states := [...]string{
 		"PushPayRequest",
-		"DisburseRequest",
+		"DISBURSE_REQUEST",
 		"GetTokenRequest",
 		"RefundRequest",
 		"Healthcheck",

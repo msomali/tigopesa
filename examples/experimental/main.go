@@ -228,7 +228,7 @@ func (app *App) DisburseHandler(writer http.ResponseWriter, r *http.Request) {
 		MSISDN:      info.Msisdn,
 		Amount:      info.Amount,
 	}
-	resp, err := app.SendRequest(context.TODO(), internal.DisburseRequest,disburseRequest)
+	resp, err := app.SendRequest(context.TODO(), internal.DISBURSE_REQUEST,disburseRequest)
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusBadRequest)
 		return

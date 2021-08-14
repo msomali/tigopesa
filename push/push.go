@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/techcraftlabs/tigopesa/internal"
-	"github.com/techcraftlabs/tigopesa/pkg/tigo"
 )
 
 const (
@@ -119,7 +118,7 @@ type (
 	//Client is the client for making push pay requests
 	Client struct {
 		*Config
-		*tigo.BaseClient
+		*internal.BaseClient
 		CallbackHandler CallbackHandler
 		token           string
 		tokenExpires    time.Time
@@ -174,19 +173,19 @@ func (client *Client) Pay(ctx context.Context, request PayRequest) (response Pay
 	authHeader := map[string]string{
 		"Authorization": tokenStr,
 	}
-	var requestOpts []tigo.RequestOption
-	moreHeaderOpt := tigo.WithMoreHeaders(authHeader)
-	basicAuth := tigo.WithAuthHeaders(client.Username, client.Password)
-	ctxOpt := tigo.WithRequestContext(ctx)
+	var requestOpts []internal.RequestOption
+	moreHeaderOpt := internal.WithMoreHeaders(authHeader)
+	basicAuth := internal.WithAuthHeaders(client.Username, client.Password)
+	ctxOpt := internal.WithRequestContext(ctx)
 	requestOpts = append(requestOpts, ctxOpt, basicAuth, moreHeaderOpt)
 
-	tigoRequest := tigo.NewRequest(http.MethodPost,
+	tigoRequest := internal.NewRequest(http.MethodPost,
 		client.ApiBaseURL+client.PushPayURL,
 		internal.JsonPayload, billPayReq,
 		requestOpts...,
 	)
 
-	err = client.Send(context.TODO(), tigo.PushPayRequest, tigoRequest, &response)
+	err = client.Send(context.TODO(), internal.PushPayRequest, tigoRequest, &response)
 
 	if err != nil {
 		return response, err
@@ -202,7 +201,7 @@ func (client *Client) Callback(w http.ResponseWriter, r *http.Request) {
 	}
 	var callbackRequest CallbackRequest
 	var callbackResponse CallbackResponse
-	var response *tigo.Response
+	var response *internal.Response
 	var statusCode int
 
 	statusCode = 200
@@ -214,7 +213,7 @@ func (client *Client) Callback(w http.ResponseWriter, r *http.Request) {
 		}
 	}(client.DebugMode)
 
-	err := tigo.Receive(r, internal.JsonPayload, &callbackRequest)
+	err := internal.Receive(r, internal.JsonPayload, &callbackRequest)
 
 	if err != nil {
 		statusCode = http.StatusInternalServerError
@@ -230,30 +229,30 @@ func (client *Client) Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var responseOpts []tigo.ResponseOption
-	headers := tigo.WithDefaultJsonHeader()
+	var responseOpts []internal.ResponseOption
+	headers := internal.WithDefaultJsonHeader()
 
-	responseOpts = append(responseOpts, headers, tigo.WithResponseError(err))
-	response = tigo.NewResponse(statusCode, callbackResponse, internal.JsonPayload, responseOpts...)
+	responseOpts = append(responseOpts, headers, internal.WithResponseError(err))
+	response = internal.NewResponse(statusCode, callbackResponse, internal.JsonPayload, responseOpts...)
 
-	tigo.Reply(response, w)
+	internal.Reply(response, w)
 
 }
 
 func (client *Client) Refund(ctx context.Context, refundReq RefundRequest) (RefundResponse, error) {
 	var refundPaymentResp = &RefundResponse{}
 
-	var requestOptions []tigo.RequestOption
-	ctxOption := tigo.WithRequestContext(ctx)
+	var requestOptions []internal.RequestOption
+	ctxOption := internal.WithRequestContext(ctx)
 	requestOptions = append(requestOptions, ctxOption)
 
-	request := tigo.NewRequest(http.MethodPost,
+	request := internal.NewRequest(http.MethodPost,
 		client.ApiBaseURL+client.GetTokenURL,
 		internal.JsonPayload, refundReq,
 		requestOptions...,
 	)
 
-	if err := client.Send(ctx, tigo.RefundRequest, request, refundPaymentResp); err != nil {
+	if err := client.Send(ctx, internal.RefundRequest, request, refundPaymentResp); err != nil {
 		return RefundResponse{}, err
 	}
 
@@ -263,14 +262,14 @@ func (client *Client) Refund(ctx context.Context, refundReq RefundRequest) (Refu
 func (client *Client) HeartBeat(ctx context.Context, request HealthCheckRequest) (HealthCheckResponse, error) {
 	var healthCheckResp = &HealthCheckResponse{}
 
-	var requestOptions []tigo.RequestOption
-	ctxOption := tigo.WithRequestContext(ctx)
+	var requestOptions []internal.RequestOption
+	ctxOption := internal.WithRequestContext(ctx)
 	requestOptions = append(requestOptions, ctxOption)
 
-	req := tigo.NewRequest(http.MethodPost, client.HealthCheckURL,
+	req := internal.NewRequest(http.MethodPost, client.HealthCheckURL,
 		internal.JsonPayload, request, requestOptions...)
 
-	if err := client.Send(ctx, tigo.HealthCheckRequest, req, healthCheckResp); err != nil {
+	if err := client.Send(ctx, internal.HealthCheckRequest, req, healthCheckResp); err != nil {
 		return HealthCheckResponse{}, err
 	}
 
@@ -293,12 +292,12 @@ func (client *Client) Token(ctx context.Context) (TokenResponse, error) {
 
 	payloadType := internal.FormPayload
 
-	var requestOptions []tigo.RequestOption
-	ctxOption := tigo.WithRequestContext(ctx)
-	headersOption := tigo.WithRequestHeaders(headers)
+	var requestOptions []internal.RequestOption
+	ctxOption := internal.WithRequestContext(ctx)
+	headersOption := internal.WithRequestHeaders(headers)
 	requestOptions = append(requestOptions, ctxOption, headersOption)
 
-	request := tigo.NewRequest(http.MethodPost,
+	request := internal.NewRequest(http.MethodPost,
 		client.ApiBaseURL+client.GetTokenURL,
 		payloadType, form,
 		requestOptions...,
@@ -306,7 +305,7 @@ func (client *Client) Token(ctx context.Context) (TokenResponse, error) {
 
 	var tokenResponse TokenResponse
 
-	err := client.Send(context.TODO(), tigo.GetTokenRequest, request, &tokenResponse)
+	err := client.Send(context.TODO(), internal.GetTokenRequest, request, &tokenResponse)
 
 	if err != nil {
 		return TokenResponse{}, err

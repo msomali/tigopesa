@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/techcraftlabs/tigopesa/internal"
 	"log"
 	"net/http"
 	"os"
@@ -14,7 +15,6 @@ import (
 	"github.com/techcraftlabs/tigopesa"
 	"github.com/techcraftlabs/tigopesa/disburse"
 	"github.com/techcraftlabs/tigopesa/pkg/conf"
-	"github.com/techcraftlabs/tigopesa/pkg/tigo"
 	"github.com/techcraftlabs/tigopesa/push"
 	"github.com/techcraftlabs/tigopesa/ussd"
 )
@@ -69,7 +69,7 @@ func makeApp() *App {
 
 	keeper := checker{usersMap}
 
-	bc := &tigo.BaseClient{
+	bc := &internal.BaseClient{
 		HttpClient: http.DefaultClient,
 		Ctx:        context.Background(),
 		Timeout:    60 * time.Second,

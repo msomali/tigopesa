@@ -1,4 +1,4 @@
-package tigo
+package internal
 
 import (
 	"context"

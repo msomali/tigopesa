@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/xml"
 	"github.com/techcraftlabs/tigopesa/internal"
-	"github.com/techcraftlabs/tigopesa/pkg/tigo"
 	"net/http"
 )
 
@@ -77,18 +76,18 @@ type (
 
 	Client struct {
 		*Config
-		*tigo.BaseClient
+		*internal.BaseClient
 	}
 )
 
 func (client *Client) Do(ctx context.Context, referenceId, msisdn string, amount float64) (response Response, err error) {
 
-	var reqOpts []tigo.RequestOption
-	ctxOpt := tigo.WithRequestContext(ctx)
+	var reqOpts []internal.RequestOption
+	ctxOpt := internal.WithRequestContext(ctx)
 	headers := map[string]string{
 		"Content-Type": "application/xml",
 	}
-	headersOpt := tigo.WithRequestHeaders(headers)
+	headersOpt := internal.WithRequestHeaders(headers)
 	reqOpts = append(reqOpts, ctxOpt, headersOpt)
 
 	request := disburseRequest{
@@ -103,9 +102,9 @@ func (client *Client) Do(ctx context.Context, referenceId, msisdn string, amount
 		BrandID:     client.Config.BrandID,
 	}
 
-	req := tigo.NewRequest(http.MethodPost, client.RequestURL, internal.XmlPayload, request, reqOpts...)
+	req := internal.NewRequest(http.MethodPost, client.RequestURL, internal.XmlPayload, request, reqOpts...)
 
-	err = client.Send(ctx, tigo.DisburseRequest, req, &response)
+	err = client.Send(ctx, internal.DisburseRequest, req, &response)
 
 	if err != nil {
 		return

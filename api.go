@@ -1,4 +1,4 @@
-package tigosdk
+package tigopesa
 
 const (
 	TXN_STATUS_200   = "200"

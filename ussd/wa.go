@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/xml"
 	"github.com/techcraftlabs/tigopesa/internal"
-	"github.com/techcraftlabs/tigopesa/pkg/tigo"
 	"net/http"
 )
 
@@ -115,7 +114,7 @@ type (
 	}
 
 	Client struct {
-		*tigo.BaseClient
+		*internal.BaseClient
 		*Config
 		PaymentHandler   PaymentHandler
 		NameQueryHandler NameQueryHandler
@@ -139,7 +138,7 @@ func (client *Client) HandleNameQuery(writer http.ResponseWriter, request *http.
 	defer cancel()
 	var req NameRequest
 
-	err := tigo.Receive(request, internal.XmlPayload, &req)
+	err := internal.Receive(request, internal.XmlPayload, &req)
 
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
@@ -151,8 +150,8 @@ func (client *Client) HandleNameQuery(writer http.ResponseWriter, request *http.
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
 
-	resp := tigo.NewResponse(200, response, internal.XmlPayload)
-	tigo.Reply(resp, writer)
+	resp := internal.NewResponse(200, response, internal.XmlPayload)
+	internal.Reply(resp, writer)
 
 }
 
@@ -166,7 +165,7 @@ func (client *Client) HandlePayment(writer http.ResponseWriter, request *http.Re
 
 	var req PayRequest
 
-	err := tigo.Receive(request, internal.XmlPayload, &req)
+	err := internal.Receive(request, internal.XmlPayload, &req)
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
@@ -177,8 +176,8 @@ func (client *Client) HandlePayment(writer http.ResponseWriter, request *http.Re
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
 
-	resp := tigo.NewResponse(200, response, internal.XmlPayload)
+	resp := internal.NewResponse(200, response, internal.XmlPayload)
 
-	tigo.Reply(resp, writer)
+	internal.Reply(resp, writer)
 
 }

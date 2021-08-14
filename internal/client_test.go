@@ -1,7 +1,8 @@
-package tigo_test
+package internal_test
 
 import (
 	"context"
+	"github.com/techcraftlabs/tigopesa/internal"
 	"io"
 	"net/http"
 	"os"
@@ -10,8 +11,6 @@ import (
 	"time"
 
 	"github.com/techcraftlabs/tigopesa/disburse"
-	"github.com/techcraftlabs/tigopesa/internal"
-	"github.com/techcraftlabs/tigopesa/pkg/tigo"
 )
 
 func TestBaseClient_LogPayload(t *testing.T) {
@@ -23,8 +22,8 @@ func TestBaseClient_LogPayload(t *testing.T) {
 		DebugMode  bool
 	}
 	type args struct {
-		t       internal.PayloadType
-		prefix  string
+		t      PayloadType
+		prefix string
 		payload interface{}
 	}
 	tests := []struct {
@@ -42,7 +41,7 @@ func TestBaseClient_LogPayload(t *testing.T) {
 				DebugMode:  true,
 			},
 			args: args{
-				t:      internal.JsonPayload,
+				t:      JsonPayload,
 				prefix: "disburse request",
 				payload: disburse.Request{
 					ReferenceID: "3673E67DDGVHSWHBJS89W89W",
@@ -61,7 +60,7 @@ func TestBaseClient_LogPayload(t *testing.T) {
 				DebugMode:  true,
 			},
 			args: args{
-				t:       internal.XmlPayload,
+				t:       XmlPayload,
 				prefix:  "nil payload",
 				payload: nil,
 			},
@@ -76,7 +75,7 @@ func TestBaseClient_LogPayload(t *testing.T) {
 				DebugMode:  true,
 			},
 			args: args{
-				t:      internal.XmlPayload,
+				t:      XmlPayload,
 				prefix: "xml payload",
 				payload: disburse.Response{
 					Type:        "RMFCI",
@@ -90,7 +89,7 @@ func TestBaseClient_LogPayload(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			client := &tigo.BaseClient{
+			client := &internal.BaseClient{
 				HttpClient: tt.fields.HttpClient,
 				Ctx:        tt.fields.Ctx,
 				Timeout:    tt.fields.Timeout,
@@ -105,25 +104,25 @@ func TestBaseClient_LogPayload(t *testing.T) {
 
 func TestNewBaseClient(t *testing.T) {
 	type args struct {
-		opts []tigo.ClientOption
+		opts []internal.ClientOption
 	}
 	tests := []struct {
 		name string
 		args args
-		want *tigo.BaseClient
+		want *internal.BaseClient
 	}{
 		{
 			name: "Normal Base Client",
 			args: args{
-				opts: []tigo.ClientOption{
-					tigo.WithHTTPClient(http.DefaultClient),
-					tigo.WithLogger(os.Stderr),
-					tigo.WithTimeout(10 * time.Second),
-					tigo.WithDebugMode(true),
-					tigo.WithContext(context.TODO()),
+				opts: []internal.ClientOption{
+					internal.WithHTTPClient(http.DefaultClient),
+					internal.WithLogger(os.Stderr),
+					internal.WithTimeout(10 * time.Second),
+					internal.WithDebugMode(true),
+					internal.WithContext(context.TODO()),
 				},
 			},
-			want: &tigo.BaseClient{
+			want: &internal.BaseClient{
 				HttpClient: http.DefaultClient,
 				Ctx:        context.TODO(),
 				Timeout:    10 * time.Second,
@@ -134,7 +133,7 @@ func TestNewBaseClient(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tigo.NewBaseClient(tt.args.opts...); !reflect.DeepEqual(got, tt.want) {
+			if got := internal.NewBaseClient(tt.args.opts...); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("NewBaseClient() = %v, want %v", got, tt.want)
 			}
 		})

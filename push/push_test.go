@@ -3,7 +3,7 @@ package push
 import (
 	"context"
 	"github.com/joho/godotenv"
-	"github.com/techcraftlabs/tigopesa/pkg/tigo"
+	"github.com/techcraftlabs/tigopesa/internal"
 	"os"
 	"testing"
 	"time"
@@ -53,7 +53,7 @@ func TestMain(m *testing.M) {
 func TestClient_Token(t *testing.T) {
 	type fields struct {
 		Config          *Config
-		BaseClient      *tigo.BaseClient
+		BaseClient      *internal.BaseClient
 		CallbackHandler CallbackHandler
 		token           string
 		tokenExpires    time.Time
@@ -73,7 +73,7 @@ func TestClient_Token(t *testing.T) {
 			name: "test if token is returned",
 			fields: fields{
 				Config:     PushConfig,
-				BaseClient: tigo.NewBaseClient(tigo.WithDebugMode(true)),
+				BaseClient: internal.NewBaseClient(internal.WithDebugMode(true)),
 			},
 			args: args{
 				ctx: context.TODO(),

@@ -1,4 +1,4 @@
-package tigo
+package internal
 
 import (
 	"bytes"
@@ -14,8 +14,6 @@ import (
 	"os"
 	"strings"
 	"time"
-
-	"github.com/techcraftlabs/tigopesa/internal"
 )
 
 const (
@@ -70,7 +68,7 @@ func NewBaseClient(opts ...ClientOption) *BaseClient {
 	return client
 }
 
-func (client *BaseClient) NewRequest(method, url string, payloadType internal.PayloadType, payload interface{}) (*http.Request, error) {
+func (client *BaseClient) NewRequest(method, url string, payloadType PayloadType, payload interface{}) (*http.Request, error) {
 	var (
 		ctx, _ = context.WithTimeout(context.Background(), client.Timeout)
 	)
@@ -85,8 +83,8 @@ func (client *BaseClient) NewRequest(method, url string, payloadType internal.Pa
 	return request.ToHTTPRequest()
 }
 
-func (client *BaseClient) LogPayload(t internal.PayloadType, prefix string, payload interface{}) {
-	buf, _ := internal.MarshalPayload(t, payload)
+func (client *BaseClient) LogPayload(t PayloadType, prefix string, payload interface{}) {
+	buf, _ := MarshalPayload(t, payload)
 	_, _ = client.Logger.Write([]byte(fmt.Sprintf("%s: %s\n\n", prefix, buf.String())))
 }
 

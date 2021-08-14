@@ -1,11 +1,10 @@
-package tigo
+package internal
 
 import (
 	"bytes"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"github.com/techcraftlabs/tigopesa/internal"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -29,7 +28,7 @@ type (
 	Response struct {
 		StatusCode  int
 		Payload     interface{}
-		PayloadType internal.PayloadType
+		PayloadType PayloadType
 		Headers     map[string]string
 		Error       error
 	}
@@ -45,13 +44,13 @@ type (
 // defaultResponseHeader = map[string]string{
 //		"Content-Type": ContentTypeXml,
 // }
-func NewResponse(status int, payload interface{}, payloadType internal.PayloadType, opts ...ResponseOption) *Response {
+func NewResponse(status int, payload interface{}, payloadType PayloadType, opts ...ResponseOption) *Response {
 	response := &Response{
 		StatusCode:  status,
 		Payload:     payload,
 		PayloadType: payloadType,
 		Headers:     defaultResponseHeader,
-		Error: nil,
+		Error:       nil,
 	}
 
 	for _, opt := range opts {
@@ -65,7 +64,7 @@ func NewResponse(status int, payload interface{}, payloadType internal.PayloadTy
 //It then unmarshal the provided request into given interface v
 //The expected Content-Type should also be declared. If its application/json or
 //application/xml
-func Receive(r *http.Request, payloadType internal.PayloadType, v interface{}) error {
+func Receive(r *http.Request, payloadType PayloadType, v interface{}) error {
 
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -78,7 +77,7 @@ func Receive(r *http.Request, payloadType internal.PayloadType, v interface{}) e
 	r.Body = ioutil.NopCloser(bytes.NewBuffer(body))
 
 	switch payloadType {
-	case internal.JsonPayload:
+	case JsonPayload:
 		err := json.NewDecoder(r.Body).Decode(v)
 		defer func(Body io.ReadCloser) {
 			err := Body.Close()
@@ -89,7 +88,7 @@ func Receive(r *http.Request, payloadType internal.PayloadType, v interface{}) e
 
 		return err
 
-	case internal.XmlPayload:
+	case XmlPayload:
 		return xml.Unmarshal(body, v)
 	}
 
@@ -115,7 +114,7 @@ func Reply(r *Response, writer http.ResponseWriter) {
 	}
 
 	switch r.PayloadType {
-	case internal.XmlPayload:
+	case XmlPayload:
 		payload, err := xml.MarshalIndent(r.Payload, "", "  ")
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusInternalServerError)
@@ -130,7 +129,7 @@ func Reply(r *Response, writer http.ResponseWriter) {
 		_, err = writer.Write(payload)
 		return
 
-	case internal.JsonPayload:
+	case JsonPayload:
 		payload, err := json.Marshal(r.Payload)
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusInternalServerError)

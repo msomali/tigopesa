@@ -1,8 +1,7 @@
-package tigo
+package internal
 
 import (
 	"context"
-	"github.com/techcraftlabs/tigopesa/internal"
 	"net/http"
 )
 
@@ -49,19 +48,21 @@ type (
 	RequestName int
 
 	// Request encapsulate details of a request to be sent to Tigo.
-	Request     struct {
+	Request struct {
+		Name        RequestName
 		Context     context.Context
 		HttpMethod  string
 		URL         string
-		PayloadType internal.PayloadType
+		PayloadType PayloadType
 		Payload     interface{}
 		Headers     map[string]string
+		Params      map[string]string
 	}
 
 	RequestOption func(request *Request)
 )
 
-func NewRequest(method, url string, payloadType internal.PayloadType, payload interface{}, opts ...RequestOption) *Request {
+func NewRequest(method, url string, payloadType PayloadType, payload interface{}, opts ...RequestOption) *Request {
 	request := &Request{
 		Context:     context.TODO(),
 		HttpMethod:  method,
@@ -113,7 +114,7 @@ func (request *Request) AddHeader(key, value string) {
 //ToHTTPRequest takes a *Request and transform into *http.Request with a context
 func (request *Request) ToHTTPRequest() (*http.Request, error) {
 
-	buffer, err := internal.MarshalPayload(request.PayloadType, request.Payload)
+	buffer, err := MarshalPayload(request.PayloadType, request.Payload)
 	if err != nil {
 		return nil, err
 	}

@@ -9,7 +9,7 @@ import (
 	sdk "github.com/techcraftlabs/tigopesa"
 	"github.com/techcraftlabs/tigopesa/disburse"
 	"github.com/techcraftlabs/tigopesa/examples"
-	"github.com/techcraftlabs/tigopesa/pkg/tigo"
+	"github.com/techcraftlabs/tigopesa/internal"
 	"github.com/techcraftlabs/tigopesa/push"
 	"github.com/techcraftlabs/tigopesa/ussd"
 	"log"
@@ -228,7 +228,7 @@ func (app *App) DisburseHandler(writer http.ResponseWriter, r *http.Request) {
 		MSISDN:      info.Msisdn,
 		Amount:      info.Amount,
 	}
-	resp, err := app.SendRequest(context.TODO(), tigo.DisburseRequest,disburseRequest)
+	resp, err := app.SendRequest(context.TODO(), internal.DisburseRequest,disburseRequest)
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusBadRequest)
 		return
@@ -255,7 +255,7 @@ func (app *App) PushPayHandler(writer http.ResponseWriter, r *http.Request) {
 		ReferenceID:    fmt.Sprintf("%s%d", app.Config.PushBillerCode, time.Now().Local().Unix()),
 	}
 
-	response, err := app.SendRequest(context.Background(),tigo.PushPayRequest, billRequest)
+	response, err := app.SendRequest(context.Background(), internal.PushPayRequest, billRequest)
 	if err != nil {
 		log.Printf("PushBillPay r failed error: %s", err.Error())
 		return
@@ -268,15 +268,15 @@ func (app *App) Handler() http.Handler {
 	ctx := context.TODO()
 	router := mux.NewRouter()
 	router.HandleFunc(app.Config.PayNamecheckURL,
-		app.HandleRequest(context.TODO(), tigo.NameQueryRequest)).
+		app.HandleRequest(context.TODO(), internal.NameQueryRequest)).
 		Methods(http.MethodPost, http.MethodGet)
 
 	router.HandleFunc(app.Config.PayRequestURL,
-		app.HandleRequest(ctx, tigo.PaymentRequest)).
+		app.HandleRequest(ctx, internal.PaymentRequest)).
 		Methods(http.MethodPost, http.MethodGet)
 
 	router.HandleFunc("/tigopesa/callback",
-		app.HandleRequest(context.TODO(), tigo.CallbackRequest)).
+		app.HandleRequest(context.TODO(), internal.CallbackRequest)).
 		Methods(http.MethodPost)
 
 	router.HandleFunc("/api/tigopesa/disburse", app.DisburseHandler).Methods(http.MethodPost)
@@ -293,7 +293,7 @@ func main() {
 	}
 
 	config := examples.LoadConfFromEnv()
-	base := tigo.NewBaseClient(tigo.WithDebugMode(true))
+	base := internal.NewBaseClient(internal.WithDebugMode(true))
 
 	usersMap := map[string]User{
 		"12345678": {

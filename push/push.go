@@ -110,7 +110,7 @@ type (
 	}
 
 	CallbackHandler interface {
-		Do(ctx context.Context, request CallbackRequest) (CallbackResponse, error)
+		Respond(ctx context.Context, request CallbackRequest) (CallbackResponse, error)
 	}
 
 	CallbackHandlerFunc func(context.Context, CallbackRequest) (CallbackResponse, error)
@@ -157,7 +157,7 @@ func NewClient(config *Config,handler CallbackHandler,opts ...ClientOption) *Cli
 	return client
 }
 
-func (handler CallbackHandlerFunc) Do(ctx context.Context, request CallbackRequest) (CallbackResponse, error) {
+func (handler CallbackHandlerFunc) Respond(ctx context.Context, request CallbackRequest) (CallbackResponse, error) {
 	return handler(ctx, request)
 }
 
@@ -231,7 +231,7 @@ func (client *Client) Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	callbackResponse, err = client.CallbackHandler.Do(client.Ctx, callbackRequest)
+	callbackResponse, err = client.CallbackHandler.Respond(client.Ctx, callbackRequest)
 
 	if err != nil {
 		statusCode = http.StatusInternalServerError

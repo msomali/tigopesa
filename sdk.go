@@ -2,7 +2,6 @@ package tigopesa
 
 import (
 	"context"
-	"fmt"
 	"github.com/techcraftlabs/tigopesa/disburse"
 	"github.com/techcraftlabs/tigopesa/internal"
 	"github.com/techcraftlabs/tigopesa/pkg/config"
@@ -114,72 +113,72 @@ func (client *Client) HeartBeat(ctx context.Context, request push.HealthCheckReq
 	return client.push.HeartBeat(ctx, request)
 }
 
-// handleRequest is experimental no guarantees
-func (client *Client) handleRequest(ctx context.Context, requestName internal.RequestName) http.HandlerFunc {
-	ctx, cancel := context.WithTimeout(ctx, client.Timeout)
-	defer cancel()
-	return func(writer http.ResponseWriter, request *http.Request) {
-		switch requestName {
-		case internal.NameQueryRequest:
-			client.ussd.HandleNameQuery(writer, request)
-		case internal.PaymentRequest:
-			client.ussd.HandlePayment(writer, request)
-		case internal.CallbackRequest:
-			client.push.Callback(writer, request)
-		default:
-			http.Error(writer, "unknown request type", http.StatusInternalServerError)
-		}
-	}
-}
+//// handleRequest is experimental no guarantees
+//func (client *Client) handleRequest(ctx context.Context, requestName internal.RequestName) http.HandlerFunc {
+//	ctx, cancel := context.WithTimeout(ctx, client.Timeout)
+//	defer cancel()
+//	return func(writer http.ResponseWriter, request *http.Request) {
+//		switch requestName {
+//		case internal.NameQueryRequest:
+//			client.ussd.HandleNameQuery(writer, request)
+//		case internal.PaymentRequest:
+//			client.ussd.HandlePayment(writer, request)
+//		case internal.CallbackRequest:
+//			client.push.Callback(writer, request)
+//		default:
+//			http.Error(writer, "unknown request type", http.StatusInternalServerError)
+//		}
+//	}
+//}
 
-//sendRequest like handleRequest is experimental for neat and short API
-//the problem with this API is type checking and conversion that you have
-//to deal with while using it
-func (client *Client) sendRequest(ctx context.Context, requestName internal.RequestName,
-	request interface{}) (response interface{}, err error) {
-
-	if request == nil && requestName != internal.GetTokenRequest {
-		return nil, fmt.Errorf("request can not be nil")
-	}
-
-	ctx, cancel := context.WithTimeout(ctx, client.Timeout)
-	defer cancel()
-	switch requestName {
-	case internal.RefundRequest:
-		refundReq, ok := request.(push.RefundRequest)
-		if !ok {
-			err = fmt.Errorf("invalid refund request")
-			return nil, err
-		}
-		return client.push.Refund(ctx, refundReq)
-
-	case internal.DISBURSE_REQUEST:
-		disburseReq, ok := request.(disburse.Request)
-		if !ok {
-			err = fmt.Errorf("invalid disburse request")
-			return nil, err
-		}
-		return client.disburse.Disburse(ctx, disburseReq.ReferenceID, disburseReq.MSISDN, disburseReq.Amount)
-
-	case internal.PushPayRequest:
-		payReq, ok := request.(push.PayRequest)
-		if !ok {
-			err = fmt.Errorf("invalid push pay request")
-			return nil, err
-		}
-		return client.push.Pay(ctx, payReq)
-
-	case internal.HealthCheckRequest:
-		healthReq, ok := request.(push.HealthCheckRequest)
-		if !ok {
-			err = fmt.Errorf("invalid health check request")
-			return nil, err
-		}
-		return client.push.HeartBeat(ctx, healthReq)
-
-	case internal.GetTokenRequest:
-		return client.push.Token(ctx)
-	}
-
-	return nil, fmt.Errorf("unsupported request type")
-}
+////sendRequest like handleRequest is experimental for neat and short API
+////the problem with this API is type checking and conversion that you have
+////to deal with while using it
+//func (client *Client) sendRequest(ctx context.Context, requestName internal.RequestName,
+//	request interface{}) (response interface{}, err error) {
+//
+//	if request == nil && requestName != internal.GetTokenRequest {
+//		return nil, fmt.Errorf("request can not be nil")
+//	}
+//
+//	ctx, cancel := context.WithTimeout(ctx, client.Timeout)
+//	defer cancel()
+//	switch requestName {
+//	case internal.RefundRequest:
+//		refundReq, ok := request.(push.RefundRequest)
+//		if !ok {
+//			err = fmt.Errorf("invalid refund request")
+//			return nil, err
+//		}
+//		return client.push.Refund(ctx, refundReq)
+//
+//	case internal.DISBURSE_REQUEST:
+//		disburseReq, ok := request.(disburse.Request)
+//		if !ok {
+//			err = fmt.Errorf("invalid disburse request")
+//			return nil, err
+//		}
+//		return client.disburse.Disburse(ctx, disburseReq.ReferenceID, disburseReq.MSISDN, disburseReq.Amount)
+//
+//	case internal.PushPayRequest:
+//		payReq, ok := request.(push.PayRequest)
+//		if !ok {
+//			err = fmt.Errorf("invalid push pay request")
+//			return nil, err
+//		}
+//		return client.push.Pay(ctx, payReq)
+//
+//	case internal.HealthCheckRequest:
+//		healthReq, ok := request.(push.HealthCheckRequest)
+//		if !ok {
+//			err = fmt.Errorf("invalid health check request")
+//			return nil, err
+//		}
+//		return client.push.HeartBeat(ctx, healthReq)
+//
+//	case internal.GetTokenRequest:
+//		return client.push.Token(ctx)
+//	}
+//
+//	return nil, fmt.Errorf("unsupported request type")
+//}

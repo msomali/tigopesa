@@ -13,7 +13,7 @@ var _ push.CallbackHandler = (*handler)(nil)
 
 type handler int
 
-func (h handler) Do(ctx context.Context, request push.CallbackRequest) (push.CallbackResponse, error) {
+func (h handler) Respond(ctx context.Context, request push.CallbackRequest) (push.CallbackResponse, error) {
 	panic("implement me")
 }
 

@@ -3,7 +3,7 @@ package examples
 import (
 	"fmt"
 	"github.com/joho/godotenv"
-	"github.com/techcraftlabs/tigopesa/pkg/conf"
+	"github.com/techcraftlabs/tigopesa/pkg/config"
 	"log"
 	"os"
 )
@@ -28,7 +28,7 @@ const (
 	envPushPayURL            = "TIGO_PUSH_PAY_URL"
 )
 
-func LoadConfFromEnv() *conf.Config {
+func LoadConfFromEnv() *config.Overall {
 	err := godotenv.Load("tigo.env")
 	if err != nil {
 		log.Fatal("Error loading .env file")
@@ -71,7 +71,7 @@ func LoadConfFromEnv() *conf.Config {
 	fmt.Printf("%s\n", pushBillerCode)
 	fmt.Printf("%s\n", pushPayURL)
 
-	return &conf.Config{
+	return &config.Overall{
 		PayAccountName:            payAccountName,
 		PayAccountMSISDN:          payAccountMSISDN,
 		PayBillerNumber:           payBillerNumber,

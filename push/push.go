@@ -137,6 +137,26 @@ type (
 	}
 )
 
+func NewClient(config *Config,handler CallbackHandler,opts ...ClientOption) *Client {
+	client := &Client{
+		Config:          config,
+		CallbackHandler: handler,
+		token:           "",
+		tokenExpires:    time.Now(),
+	}
+	client.Logger = defaultWriter
+	client.Ctx = defaultCtx
+	client.DebugMode = false
+	client.Timeout = defaultTimeout
+	client.Http = defaultHttpClient
+
+	for _, opt := range opts {
+		opt(client)
+	}
+
+	return client
+}
+
 func (handler CallbackHandlerFunc) Do(ctx context.Context, request CallbackRequest) (CallbackResponse, error) {
 	return handler(ctx, request)
 }
@@ -203,13 +223,6 @@ func (client *Client) Callback(w http.ResponseWriter, r *http.Request) {
 
 	statusCode = 200
 
-	defer func(debug bool) {
-		if debug {
-			//client.LogPayload(internal.JsonPayload, "callback from tigo", &callbackRequest)
-			client.LogPayload(internal.JsonPayload, "callback response", &callbackResponse)
-		}
-	}(client.DebugMode)
-
 	err := client.Receive(r, internal.CallbackRequest, internal.JsonPayload, &callbackRequest)
 
 	if err != nil {
@@ -232,7 +245,7 @@ func (client *Client) Callback(w http.ResponseWriter, r *http.Request) {
 	responseOpts = append(responseOpts, headers, internal.WithResponseError(err))
 	response = internal.NewResponse(statusCode, callbackResponse, internal.JsonPayload, responseOpts...)
 
-	internal.Reply(response, w)
+	client.Reply("callback response", response, w)
 
 }
 

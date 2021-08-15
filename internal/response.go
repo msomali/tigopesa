@@ -107,7 +107,7 @@ func (client *BaseClient) Receive(r *http.Request, rn RequestName, payloadType P
 }
 
 //Reply respond to Tigo requests like callback request and namecheck
-func Reply(r *Response, writer http.ResponseWriter) {
+func (client *BaseClient) Reply(name string, r *Response, writer http.ResponseWriter) {
 
 	if r.Payload == nil {
 
@@ -118,6 +118,11 @@ func Reply(r *Response, writer http.ResponseWriter) {
 		_, _ = writer.Write([]byte("ok"))
 		return
 	}
+
+	defer func(debug bool) {
+		client.logPayload(r.PayloadType, strings.ToUpper(name), r.Payload)
+		return
+	}(client.DebugMode)
 
 	if r.Error != nil {
 		http.Error(writer, r.Error.Error(), http.StatusInternalServerError)

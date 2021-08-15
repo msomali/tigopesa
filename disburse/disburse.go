@@ -34,6 +34,8 @@ type (
 		Disburse(ctx context.Context, referenceId, msisdn string, amount float64) (Response, error)
 	}
 
+	ClientX internal.BaseClient
+
 	HandlerFunc func(ctx context.Context, referenceId, msisdn string, amount float64) (Response, error)
 
 	Config struct {
@@ -80,6 +82,24 @@ type (
 	}
 )
 
+func NewClient(config *Config, opts ...ClientOption) *Client {
+
+	client := &Client{
+		Config: config,
+	}
+	client.Logger = defaultWriter
+	client.Ctx = defaultCtx
+	client.DebugMode = false
+	client.Timeout = defaultTimeout
+	client.Http = defaultHttpClient
+
+	for _, opt := range opts {
+		opt(client)
+	}
+
+	return client
+}
+
 func (client *Client) Disburse(ctx context.Context, referenceId, msisdn string, amount float64) (response Response, err error) {
 
 	var reqOpts []internal.RequestOption
@@ -102,7 +122,7 @@ func (client *Client) Disburse(ctx context.Context, referenceId, msisdn string, 
 		BrandID:     client.Config.BrandID,
 	}
 
-	req := internal.NewRequest(ctx,http.MethodPost, client.RequestURL, internal.XmlPayload, request, reqOpts...)
+	req := internal.NewRequest(ctx, http.MethodPost, client.RequestURL, internal.XmlPayload, request, reqOpts...)
 
 	err = client.Send(ctx, internal.DISBURSE_REQUEST, req, &response)
 

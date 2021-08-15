@@ -1,4 +1,4 @@
-package conf
+package config
 
 import (
 	"errors"
@@ -12,7 +12,7 @@ var (
 )
 
 type (
-	Config struct {
+	Overall struct {
 		PayAccountName            string
 		PayAccountMSISDN          string
 		PayBillerNumber           string
@@ -36,7 +36,7 @@ type (
 	}
 )
 
-func (conf *Config) Split() (pushConf *push.Config, pay *ussd.Config, disburse *disburse.Config) {
+func (conf *Overall) Split() (pushConf *push.Config, pay *ussd.Config, dConf *disburse.Config) {
 	pushConf = &push.Config{
 		Username:              conf.PushUsername,
 		Password:              conf.PushPassword,
@@ -58,7 +58,7 @@ func (conf *Config) Split() (pushConf *push.Config, pay *ussd.Config, disburse *
 		NamecheckURL:  conf.PayNamecheckURL,
 	}
 
-	disburse = &disburse.Config{
+	dConf = &disburse.Config{
 		AccountName:   conf.DisburseAccountName,
 		AccountMSISDN: conf.DisburseAccountMSISDN,
 		BrandID:       conf.DisburseBrandID,
@@ -72,13 +72,13 @@ func (conf *Config) Split() (pushConf *push.Config, pay *ussd.Config, disburse *
 // Merge combine configurations of different clients. It is usefully when they have been loaded from
 // different sources before being used:
 // returns error ErrConfigNil if any of the 3 config is nil
-func Merge(pushConf *push.Config, waConf *ussd.Config, awConf *disburse.Config) (*Config, error) {
+func Merge(pushConf *push.Config, waConf *ussd.Config, awConf *disburse.Config) (*Overall, error) {
 
 	if pushConf == nil || waConf == nil || awConf == nil {
 		return nil, ErrConfigNil
 	}
 
-	merged := &Config{
+	merged := &Overall{
 		PayAccountName:            waConf.AccountName,
 		PayAccountMSISDN:          waConf.AccountMSISDN,
 		PayBillerNumber:           waConf.BillerNumber,

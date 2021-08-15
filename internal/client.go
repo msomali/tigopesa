@@ -52,7 +52,6 @@ type (
 
 func NewBaseClient(opts ...ClientOption) *BaseClient {
 	client := &BaseClient{
-		//Config:     conf,
 		Http:      defaultHttpClient,
 		Logger:    defaultWriter,
 		Timeout:   defaultTimeout,
@@ -82,7 +81,7 @@ func NewBaseClient(opts ...ClientOption) *BaseClient {
 //	return request.newRequestWithContext()
 //}
 
-func (client *BaseClient) LogPayload(t PayloadType, prefix string, payload interface{}) {
+func (client *BaseClient) logPayload(t PayloadType, prefix string, payload interface{}) {
 	buf, _ := MarshalPayload(t, payload)
 	_, _ = client.Logger.Write([]byte(fmt.Sprintf("%s: %s\n\n", prefix, buf.String())))
 }

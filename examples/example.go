@@ -14,12 +14,12 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/techcraftlabs/tigopesa"
 	"github.com/techcraftlabs/tigopesa/disburse"
-	"github.com/techcraftlabs/tigopesa/pkg/conf"
+	"github.com/techcraftlabs/tigopesa/pkg/config"
 	"github.com/techcraftlabs/tigopesa/push"
 	"github.com/techcraftlabs/tigopesa/ussd"
 )
 
-//var Config = &conf.Config{
+//var Overall = &config.Overall{
 //	PayAccountName:            "",
 //	PayAccountMSISDN:          "",
 //	PayBillerNumber:           "",
@@ -115,7 +115,7 @@ type (
 	}
 
 	App struct {
-		Config   *conf.Config
+		Config   *config.Overall
 		push     *push.Client
 		disburse *disburse.Client
 		ussd     *ussd.Client

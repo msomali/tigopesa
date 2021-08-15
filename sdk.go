@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/techcraftlabs/tigopesa/disburse"
 	"github.com/techcraftlabs/tigopesa/internal"
-	"github.com/techcraftlabs/tigopesa/pkg/conf"
+	"github.com/techcraftlabs/tigopesa/pkg/config"
 	"github.com/techcraftlabs/tigopesa/push"
 	"github.com/techcraftlabs/tigopesa/ussd"
 	"net/http"
@@ -23,23 +23,46 @@ type (
 	}
 	Client struct {
 		*internal.BaseClient
-		*conf.Config
+		*config.Overall
 		ussd     *ussd.Client
 		disburse *disburse.Client
 		push     *push.Client
 	}
 )
 
-func NewClient(config *conf.Config, base *internal.BaseClient,
-	handler ussd.NameQueryHandler, paymentHandler ussd.PaymentHandler, callbackHandler push.CallbackHandler) *Client {
+func NewClient(config *config.Overall,handler ussd.NameQueryHandler, paymentHandler ussd.PaymentHandler,
+	callbackHandler push.CallbackHandler, opts ...ClientOption) *Client {
+
+	client := &Client{
+		Overall:    config,
+	}
+
+	client.Logger = defaultWriter
+	client.Ctx = defaultCtx
+	client.DebugMode = false
+	client.Timeout = defaultTimeout
+	client.Http = defaultHttpClient
+
+	for _, opt := range opts {
+		opt(client)
+	}
 
 	pushConf, payConf, disburseConf := config.Split()
+
+	base := &internal.BaseClient{
+		Http:      client.Http,
+		Ctx:       client.Ctx,
+		Timeout:   client.Timeout,
+		Logger:    client.Logger,
+		DebugMode: client.DebugMode,
+	}
 
 	pushClient := &push.Client{
 		Config:          pushConf,
 		BaseClient:      base,
 		CallbackHandler: callbackHandler,
 	}
+
 	payClient := &ussd.Client{
 		BaseClient:       base,
 		Config:           payConf,
@@ -52,13 +75,11 @@ func NewClient(config *conf.Config, base *internal.BaseClient,
 		BaseClient: base,
 	}
 
-	return &Client{
-		BaseClient: base,
-		Config:     config,
-		ussd:       payClient,
-		disburse:   disburseClient,
-		push:       pushClient,
-	}
+	client.push = pushClient
+	client.ussd = payClient
+	client.disburse = disburseClient
+
+	return client
 }
 
 func (client *Client) Disburse(ctx context.Context, referenceId, msisdn string, amount float64) (disburse.Response, error) {

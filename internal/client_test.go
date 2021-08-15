@@ -97,7 +97,7 @@ func TestBaseClient_LogPayload(t *testing.T) {
 				DebugMode: tt.fields.DebugMode,
 			}
 
-			client.LogPayload(tt.args.t, tt.args.prefix, tt.args.payload)
+			client.logPayload(tt.args.t, tt.args.prefix, tt.args.payload)
 		})
 	}
 }

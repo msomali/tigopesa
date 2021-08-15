@@ -121,6 +121,26 @@ type (
 	}
 )
 
+func NewClient(config *Config, handler PaymentHandler, queryHandler NameQueryHandler, opts ...ClientOption) *Client {
+	client := &Client{
+
+		Config:           config,
+		PaymentHandler:   handler,
+		NameQueryHandler: queryHandler,
+	}
+	client.Logger = defaultWriter
+	client.Ctx = defaultCtx
+	client.DebugMode = false
+	client.Timeout = defaultTimeout
+	client.Http = defaultHttpClient
+
+	for _, opt := range opts {
+		opt(client)
+	}
+
+	return client
+}
+
 func (handler PaymentHandleFunc) PaymentRequest(ctx context.Context, request PayRequest) (PayResponse, error) {
 	return handler(ctx, request)
 }
@@ -135,7 +155,7 @@ func (client *Client) HandleNameQuery(writer http.ResponseWriter, request *http.
 	defer cancel()
 	var req NameRequest
 
-	err := client.Receive(request,internal.NameQueryRequest, internal.XmlPayload, &req)
+	err := client.Receive(request, internal.NameQueryRequest, internal.XmlPayload, &req)
 
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
@@ -148,7 +168,7 @@ func (client *Client) HandleNameQuery(writer http.ResponseWriter, request *http.
 	}
 
 	resp := internal.NewResponse(200, response, internal.XmlPayload)
-	internal.Reply(resp, writer)
+	client.Reply("name query response", resp, writer)
 
 }
 
@@ -159,7 +179,7 @@ func (client *Client) HandlePayment(writer http.ResponseWriter, request *http.Re
 
 	var req PayRequest
 
-	err := client.Receive(request,internal.PaymentRequest, internal.XmlPayload, &req)
+	err := client.Receive(request, internal.PaymentRequest, internal.XmlPayload, &req)
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
@@ -172,6 +192,6 @@ func (client *Client) HandlePayment(writer http.ResponseWriter, request *http.Re
 
 	resp := internal.NewResponse(200, response, internal.XmlPayload)
 
-	internal.Reply(resp, writer)
+	client.Reply("ussd payment response", resp, writer)
 
 }

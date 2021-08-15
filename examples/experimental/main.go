@@ -251,7 +251,7 @@ func (app *App) PushPayHandler(writer http.ResponseWriter, r *http.Request) {
 		CustomerMSISDN: req.Msisdn,
 		Amount:         int(req.Amount),
 		Remarks:        req.Remarks,
-		ReferenceID:    fmt.Sprintf("%s%d", app.Config.PushBillerCode, time.Now().Local().Unix()),
+		ReferenceID:    fmt.Sprintf("%s%d", app.Overall.PushBillerCode, time.Now().Local().Unix()),
 	}
 
 	response, err := app.sendRequest(context.Background(), internal.PushPayRequest, billRequest)
@@ -266,11 +266,11 @@ func (app *App) PushPayHandler(writer http.ResponseWriter, r *http.Request) {
 func (app *App) Handler() http.Handler {
 	ctx := context.TODO()
 	router := mux.NewRouter()
-	router.HandleFunc(app.Config.PayNamecheckURL,
+	router.HandleFunc(app.Overall.PayNamecheckURL,
 		app.handleRequest(context.TODO(), internal.NameQueryRequest)).
 		Methods(http.MethodPost, http.MethodGet)
 
-	router.HandleFunc(app.Config.PayRequestURL,
+	router.HandleFunc(app.Overall.PayRequestURL,
 		app.handleRequest(ctx, internal.PaymentRequest)).
 		Methods(http.MethodPost, http.MethodGet)
 

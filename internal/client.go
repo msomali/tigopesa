@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"os"
@@ -17,7 +16,7 @@ import (
 )
 
 const (
-	defaultTimeout          = 60*time.Second
+	defaultTimeout          = 60 * time.Second
 	jsonContentTypeString   = "application/json"
 	xmlContentTypeString    = "text/xml"
 	appXMLContentTypeString = "application/xml"
@@ -43,22 +42,22 @@ var (
 
 type (
 	BaseClient struct {
-		HttpClient *http.Client
-		Ctx        context.Context
-		Timeout    time.Duration
-		Logger     io.Writer // for logging purposes
-		DebugMode  bool
+		Http      *http.Client
+		Ctx       context.Context
+		Timeout   time.Duration
+		Logger    io.Writer // for logging purposes
+		DebugMode bool
 	}
 )
 
 func NewBaseClient(opts ...ClientOption) *BaseClient {
 	client := &BaseClient{
 		//Config:     conf,
-		HttpClient: defaultHttpClient,
-		Logger:     defaultWriter,
-		Timeout:    defaultTimeout,
-		Ctx:        defaultCtx,
-		DebugMode:  false,
+		Http:      defaultHttpClient,
+		Logger:    defaultWriter,
+		Timeout:   defaultTimeout,
+		Ctx:       defaultCtx,
+		DebugMode: false,
 	}
 
 	for _, opt := range opts {
@@ -68,29 +67,29 @@ func NewBaseClient(opts ...ClientOption) *BaseClient {
 	return client
 }
 
-func (client *BaseClient) NewRequest(method, url string, payloadType PayloadType, payload interface{}) (*http.Request, error) {
-	var (
-		ctx, _ = context.WithTimeout(context.Background(), client.Timeout)
-	)
-
-	request := &Request{
-		Context:     ctx,
-		HttpMethod:  method,
-		URL:         url,
-		PayloadType: payloadType,
-		Payload:     payload,
-	}
-	return request.ToHTTPRequest()
-}
+//func (client *BaseClient) NewRequest(method, url string, payloadType PayloadType, payload interface{}) (*http.Request, error) {
+//	var (
+//		ctx, _ = context.WithTimeout(context.Background(), client.Timeout)
+//	)
+//
+//	request := &Request{
+//		Context:     ctx,
+//		Method:      method,
+//		URL:         url,
+//		PayloadType: payloadType,
+//		Payload:     payload,
+//	}
+//	return request.newRequestWithContext()
+//}
 
 func (client *BaseClient) LogPayload(t PayloadType, prefix string, payload interface{}) {
 	buf, _ := MarshalPayload(t, payload)
 	_, _ = client.Logger.Write([]byte(fmt.Sprintf("%s: %s\n\n", prefix, buf.String())))
 }
 
-// Log is called to print the details of http.Request sent from Tigo during
+// log is called to print the details of http.Request sent from Tigo during
 // callback, namecheck or ussd payment. It is used for debugging purposes
-func (client *BaseClient) Log(name string, request *http.Request) {
+func (client *BaseClient) log(name string, request *http.Request) {
 
 	if request != nil {
 		reqDump, _ := httputil.DumpRequest(request, true)
@@ -105,9 +104,9 @@ func (client *BaseClient) Log(name string, request *http.Request) {
 	return
 }
 
-// LogOut is like Log except this is for outgoing client requests:
+// logOut is like log except this is for outgoing client requests:
 // http.Request that is supposed to be sent to tigo
-func (client *BaseClient) LogOut(name string, request *http.Request, response *http.Response) {
+func (client *BaseClient) logOut(name string, request *http.Request, response *http.Response) {
 
 	if request != nil {
 		reqDump, _ := httputil.DumpRequestOut(request, true)
@@ -130,56 +129,55 @@ func (client *BaseClient) LogOut(name string, request *http.Request, response *h
 	return
 }
 
-func (client *BaseClient) Send(_ context.Context, rn RequestName, request *Request, v interface{}) error {
-	var bodyBytes []byte
+func (client *BaseClient) Send(ctx context.Context, rn RequestName, request *Request, v interface{}) error {
+	var (
+		_, cancel = context.WithTimeout(context.Background(), client.Timeout)
+	)
+
+	defer cancel()
+	var req *http.Request
+	var res *http.Response
+
+	var reqBodyBytes []byte
+	var resBodyBytes []byte
+	defer func(debug bool) {
+		if debug {
+			req.Body = io.NopCloser(bytes.NewBuffer(reqBodyBytes))
+			res.Body = io.NopCloser(bytes.NewBuffer(resBodyBytes))
+			name := strings.ToUpper(rn.String())
+			client.logOut(name, req, res)
+		}
+	}(client.DebugMode)
 
 	//creates http request with context
-	req, err := request.ToHTTPRequest()
+	req, err := request.newRequestWithContext()
 
 	if err != nil {
 		return err
 	}
 
 	if req.Body != nil {
-		bodyBytes, _ = ioutil.ReadAll(req.Body)
+		reqBodyBytes, _ = io.ReadAll(req.Body)
 	}
 
 	if v == nil {
 		return errors.New("v interface can not be empty")
 	}
 
-	// restore request body for logging
-	req.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
-
-	resp, err := client.HttpClient.Do(req)
+	req.Body = io.NopCloser(bytes.NewBuffer(reqBodyBytes))
+	res, err = client.Http.Do(req)
 
 	if err != nil {
 		return err
 	}
 
-	//restore request body for logging
-	req.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
-
-	var respBodyBytes []byte
-	if resp.Body != nil {
-		respBodyBytes, _ = ioutil.ReadAll(resp.Body)
+	if res.Body != nil {
+		resBodyBytes, _ = io.ReadAll(res.Body)
 	}
 
-	name := strings.ToUpper(rn.String())
-
-	go func(debugMode bool) {
-		if debugMode {
-			client.LogOut(name, req, resp)
-		}
-	}(client.DebugMode)
-
-	// restore response http.Response.Body after debugging
-	resp.Body = ioutil.NopCloser(bytes.NewBuffer(respBodyBytes))
-
-	contentType := resp.Header.Get("Content-Type")
-
-	if strings.Contains(contentType, jsonContentTypeString) {
-		if err := json.NewDecoder(resp.Body).Decode(v); err != nil {
+	contentType := res.Header.Get("Content-Type")
+	if strings.Contains(contentType, "application/json") {
+		if err := json.NewDecoder(bytes.NewBuffer(resBodyBytes)).Decode(v); err != nil {
 			if err != io.EOF {
 				return err
 			}
@@ -188,7 +186,7 @@ func (client *BaseClient) Send(_ context.Context, rn RequestName, request *Reque
 
 	if strings.Contains(contentType, xmlContentTypeString) ||
 		strings.Contains(contentType, appXMLContentTypeString) {
-		if err := xml.NewDecoder(resp.Body).Decode(v); err != nil {
+		if err := xml.NewDecoder(bytes.NewBuffer(resBodyBytes)).Decode(v); err != nil {
 			if err != io.EOF {
 				return err
 			}

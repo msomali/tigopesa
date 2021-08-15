@@ -22,8 +22,8 @@ func TestBaseClient_LogPayload(t *testing.T) {
 		DebugMode  bool
 	}
 	type args struct {
-		t      PayloadType
-		prefix string
+		t       PayloadType
+		prefix  string
 		payload interface{}
 	}
 	tests := []struct {
@@ -90,11 +90,11 @@ func TestBaseClient_LogPayload(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			client := &internal.BaseClient{
-				HttpClient: tt.fields.HttpClient,
-				Ctx:        tt.fields.Ctx,
-				Timeout:    tt.fields.Timeout,
-				Logger:     tt.fields.Logger,
-				DebugMode:  tt.fields.DebugMode,
+				Http:      tt.fields.HttpClient,
+				Ctx:       tt.fields.Ctx,
+				Timeout:   tt.fields.Timeout,
+				Logger:    tt.fields.Logger,
+				DebugMode: tt.fields.DebugMode,
 			}
 
 			client.LogPayload(tt.args.t, tt.args.prefix, tt.args.payload)
@@ -123,11 +123,11 @@ func TestNewBaseClient(t *testing.T) {
 				},
 			},
 			want: &internal.BaseClient{
-				HttpClient: http.DefaultClient,
-				Ctx:        context.TODO(),
-				Timeout:    10 * time.Second,
-				Logger:     os.Stderr,
-				DebugMode:  true,
+				Http:      http.DefaultClient,
+				Ctx:       context.TODO(),
+				Timeout:   10 * time.Second,
+				Logger:    os.Stderr,
+				DebugMode: true,
 			},
 		},
 	}

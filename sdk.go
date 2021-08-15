@@ -17,7 +17,7 @@ var (
 
 type (
 	Service interface {
-		disburse.Handler
+		disburse.Service
 		ussd.Service
 		push.Service
 	}
@@ -61,8 +61,8 @@ func NewClient(config *conf.Config, base *internal.BaseClient,
 	}
 }
 
-func (client *Client) Do(ctx context.Context, referenceId, msisdn string, amount float64) (disburse.Response, error) {
-	return client.disburse.Do(ctx, referenceId, msisdn, amount)
+func (client *Client) Disburse(ctx context.Context, referenceId, msisdn string, amount float64) (disburse.Response, error) {
+	return client.disburse.Disburse(ctx, referenceId, msisdn, amount)
 }
 
 func (client *Client) HandleNameQuery(writer http.ResponseWriter, request *http.Request) {
@@ -93,8 +93,8 @@ func (client *Client) HeartBeat(ctx context.Context, request push.HealthCheckReq
 	return client.push.HeartBeat(ctx, request)
 }
 
-// HandleRequest is experimental no guarantees
-func (client *Client) HandleRequest(ctx context.Context, requestName internal.RequestName) http.HandlerFunc {
+// handleRequest is experimental no guarantees
+func (client *Client) handleRequest(ctx context.Context, requestName internal.RequestName) http.HandlerFunc {
 	ctx, cancel := context.WithTimeout(ctx, client.Timeout)
 	defer cancel()
 	return func(writer http.ResponseWriter, request *http.Request) {
@@ -111,10 +111,10 @@ func (client *Client) HandleRequest(ctx context.Context, requestName internal.Re
 	}
 }
 
-//SendRequest like HandleRequest is experimental for neat and short API
+//sendRequest like handleRequest is experimental for neat and short API
 //the problem with this API is type checking and conversion that you have
 //to deal with while using it
-func (client *Client) SendRequest(ctx context.Context, requestName internal.RequestName,
+func (client *Client) sendRequest(ctx context.Context, requestName internal.RequestName,
 	request interface{}) (response interface{}, err error) {
 
 	if request == nil && requestName != internal.GetTokenRequest {
@@ -138,7 +138,7 @@ func (client *Client) SendRequest(ctx context.Context, requestName internal.Requ
 			err = fmt.Errorf("invalid disburse request")
 			return nil, err
 		}
-		return client.disburse.Do(ctx, disburseReq.ReferenceID, disburseReq.MSISDN, disburseReq.Amount)
+		return client.disburse.Disburse(ctx, disburseReq.ReferenceID, disburseReq.MSISDN, disburseReq.Amount)
 
 	case internal.PushPayRequest:
 		payReq, ok := request.(push.PayRequest)

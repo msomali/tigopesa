@@ -8,7 +8,7 @@ import (
 )
 
 // ClientOption is a setter func to set BaseClient details like
-// Timeout, context, HttpClient and Logger
+// Timeout, context, Http and Logger
 type ClientOption func(client *BaseClient)
 
 // WithContext set the context to be used by Client in its ops
@@ -65,6 +65,6 @@ func WithHTTPClient(httpClient *http.Client) ClientOption {
 			return
 		}
 
-		client.HttpClient = httpClient
+		client.Http = httpClient
 	}
 }

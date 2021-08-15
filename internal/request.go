@@ -51,7 +51,7 @@ type (
 	Request struct {
 		Name        RequestName
 		Context     context.Context
-		HttpMethod  string
+		Method      string
 		URL         string
 		PayloadType PayloadType
 		Payload     interface{}
@@ -62,10 +62,10 @@ type (
 	RequestOption func(request *Request)
 )
 
-func NewRequest(method, url string, payloadType PayloadType, payload interface{}, opts ...RequestOption) *Request {
+func NewRequest(ctx context.Context, method, url string, payloadType PayloadType, payload interface{}, opts ...RequestOption) *Request {
 	request := &Request{
-		Context:     context.TODO(),
-		HttpMethod:  method,
+		Context:     ctx,
+		Method:      method,
 		URL:         url,
 		PayloadType: payloadType,
 		Payload:     payload,
@@ -111,15 +111,15 @@ func (request *Request) AddHeader(key, value string) {
 	request.Headers[key] = value
 }
 
-//ToHTTPRequest takes a *Request and transform into *http.Request with a context
-func (request *Request) ToHTTPRequest() (*http.Request, error) {
+//newRequestWithContext takes a *Request and transform into *http.Request with a context
+func (request *Request) newRequestWithContext() (*http.Request, error) {
 
 	buffer, err := MarshalPayload(request.PayloadType, request.Payload)
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := http.NewRequestWithContext(request.Context, request.HttpMethod, request.URL, buffer)
+	req, err := http.NewRequestWithContext(request.Context, request.Method, request.URL, buffer)
 	if err != nil {
 		return nil, err
 	}

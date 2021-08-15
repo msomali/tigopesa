@@ -131,14 +131,11 @@ func (handler NameQueryFunc) NameQuery(ctx context.Context, request NameRequest)
 
 func (client *Client) HandleNameQuery(writer http.ResponseWriter, request *http.Request) {
 
-	if client.DebugMode {
-		client.Log("NAME QUERY", request)
-	}
 	ctx, cancel := context.WithTimeout(client.Ctx, client.Timeout)
 	defer cancel()
 	var req NameRequest
 
-	err := internal.Receive(request, internal.XmlPayload, &req)
+	err := client.Receive(request,internal.NameQueryRequest, internal.XmlPayload, &req)
 
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
@@ -157,15 +154,12 @@ func (client *Client) HandleNameQuery(writer http.ResponseWriter, request *http.
 
 func (client *Client) HandlePayment(writer http.ResponseWriter, request *http.Request) {
 
-	if client.DebugMode {
-		client.Log("USSD WA PAYMENT", request)
-	}
 	ctx, cancel := context.WithTimeout(client.Ctx, client.Timeout)
 	defer cancel()
 
 	var req PayRequest
 
-	err := internal.Receive(request, internal.XmlPayload, &req)
+	err := client.Receive(request,internal.PaymentRequest, internal.XmlPayload, &req)
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}

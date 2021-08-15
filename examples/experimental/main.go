@@ -37,7 +37,6 @@ type (
 		ReadTimeout       time.Duration
 		WriteTimeout      time.Duration
 		ReadHeaderTimeout time.Duration
-
 	}
 
 	Handler struct {
@@ -190,7 +189,7 @@ func (h Handler) Do(ctx context.Context, request push.CallbackRequest) (push.Cal
 
 }
 
-func (h Handler) checkUser(ref string) (User, bool){
+func (h Handler) checkUser(ref string) (User, bool) {
 	fmt.Printf("checking %s\n", ref)
 
 	user, found := h.Users[ref]
@@ -228,7 +227,7 @@ func (app *App) DisburseHandler(writer http.ResponseWriter, r *http.Request) {
 		MSISDN:      info.Msisdn,
 		Amount:      info.Amount,
 	}
-	resp, err := app.SendRequest(context.TODO(), internal.DISBURSE_REQUEST,disburseRequest)
+	resp, err := app.sendRequest(context.TODO(), internal.DISBURSE_REQUEST, disburseRequest)
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusBadRequest)
 		return
@@ -255,7 +254,7 @@ func (app *App) PushPayHandler(writer http.ResponseWriter, r *http.Request) {
 		ReferenceID:    fmt.Sprintf("%s%d", app.Config.PushBillerCode, time.Now().Local().Unix()),
 	}
 
-	response, err := app.SendRequest(context.Background(), internal.PushPayRequest, billRequest)
+	response, err := app.sendRequest(context.Background(), internal.PushPayRequest, billRequest)
 	if err != nil {
 		log.Printf("PushBillPay r failed error: %s", err.Error())
 		return
@@ -268,15 +267,15 @@ func (app *App) Handler() http.Handler {
 	ctx := context.TODO()
 	router := mux.NewRouter()
 	router.HandleFunc(app.Config.PayNamecheckURL,
-		app.HandleRequest(context.TODO(), internal.NameQueryRequest)).
+		app.handleRequest(context.TODO(), internal.NameQueryRequest)).
 		Methods(http.MethodPost, http.MethodGet)
 
 	router.HandleFunc(app.Config.PayRequestURL,
-		app.HandleRequest(ctx, internal.PaymentRequest)).
+		app.handleRequest(ctx, internal.PaymentRequest)).
 		Methods(http.MethodPost, http.MethodGet)
 
 	router.HandleFunc("/tigopesa/callback",
-		app.HandleRequest(context.TODO(), internal.CallbackRequest)).
+		app.handleRequest(context.TODO(), internal.CallbackRequest)).
 		Methods(http.MethodPost)
 
 	router.HandleFunc("/api/tigopesa/disburse", app.DisburseHandler).Methods(http.MethodPost)
@@ -317,7 +316,6 @@ func main() {
 			Status: 2,
 		},
 	}
-
 
 	handler := Handler{
 		Users: usersMap,

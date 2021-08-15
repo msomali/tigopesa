@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"strings"
 )
 
 const (
@@ -64,17 +65,27 @@ func NewResponse(status int, payload interface{}, payloadType PayloadType, opts 
 //It then unmarshal the provided request into given interface v
 //The expected Content-Type should also be declared. If its application/json or
 //application/xml
-func Receive(r *http.Request, payloadType PayloadType, v interface{}) error {
+func (client *BaseClient) Receive(r *http.Request, rn RequestName, payloadType PayloadType, v interface{}) error {
 
-	body, err := ioutil.ReadAll(r.Body)
+	var reqBodyBytes []byte
+	reqBodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
 		return err
 	}
+
+	defer func(debug bool) {
+		if debug {
+			r.Body = io.NopCloser(bytes.NewBuffer(reqBodyBytes))
+			name := strings.ToUpper(rn.String())
+			client.log(name, r)
+		}
+	}(client.DebugMode)
+
 	if v == nil {
 		return fmt.Errorf("v can not be nil")
 	}
 	// restore request body
-	r.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+	r.Body = ioutil.NopCloser(bytes.NewBuffer(reqBodyBytes))
 
 	switch payloadType {
 	case JsonPayload:
@@ -89,7 +100,7 @@ func Receive(r *http.Request, payloadType PayloadType, v interface{}) error {
 		return err
 
 	case XmlPayload:
-		return xml.Unmarshal(body, v)
+		return xml.Unmarshal(reqBodyBytes, v)
 	}
 
 	return err
@@ -171,5 +182,3 @@ func WithResponseError(err error) ResponseOption {
 		response.Error = err
 	}
 }
-
-

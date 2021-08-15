@@ -179,7 +179,7 @@ func (client *Client) Pay(ctx context.Context, request PayRequest) (response Pay
 	ctxOpt := internal.WithRequestContext(ctx)
 	requestOpts = append(requestOpts, ctxOpt, basicAuth, moreHeaderOpt)
 
-	tigoRequest := internal.NewRequest(http.MethodPost,
+	tigoRequest := internal.NewRequest(ctx, http.MethodPost,
 		client.ApiBaseURL+client.PushPayURL,
 		internal.JsonPayload, billPayReq,
 		requestOpts...,
@@ -196,9 +196,6 @@ func (client *Client) Pay(ctx context.Context, request PayRequest) (response Pay
 
 func (client *Client) Callback(w http.ResponseWriter, r *http.Request) {
 
-	if client.DebugMode {
-		client.Log("CALLBACK (FROM TIGO)", r)
-	}
 	var callbackRequest CallbackRequest
 	var callbackResponse CallbackResponse
 	var response *internal.Response
@@ -213,11 +210,11 @@ func (client *Client) Callback(w http.ResponseWriter, r *http.Request) {
 		}
 	}(client.DebugMode)
 
-	err := internal.Receive(r, internal.JsonPayload, &callbackRequest)
+	err := client.Receive(r, internal.CallbackRequest, internal.JsonPayload, &callbackRequest)
 
 	if err != nil {
 		statusCode = http.StatusInternalServerError
-		http.Error(w,err.Error(),statusCode)
+		http.Error(w, err.Error(), statusCode)
 		return
 	}
 
@@ -225,7 +222,7 @@ func (client *Client) Callback(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		statusCode = http.StatusInternalServerError
-		http.Error(w,err.Error(),statusCode)
+		http.Error(w, err.Error(), statusCode)
 		return
 	}
 
@@ -246,7 +243,7 @@ func (client *Client) Refund(ctx context.Context, refundReq RefundRequest) (Refu
 	ctxOption := internal.WithRequestContext(ctx)
 	requestOptions = append(requestOptions, ctxOption)
 
-	request := internal.NewRequest(http.MethodPost,
+	request := internal.NewRequest(ctx, http.MethodPost,
 		client.ApiBaseURL+client.GetTokenURL,
 		internal.JsonPayload, refundReq,
 		requestOptions...,
@@ -266,7 +263,7 @@ func (client *Client) HeartBeat(ctx context.Context, request HealthCheckRequest)
 	ctxOption := internal.WithRequestContext(ctx)
 	requestOptions = append(requestOptions, ctxOption)
 
-	req := internal.NewRequest(http.MethodPost, client.HealthCheckURL,
+	req := internal.NewRequest(ctx, http.MethodPost, client.HealthCheckURL,
 		internal.JsonPayload, request, requestOptions...)
 
 	if err := client.Send(ctx, internal.HealthCheckRequest, req, healthCheckResp); err != nil {
@@ -297,7 +294,7 @@ func (client *Client) Token(ctx context.Context) (TokenResponse, error) {
 	headersOption := internal.WithRequestHeaders(headers)
 	requestOptions = append(requestOptions, ctxOption, headersOption)
 
-	request := internal.NewRequest(http.MethodPost,
+	request := internal.NewRequest(ctx, http.MethodPost,
 		client.ApiBaseURL+client.GetTokenURL,
 		payloadType, form,
 		requestOptions...,

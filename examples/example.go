@@ -70,11 +70,11 @@ func makeApp() *App {
 	keeper := checker{usersMap}
 
 	bc := &internal.BaseClient{
-		HttpClient: http.DefaultClient,
-		Ctx:        context.Background(),
-		Timeout:    60 * time.Second,
-		Logger:     os.Stdout,
-		DebugMode:  true,
+		Http:      http.DefaultClient,
+		Ctx:       context.Background(),
+		Timeout:   60 * time.Second,
+		Logger:    os.Stdout,
+		DebugMode: true,
 	}
 
 	confx := LoadConfFromEnv()
@@ -140,7 +140,7 @@ func (a *App) disburseHandler(writer http.ResponseWriter, request *http.Request)
 
 	refid := fmt.Sprintf("PCT%s", strconv.FormatInt(time.Now().UnixNano(), 10))
 
-	resp, err := a.disburse.Do(context.TODO(), refid, info.Msisdn, info.Amount)
+	resp, err := a.disburse.Disburse(context.TODO(), refid, info.Msisdn, info.Amount)
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusBadRequest)
 		return

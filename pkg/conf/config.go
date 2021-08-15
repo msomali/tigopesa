@@ -8,7 +8,6 @@ import (
 )
 
 var (
-
 	ErrConfigNil = errors.New("config can not be nil")
 )
 
@@ -35,7 +34,6 @@ type (
 		PushReverseTransactionURL string
 		PushHealthCheckURL        string
 	}
-
 )
 
 func (conf *Config) Split() (pushConf *push.Config, pay *ussd.Config, disburse *disburse.Config) {

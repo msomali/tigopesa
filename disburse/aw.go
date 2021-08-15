@@ -25,13 +25,13 @@ const (
 )
 
 var (
-	_ Handler = (*HandlerFunc)(nil)
-	_ Handler = (*Client)(nil)
+	_ Service = (*HandlerFunc)(nil)
+	_ Service = (*Client)(nil)
 )
 
 type (
-	Handler interface {
-		Do(ctx context.Context, referenceId, msisdn string, amount float64) (Response, error)
+	Service interface {
+		Disburse(ctx context.Context, referenceId, msisdn string, amount float64) (Response, error)
 	}
 
 	HandlerFunc func(ctx context.Context, referenceId, msisdn string, amount float64) (Response, error)
@@ -68,10 +68,10 @@ type (
 		XMLName     xml.Name `xml:"COMMAND" json:"-"`
 		Text        string   `xml:",chardata" json:"-"`
 		Type        string   `xml:"TYPE" json:"type"`
-		ReferenceID string   `xml:"REFERENCEID" json:"reference"`
+		ReferenceID string   `xml:"REFERENCEID" json:"reference,omitempty"`
 		TxnID       string   `xml:"TXNID" json:"id,omitempty"`
-		TxnStatus   string   `xml:"TXNSTATUS" json:"status"`
-		Message     string   `xml:"MESSAGE" json:"message"`
+		TxnStatus   string   `xml:"TXNSTATUS" json:"status,omitempty"`
+		Message     string   `xml:"MESSAGE" json:"message,omitempty"`
 	}
 
 	Client struct {
@@ -80,7 +80,7 @@ type (
 	}
 )
 
-func (client *Client) Do(ctx context.Context, referenceId, msisdn string, amount float64) (response Response, err error) {
+func (client *Client) Disburse(ctx context.Context, referenceId, msisdn string, amount float64) (response Response, err error) {
 
 	var reqOpts []internal.RequestOption
 	ctxOpt := internal.WithRequestContext(ctx)
@@ -102,7 +102,7 @@ func (client *Client) Do(ctx context.Context, referenceId, msisdn string, amount
 		BrandID:     client.Config.BrandID,
 	}
 
-	req := internal.NewRequest(http.MethodPost, client.RequestURL, internal.XmlPayload, request, reqOpts...)
+	req := internal.NewRequest(ctx,http.MethodPost, client.RequestURL, internal.XmlPayload, request, reqOpts...)
 
 	err = client.Send(ctx, internal.DISBURSE_REQUEST, req, &response)
 
@@ -113,6 +113,6 @@ func (client *Client) Do(ctx context.Context, referenceId, msisdn string, amount
 	return
 }
 
-func (handler HandlerFunc) Do(ctx context.Context, referenceId, msisdn string, amount float64) (Response, error) {
+func (handler HandlerFunc) Disburse(ctx context.Context, referenceId, msisdn string, amount float64) (Response, error) {
 	return handler(ctx, referenceId, msisdn, amount)
 }

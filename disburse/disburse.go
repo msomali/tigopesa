@@ -86,12 +86,13 @@ func NewClient(config *Config, opts ...ClientOption) *Client {
 
 	client := &Client{
 		Config: config,
+		BaseClient: internal.NewBaseClient(),
 	}
-	client.Logger = defaultWriter
-	client.Ctx = defaultCtx
-	client.DebugMode = false
-	client.Timeout = defaultTimeout
-	client.Http = defaultHttpClient
+	//client.Logger = defaultWriter
+	//client.Ctx = defaultCtx
+	//client.DebugMode = false
+	//client.Timeout = defaultTimeout
+	//client.Http = defaultHttpClient
 
 	for _, opt := range opts {
 		opt(client)

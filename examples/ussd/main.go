@@ -19,6 +19,12 @@ type (
 	queryHandler int
 )
 
+func PaymentHandler()ussd.PaymentHandleFunc{
+	return func(ctx context.Context, request ussd.PayRequest) (ussd.PayResponse, error) {
+		return ussd.PayResponse{}, nil
+	}
+}
+
 func (q queryHandler) NameQuery(ctx context.Context, request ussd.NameRequest) (ussd.NameResponse, error) {
 	panic("implement me")
 }

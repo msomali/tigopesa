@@ -66,20 +66,6 @@ func NewBaseClient(opts ...ClientOption) *BaseClient {
 	return client
 }
 
-//func (client *BaseClient) NewRequest(method, url string, payloadType PayloadType, payload interface{}) (*http.Request, error) {
-//	var (
-//		ctx, _ = context.WithTimeout(context.Background(), client.Timeout)
-//	)
-//
-//	request := &Request{
-//		Context:     ctx,
-//		Method:      method,
-//		URL:         url,
-//		PayloadType: payloadType,
-//		Payload:     payload,
-//	}
-//	return request.newRequestWithContext()
-//}
 
 func (client *BaseClient) logPayload(t PayloadType, prefix string, payload interface{}) {
 	buf, _ := MarshalPayload(t, payload)

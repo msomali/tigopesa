@@ -143,12 +143,8 @@ func NewClient(config *Config,handler CallbackHandler,opts ...ClientOption) *Cli
 		CallbackHandler: handler,
 		token:           "",
 		tokenExpires:    time.Now(),
+		BaseClient: internal.NewBaseClient(),
 	}
-	client.Logger = defaultWriter
-	client.Ctx = defaultCtx
-	client.DebugMode = false
-	client.Timeout = defaultTimeout
-	client.Http = defaultHttpClient
 
 	for _, opt := range opts {
 		opt(client)
@@ -162,7 +158,6 @@ func (handler CallbackHandlerFunc) Respond(ctx context.Context, request Callback
 }
 
 func (client *Client) Pay(ctx context.Context, request PayRequest) (response PayResponse, err error) {
-
 	var billPayReq = payRequest{
 		CustomerMSISDN: request.CustomerMSISDN,
 		BillerMSISDN:   client.BillerMSISDN,

@@ -22,7 +22,6 @@ const (
 	TXN_STATUS_60030 = "60030"
 	TXN_STATUS_60074 = "60074"
 	TXN_STATUS_100   = "100"
-
 	YesFlag            = "Y"
 	NoFlag             = "N"
 	SucceededTxnResult = "TS"

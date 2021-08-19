@@ -127,12 +127,9 @@ func NewClient(config *Config, handler PaymentHandler, queryHandler NameQueryHan
 		Config:           config,
 		PaymentHandler:   handler,
 		NameQueryHandler: queryHandler,
+		BaseClient: internal.NewBaseClient(),
 	}
-	client.Logger = defaultWriter
-	client.Ctx = defaultCtx
-	client.DebugMode = false
-	client.Timeout = defaultTimeout
-	client.Http = defaultHttpClient
+
 
 	for _, opt := range opts {
 		opt(client)

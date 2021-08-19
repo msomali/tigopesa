@@ -102,7 +102,6 @@ func NewClient(config *Config, opts ...ClientOption) *Client {
 }
 
 func (client *Client) Disburse(ctx context.Context, referenceId, msisdn string, amount float64) (response Response, err error) {
-
 	var reqOpts []internal.RequestOption
 	ctxOpt := internal.WithRequestContext(ctx)
 	headers := map[string]string{
@@ -110,7 +109,6 @@ func (client *Client) Disburse(ctx context.Context, referenceId, msisdn string, 
 	}
 	headersOpt := internal.WithRequestHeaders(headers)
 	reqOpts = append(reqOpts, ctxOpt, headersOpt)
-
 	request := disburseRequest{
 		Type:        requestType,
 		ReferenceID: referenceId,

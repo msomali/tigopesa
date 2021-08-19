@@ -4,30 +4,7 @@ import (
 	"context"
 	"io"
 	"net/http"
-	"os"
 	"time"
-)
-
-const (
-	defaultTimeout = 60 * time.Second
-)
-
-var (
-	// defaultCtx is the context used by pkg when none is set
-	// to override this one has to call WithContext method and supply
-	// his her own context.Context
-	defaultCtx = context.TODO()
-
-	// defaultWriter is an io.Writer used for debugging. When debug mode is
-	// set to true i.e DEBUG=true and no io.Writer is provided via
-	// WithLogger method this is used.
-	defaultWriter = os.Stderr
-
-	// defaultHttpClient is the pkg used by library to send Http requests, specifically
-	// disbursement requests in case a user does not specify one
-	defaultHttpClient = &http.Client{
-		Timeout: defaultTimeout,
-	}
 )
 
 // ClientOption is a setter func to set Client details like

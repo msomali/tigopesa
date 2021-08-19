@@ -34,13 +34,8 @@ func NewClient(config *config.Overall,handler ussd.NameQueryHandler, paymentHand
 
 	client := &Client{
 		Overall:    config,
+		BaseClient: internal.NewBaseClient(),
 	}
-
-	client.Logger = defaultWriter
-	client.Ctx = defaultCtx
-	client.DebugMode = false
-	client.Timeout = defaultTimeout
-	client.Http = defaultHttpClient
 
 	for _, opt := range opts {
 		opt(client)

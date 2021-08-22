@@ -38,6 +38,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"strings"
+	"time"
 )
 
 const (
@@ -55,8 +56,12 @@ type (
 )
 
 func NewBaseClient(opts ...ClientOption) *BaseClient {
+
+	cl := &http.Client{
+		Timeout:       60 * time.Second,
+	}
 	client := &BaseClient{
-		HTTP:      http.DefaultClient,
+		HTTP:      cl,
 		Logger:    term.Stderr,
 		DebugMode: false,
 	}

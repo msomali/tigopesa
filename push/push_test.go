@@ -3,8 +3,8 @@ package push
 import (
 	"context"
 	"github.com/techcraftlabs/tigopesa/internal"
+	"github.com/techcraftlabs/tigopesa/term"
 	"net/http"
-	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -27,7 +27,7 @@ func TestNewClient(t *testing.T) {
 	var pushOpts []ClientOption
 	debugOption := WithDebugMode(true)
 	timeOutOption := WithTimeout(60 * time.Second)
-	loggerOption := WithLogger(os.Stderr)
+	loggerOption := WithLogger(term.Stderr)
 	contextOption := WithContext(context.TODO())
 	httpOption := WithHTTPClient(http.DefaultClient)
 	pushOpts = append(pushOpts, debugOption, loggerOption, timeOutOption, contextOption, httpOption)
@@ -51,10 +51,10 @@ func TestNewClient(t *testing.T) {
 			want: &Client{
 				Config: config,
 				BaseClient: &internal.BaseClient{
-					Http:      http.DefaultClient,
+					HTTP:      http.DefaultClient,
 					Ctx:       context.TODO(),
 					Timeout:   60 * time.Second,
-					Logger:    os.Stderr,
+					Logger:    term.Stderr,
 					DebugMode: true,
 				},
 				CallbackHandler: nil,

@@ -65,6 +65,6 @@ func WithHTTPClient(httpClient *http.Client) ClientOption {
 			return
 		}
 
-		client.Http = httpClient
+		client.HTTP = httpClient
 	}
 }

@@ -73,7 +73,7 @@ func TestBaseClient_Send(t *testing.T) {
 				Timeout:   60 * time.Second,
 				Logger:    os.Stderr,
 				DebugMode: true,
-		},
+			},
 			args: args{
 				ctx:     context.TODO(),
 				rn:      PaymentRequest,
@@ -86,7 +86,7 @@ func TestBaseClient_Send(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			client := &BaseClient{
-				Http:      tt.fields.Http,
+				HTTP:      tt.fields.Http,
 				Ctx:       tt.fields.Ctx,
 				Timeout:   tt.fields.Timeout,
 				Logger:    tt.fields.Logger,

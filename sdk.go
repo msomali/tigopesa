@@ -44,7 +44,7 @@ func NewClient(config *config.Overall, handler ussd.NameQueryHandler, paymentHan
 	pushConf, payConf, disburseConf := config.Split()
 
 	base := &internal.BaseClient{
-		Http:      client.Http,
+		HTTP:      client.HTTP,
 		Ctx:       client.Ctx,
 		Timeout:   client.Timeout,
 		Logger:    client.Logger,

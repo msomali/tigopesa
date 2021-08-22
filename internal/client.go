@@ -7,10 +7,11 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"github.com/techcraftlabs/tigopesa/term"
 	"io"
+	"log"
 	"net/http"
 	"net/http/httputil"
-	"os"
 	"strings"
 	"time"
 )
@@ -22,27 +23,9 @@ const (
 	appXMLContentTypeString = "application/xml"
 )
 
-var (
-	// defaultCtx is the context used by pkg when none is set
-	// to override this one has to call WithContext method and supply
-	// his her own context.Context
-	defaultCtx = context.TODO()
-
-	// defaultWriter is an io.Writer used for debugging. When debug mode is
-	// set to true i.e DEBUG=true and no io.Writer is provided via
-	// WithLogger method this is used.
-	defaultWriter = os.Stderr
-
-	// defaultHttpClient is the pkg used by library to send Http requests, specifically
-	// disbursement requests in case a user does not specify one
-	defaultHttpClient = &http.Client{
-		Timeout: defaultTimeout,
-	}
-)
-
 type (
 	BaseClient struct {
-		Http      *http.Client
+		HTTP      *http.Client
 		Ctx       context.Context
 		Timeout   time.Duration
 		Logger    io.Writer // for logging purposes
@@ -52,10 +35,10 @@ type (
 
 func NewBaseClient(opts ...ClientOption) *BaseClient {
 	client := &BaseClient{
-		Http:      defaultHttpClient,
-		Logger:    defaultWriter,
+		HTTP:      http.DefaultClient,
+		Logger:    term.Stderr,
 		Timeout:   defaultTimeout,
-		Ctx:       defaultCtx,
+		Ctx:       context.TODO(),
 		DebugMode: false,
 	}
 
@@ -72,31 +55,30 @@ func (client *BaseClient) logPayload(t PayloadType, prefix string, payload inter
 }
 
 // log is called to print the details of http.Request sent from Tigo during
-// callback, namecheck or ussd payment. It is used for debugging purposes
+// callback, namecheck or ussd payment. It is used for debugging purposes.
 func (client *BaseClient) log(name string, request *http.Request) {
-
 	if request != nil {
 		reqDump, _ := httputil.DumpRequest(request, true)
 		_, err := fmt.Fprintf(client.Logger, "%s REQUEST: %s\n", name, reqDump)
 		if err != nil {
-			fmt.Printf("error while logging %s request: %v\n",
+			log.Printf("error while logging %s request: %v\n",
 				strings.ToLower(name), err)
+
 			return
 		}
+
 		return
 	}
-	return
 }
 
 // logOut is like log except this is for outgoing client requests:
 // http.Request that is supposed to be sent to tigo
 func (client *BaseClient) logOut(name string, request *http.Request, response *http.Response) {
-
 	if request != nil {
 		reqDump, _ := httputil.DumpRequestOut(request, true)
 		_, err := fmt.Fprintf(client.Logger, "%s REQUEST: %s\n", name, reqDump)
 		if err != nil {
-			fmt.Printf("error while logging %s request: %v\n",
+			log.Printf("error while logging %s request: %v\n",
 				strings.ToLower(name), err)
 		}
 	}
@@ -105,7 +87,7 @@ func (client *BaseClient) logOut(name string, request *http.Request, response *h
 		respDump, _ := httputil.DumpResponse(response, true)
 		_, err := fmt.Fprintf(client.Logger, "%s RESPONSE: %s\n", name, respDump)
 		if err != nil {
-			fmt.Printf("error while logging %s response: %v\n",
+			log.Printf("error while logging %s response: %v\n",
 				strings.ToLower(name), err)
 		}
 	}
@@ -115,7 +97,7 @@ func (client *BaseClient) logOut(name string, request *http.Request, response *h
 
 func (client *BaseClient) Send(ctx context.Context, rn RequestName, request *Request, v interface{}) error {
 	var (
-		_, cancel = context.WithTimeout(context.Background(), client.Timeout)
+		_, cancel = context.WithTimeout(ctx, client.Timeout)
 	)
 
 	defer cancel()
@@ -128,7 +110,7 @@ func (client *BaseClient) Send(ctx context.Context, rn RequestName, request *Req
 		if debug {
 			req.Body = io.NopCloser(bytes.NewBuffer(reqBodyBytes))
 			name := strings.ToUpper(rn.String())
-			if res == nil{
+			if res == nil {
 				client.logOut(name, req, nil)
 				return
 			}
@@ -154,7 +136,7 @@ func (client *BaseClient) Send(ctx context.Context, rn RequestName, request *Req
 	}
 
 	req.Body = io.NopCloser(bytes.NewBuffer(reqBodyBytes))
-	res, err = client.Http.Do(req)
+	res, err = client.HTTP.Do(req)
 
 	if err != nil {
 		return err
@@ -165,7 +147,7 @@ func (client *BaseClient) Send(ctx context.Context, rn RequestName, request *Req
 	}
 
 	contentType := res.Header.Get("Content-Type")
-	if strings.Contains(contentType, "application/json") {
+	if strings.Contains(contentType, jsonContentTypeString) {
 		if err := json.NewDecoder(bytes.NewBuffer(resBodyBytes)).Decode(v); err != nil {
 			if err != io.EOF {
 				return err

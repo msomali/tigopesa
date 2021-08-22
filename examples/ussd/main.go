@@ -79,9 +79,7 @@ func main() {
 	}
 
 	client := ussd.NewClient(config, payHandler(1), queryHandler(2), opts...)
-
 	router := mux.NewRouter()
-
 	router.HandleFunc("/pay", client.HandlePayment)
 	router.HandleFunc("/name", client.HandleNameQuery)
 

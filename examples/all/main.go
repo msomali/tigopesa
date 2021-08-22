@@ -67,17 +67,15 @@ func (h handler) Respond(ctx context.Context, request push.CallbackRequest) (pus
 
 func main() {
 	timeout := 60 * time.Second
-	ctx, cancel := context.WithTimeout(context.TODO(), timeout)
+	_, cancel := context.WithTimeout(context.TODO(), timeout)
 	defer cancel()
 
 	var opts []tigopesa.ClientOption
 	debugOption := tigopesa.WithDebugMode(true)
-	timeOutOption := tigopesa.WithTimeout(timeout)
 	loggerOption := tigopesa.WithLogger(os.Stderr)
-	contextOption := tigopesa.WithContext(ctx)
 	httpOption := tigopesa.WithHTTPClient(http.DefaultClient)
 
-	opts = append(opts, debugOption, timeOutOption, loggerOption, contextOption, httpOption)
+	opts = append(opts, debugOption, loggerOption,  httpOption)
 
 	config := &config2.Overall{
 		PayAccountName:            "",

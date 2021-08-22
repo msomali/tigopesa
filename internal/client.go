@@ -66,7 +66,6 @@ func NewBaseClient(opts ...ClientOption) *BaseClient {
 	return client
 }
 
-
 func (client *BaseClient) logPayload(t PayloadType, prefix string, payload interface{}) {
 	buf, _ := MarshalPayload(t, payload)
 	_, _ = client.Logger.Write([]byte(fmt.Sprintf("%s: %s\n\n", prefix, buf.String())))
@@ -128,9 +127,14 @@ func (client *BaseClient) Send(ctx context.Context, rn RequestName, request *Req
 	defer func(debug bool) {
 		if debug {
 			req.Body = io.NopCloser(bytes.NewBuffer(reqBodyBytes))
-			res.Body = io.NopCloser(bytes.NewBuffer(resBodyBytes))
 			name := strings.ToUpper(rn.String())
+			if res == nil{
+				client.logOut(name, req, nil)
+				return
+			}
+			res.Body = io.NopCloser(bytes.NewBuffer(resBodyBytes))
 			client.logOut(name, req, res)
+
 		}
 	}(client.DebugMode)
 

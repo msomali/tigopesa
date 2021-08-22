@@ -137,13 +137,13 @@ type (
 	}
 )
 
-func NewClient(config *Config,handler CallbackHandler,opts ...ClientOption) *Client {
+func NewClient(config *Config, handler CallbackHandler, opts ...ClientOption) *Client {
 	client := &Client{
 		Config:          config,
 		CallbackHandler: handler,
 		token:           "",
 		tokenExpires:    time.Now(),
-		BaseClient: internal.NewBaseClient(),
+		BaseClient:      internal.NewBaseClient(),
 	}
 
 	for _, opt := range opts {

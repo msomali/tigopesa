@@ -10,16 +10,16 @@ import (
 )
 
 var (
-	_ ussd.PaymentHandler = (*payHandler)(nil)
+	_ ussd.PaymentHandler   = (*payHandler)(nil)
 	_ ussd.NameQueryHandler = (*queryHandler)(nil)
 )
 
 type (
-	payHandler int
+	payHandler   int
 	queryHandler int
 )
 
-func PaymentHandler()ussd.PaymentHandleFunc{
+func PaymentHandler() ussd.PaymentHandleFunc {
 	return func(ctx context.Context, request ussd.PayRequest) (ussd.PayResponse, error) {
 		return ussd.PayResponse{}, nil
 	}
@@ -36,7 +36,7 @@ func (p payHandler) PaymentRequest(ctx context.Context, request ussd.PayRequest)
 func main() {
 
 	timeout := 60 * time.Second
-	ctx, cancel := context.WithTimeout(context.TODO(),timeout)
+	ctx, cancel := context.WithTimeout(context.TODO(), timeout)
 	defer cancel()
 
 	var opts []ussd.ClientOption
@@ -45,7 +45,7 @@ func main() {
 	loggerOption := ussd.WithLogger(os.Stderr)
 	contextOption := ussd.WithContext(ctx)
 	httpOption := ussd.WithHTTPClient(http.DefaultClient)
-	opts = append(opts,debugOption,timeOutOption,loggerOption,contextOption,httpOption)
+	opts = append(opts, debugOption, timeOutOption, loggerOption, contextOption, httpOption)
 
 	config := &ussd.Config{
 		AccountName:   "",
@@ -55,12 +55,11 @@ func main() {
 		NamecheckURL:  "",
 	}
 
-
-	client := ussd.NewClient(config,payHandler(1),queryHandler(2),opts...)
+	client := ussd.NewClient(config, payHandler(1), queryHandler(2), opts...)
 
 	router := mux.NewRouter()
 
-	router.HandleFunc("/pay",client.HandlePayment)
-	router.HandleFunc("/name",client.HandleNameQuery)
+	router.HandleFunc("/pay", client.HandlePayment)
+	router.HandleFunc("/name", client.HandleNameQuery)
 
 }

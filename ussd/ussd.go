@@ -127,9 +127,8 @@ func NewClient(config *Config, handler PaymentHandler, queryHandler NameQueryHan
 		Config:           config,
 		PaymentHandler:   handler,
 		NameQueryHandler: queryHandler,
-		BaseClient: internal.NewBaseClient(),
+		BaseClient:       internal.NewBaseClient(),
 	}
-
 
 	for _, opt := range opts {
 		opt(client)

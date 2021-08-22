@@ -7,7 +7,6 @@ import (
 	"time"
 )
 
-
 // ClientOption is a setter func to set Client details like
 // Timeout, context, Http and Logger
 type ClientOption func(client *Client)

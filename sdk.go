@@ -29,7 +29,7 @@ type (
 	}
 )
 
-func NewClient(config *config.Overall,handler ussd.NameQueryHandler, paymentHandler ussd.PaymentHandler,
+func NewClient(config *config.Overall, handler ussd.NameQueryHandler, paymentHandler ussd.PaymentHandler,
 	callbackHandler push.CallbackHandler, opts ...ClientOption) *Client {
 
 	client := &Client{

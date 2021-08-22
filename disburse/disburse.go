@@ -85,7 +85,7 @@ type (
 func NewClient(config *Config, opts ...ClientOption) *Client {
 
 	client := &Client{
-		Config: config,
+		Config:     config,
 		BaseClient: internal.NewBaseClient(),
 	}
 	//client.Logger = defaultWriter

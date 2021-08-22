@@ -15,12 +15,12 @@ import (
 )
 
 var (
-	_ ussd.PaymentHandler = (*payHandler)(nil)
+	_ ussd.PaymentHandler   = (*payHandler)(nil)
 	_ ussd.NameQueryHandler = (*queryHandler)(nil)
 )
 
 type (
-	payHandler int
+	payHandler   int
 	queryHandler int
 )
 
@@ -40,10 +40,9 @@ func (h handler) Respond(ctx context.Context, request push.CallbackRequest) (pus
 	panic("implement me")
 }
 
-
 func main() {
 	timeout := 60 * time.Second
-	ctx, cancel := context.WithTimeout(context.TODO(),timeout)
+	ctx, cancel := context.WithTimeout(context.TODO(), timeout)
 	defer cancel()
 
 	var opts []tigopesa.ClientOption
@@ -53,7 +52,7 @@ func main() {
 	contextOption := tigopesa.WithContext(ctx)
 	httpOption := tigopesa.WithHTTPClient(http.DefaultClient)
 
-	opts = append(opts,debugOption,timeOutOption,loggerOption,contextOption,httpOption)
+	opts = append(opts, debugOption, timeOutOption, loggerOption, contextOption, httpOption)
 
 	config := &config2.Overall{
 		PayAccountName:            "",
@@ -77,7 +76,7 @@ func main() {
 		PushReverseTransactionURL: "",
 		PushHealthCheckURL:        "",
 	}
-	client := tigopesa.NewClient(config,queryHandler(1),payHandler(1),handler(1),opts...)
+	client := tigopesa.NewClient(config, queryHandler(1), payHandler(1), handler(1), opts...)
 
 	disbReq := disburse.Request{
 		ReferenceID: "",
@@ -87,11 +86,11 @@ func main() {
 
 	response, err := client.Disburse(context.TODO(), disbReq.ReferenceID, disbReq.MSISDN, disbReq.Amount)
 
-	if err != nil{
-		fmt.Printf("error is %v\n",err)
+	if err != nil {
+		fmt.Printf("error is %v\n", err)
 	}
 
-	fmt.Printf("response: %v\n",response)
+	fmt.Printf("response: %v\n", response)
 
 	pushPayRequest := push.PayRequest{
 		CustomerMSISDN: "",
@@ -101,22 +100,22 @@ func main() {
 	}
 
 	token, err := client.Token(context.TODO())
-	if err != nil{
-		fmt.Printf("error is %v\n",err)
+	if err != nil {
+		fmt.Printf("error is %v\n", err)
 	}
 
-	fmt.Printf("response: %v\n",token)
+	fmt.Printf("response: %v\n", token)
 
-	response2, err := client.Pay(context.TODO(),pushPayRequest)
-	if err != nil{
-		fmt.Printf("error is %v\n",err)
+	response2, err := client.Pay(context.TODO(), pushPayRequest)
+	if err != nil {
+		fmt.Printf("error is %v\n", err)
 	}
 
-	fmt.Printf("response: %v\n",response2)
+	fmt.Printf("response: %v\n", response2)
 
 	router := mux.NewRouter()
 
-	router.HandleFunc("/pay",client.HandlePayment)
-	router.HandleFunc("/name",client.HandleNameQuery)
+	router.HandleFunc("/pay", client.HandlePayment)
+	router.HandleFunc("/name", client.HandleNameQuery)
 
 }

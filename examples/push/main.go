@@ -19,7 +19,7 @@ func (h handler) Respond(ctx context.Context, request push.CallbackRequest) (pus
 
 func main() {
 	timeout := 60 * time.Second
-	ctx, cancel := context.WithTimeout(context.TODO(),timeout)
+	ctx, cancel := context.WithTimeout(context.TODO(), timeout)
 	defer cancel()
 
 	var opts []push.ClientOption
@@ -29,7 +29,7 @@ func main() {
 	contextOption := push.WithContext(ctx)
 	httpOption := push.WithHTTPClient(http.DefaultClient)
 
-	opts = append(opts,debugOption,timeOutOption,loggerOption,contextOption,httpOption)
+	opts = append(opts, debugOption, timeOutOption, loggerOption, contextOption, httpOption)
 
 	config := &push.Config{
 		Username:              "",
@@ -54,17 +54,17 @@ func main() {
 	}
 
 	token, err := client.Token(context.TODO())
-	if err != nil{
-		fmt.Printf("error is %v\n",err)
+	if err != nil {
+		fmt.Printf("error is %v\n", err)
 	}
 
-	fmt.Printf("response: %v\n",token)
+	fmt.Printf("response: %v\n", token)
 
-	response, err := client.Pay(context.TODO(),pushPayRequest)
-	if err != nil{
-		fmt.Printf("error is %v\n",err)
+	response, err := client.Pay(context.TODO(), pushPayRequest)
+	if err != nil {
+		fmt.Printf("error is %v\n", err)
 	}
 
-	fmt.Printf("response: %v\n",response)
+	fmt.Printf("response: %v\n", response)
 
 }

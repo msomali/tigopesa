@@ -44,16 +44,16 @@ func TestNewClient(t *testing.T) {
 		{
 			name: "normal creation",
 			args: args{
-				config: config,
+				config:  config,
 				handler: nil,
 				opts:    pushOpts,
 			},
 			want: &Client{
-				Config:          config,
-				BaseClient:      &internal.BaseClient{
+				Config: config,
+				BaseClient: &internal.BaseClient{
 					Http:      http.DefaultClient,
 					Ctx:       context.TODO(),
-					Timeout:   60*time.Second,
+					Timeout:   60 * time.Second,
 					Logger:    os.Stderr,
 					DebugMode: true,
 				},

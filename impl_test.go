@@ -43,7 +43,7 @@ func TestInterfaceImplementations(t *testing.T) {
 
 	t.Run("testing disburse interfaces & impl",
 		func(t *testing.T) {
-			var i,j interface{} = new(disburse.Client), new(disburse.HandlerFunc)
+			var i, j interface{} = new(disburse.Client), new(disburse.HandlerFunc)
 			if _, ok := i.(disburse.Service); !ok {
 				t.Fatalf("expected %t to implement Service", i)
 			}
@@ -56,7 +56,7 @@ func TestInterfaceImplementations(t *testing.T) {
 
 	t.Run("testing disburse interfaces & impl",
 		func(t *testing.T) {
-			var i,j interface{} = new(push.Client), new(push.CallbackHandlerFunc)
+			var i, j interface{} = new(push.Client), new(push.CallbackHandlerFunc)
 			if _, ok := i.(push.Service); !ok {
 				t.Fatalf("expected %t to implement Service", i)
 			}

@@ -137,7 +137,7 @@ func (client *Client) Disburse(ctx context.Context, referenceId, msisdn string, 
 
 	req := internal.NewRequest(ctx, http.MethodPost, client.RequestURL, internal.XmlPayload, request, reqOpts...)
 
-	err = client.Send(ctx, internal.DISBURSE_REQUEST, req, &response)
+	err = client.Send(ctx, internal.DisburseRequest, req, &response)
 
 	if err != nil {
 		return

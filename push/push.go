@@ -40,10 +40,6 @@ const (
 	FailureCode = "BILLER-30-3030-E"
 )
 
-var (
-
-)
-
 type (
 	TokenResponse struct {
 		AccessToken string `json:"access_token"`

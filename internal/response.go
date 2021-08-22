@@ -41,12 +41,6 @@ const (
 	ContentTypeJson = "application/json"
 )
 
-var (
-	defaultResponseHeader = map[string]string{
-		"Content-Type": ContentTypeXml,
-	}
-)
-
 type (
 	// Response contains details to be sent as a response to tigo
 	// when tigo make callback request, name check request or payment
@@ -71,6 +65,12 @@ type (
 //		"Content-Type": ContentTypeXml,
 // }
 func NewResponse(status int, payload interface{}, payloadType PayloadType, opts ...ResponseOption) *Response {
+
+	var (
+		defaultResponseHeader = map[string]string{
+			"Content-Type": ContentTypeXml,
+		}
+	)
 	response := &Response{
 		StatusCode:  status,
 		Payload:     payload,

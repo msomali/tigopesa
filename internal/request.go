@@ -30,16 +30,9 @@ import (
 	"net/http"
 )
 
-var (
-	defaultRequestHeaders = map[string]string{
-		"Content-Type":  "application/json",
-		"Cache-Control": "no-cache",
-	}
-)
-
 const (
 	PushPayRequest RequestName = iota
-	DISBURSE_REQUEST
+	DisburseRequest
 	GetTokenRequest
 	RefundRequest
 	HealthCheckRequest
@@ -88,6 +81,13 @@ type (
 )
 
 func NewRequest(ctx context.Context, method, url string, payloadType PayloadType, payload interface{}, opts ...RequestOption) *Request {
+	var (
+		defaultRequestHeaders = map[string]string{
+			"Content-Type":  "application/json",
+			"Cache-Control": "no-cache",
+		}
+	)
+
 	request := &Request{
 		Context:     ctx,
 		Method:      method,

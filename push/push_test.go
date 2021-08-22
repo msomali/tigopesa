@@ -23,21 +23,39 @@
  *
  */
 
-package push
+package push_test
 
 import (
+	"bytes"
 	"context"
-	"github.com/techcraftlabs/tigopesa/internal"
-	"github.com/techcraftlabs/tigopesa/internal/term"
+	"encoding/json"
+	"github.com/techcraftlabs/tigopesa/push"
 	"net/http"
-	"reflect"
+	"net/http/httptest"
 	"testing"
 	"time"
 )
 
-func TestNewClient(t *testing.T) {
+var _ push.CallbackHandler = (*testHandler)(nil)
 
-	config := &Config{
+type (
+	testHandler int
+)
+
+func (t testHandler) Respond(ctx context.Context, request push.CallbackRequest) (push.CallbackResponse, error) {
+	_, cancel := context.WithTimeout(ctx, time.Minute)
+	defer cancel()
+
+	return push.CallbackResponse{
+		ResponseCode:        push.SuccessCode,
+		ResponseDescription: request.Description,
+		ResponseStatus:      request.Status,
+		ReferenceID:         request.ReferenceID,
+	}, nil
+}
+
+func TestHealthCheckHandler(t *testing.T) {
+	conf := &push.Config{
 		Username:              "",
 		Password:              "",
 		PasswordGrantType:     "",
@@ -49,48 +67,40 @@ func TestNewClient(t *testing.T) {
 		ReverseTransactionURL: "",
 		HealthCheckURL:        "",
 	}
-	var pushOpts []ClientOption
-	debugOption := WithDebugMode(true)
-	timeOutOption := WithTimeout(60 * time.Second)
-	loggerOption := WithLogger(term.Stderr)
-	contextOption := WithContext(context.TODO())
-	httpOption := WithHTTPClient(http.DefaultClient)
-	pushOpts = append(pushOpts, debugOption, loggerOption, timeOutOption, contextOption, httpOption)
-	type args struct {
-		config  *Config
-		handler CallbackHandler
-		opts    []ClientOption
+	cHandler := testHandler(1)
+	client := push.NewClient(conf, cHandler, push.WithDebugMode(true))
+	reqPayload := push.CallbackRequest{
+		Status:           true,
+		Description:      "this is test",
+		MFSTransactionID: "TWTSVBSVBSGFSYA",
+		ReferenceID:      "WWTYTYW6W67WTW",
+		Amount:           "10000",
 	}
-	tests := []struct {
-		name string
-		args args
-		want *Client
-	}{
-		{
-			name: "normal creation",
-			args: args{
-				config:  config,
-				handler: nil,
-				opts:    pushOpts,
-			},
-			want: &Client{
-				Config: config,
-				BaseClient: &internal.BaseClient{
-					HTTP:      http.DefaultClient,
-					Ctx:       context.TODO(),
-					Timeout:   60 * time.Second,
-					Logger:    term.Stderr,
-					DebugMode: true,
-				},
-				CallbackHandler: nil,
-			},
-		},
+
+	buf, _ := json.Marshal(reqPayload)
+	req, err := http.NewRequestWithContext(context.TODO(), http.MethodPost, "/tigopesa/callback", bytes.NewBuffer(buf))
+	if err != nil {
+		t.Fatal(err)
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := NewClient(tt.args.config, tt.args.handler, tt.args.opts...); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewClient() = %v, want %v", got, tt.want)
-			}
-		})
+
+	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(client.Callback)
+
+	// Our handlers satisfy http.Handler, so we can call their ServeHTTP method
+	// directly and pass in our Request and ResponseRecorder.
+	handler.ServeHTTP(rr, req)
+
+	// Check the status code is what we expect.
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v",
+			status, http.StatusOK)
+	}
+
+	// Check the response body is what we expect.
+	expected := `{"ResponseCode":"BILLER-30-0000-S","ResponseDescription":"this is test","ResponseStatus":true,"ReferenceID":"WWTYTYW6W67WTW"}`
+	if rr.Body.String() != expected {
+		t.Errorf("handler returned unexpected body: got %v want %v",
+			rr.Body.String(), expected)
 	}
 }

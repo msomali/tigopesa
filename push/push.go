@@ -230,14 +230,8 @@ func (client *Client) Pay(ctx context.Context, request PayRequest) (response Pay
 }
 
 func (client *Client) Callback(w http.ResponseWriter, r *http.Request) {
-
-	var callbackRequest CallbackRequest
-	var callbackResponse CallbackResponse
-	var response *internal.Response
-	var statusCode int
-
-	statusCode = 200
-
+	callbackRequest := CallbackRequest{}
+	statusCode := 200
 	err := client.Receive(r, internal.CallbackRequest, internal.JsonPayload, &callbackRequest)
 
 	if err != nil {
@@ -246,7 +240,7 @@ func (client *Client) Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	callbackResponse, err = client.CallbackHandler.Respond(context.TODO(), callbackRequest)
+	callbackResponse, err := client.CallbackHandler.Respond(context.TODO(), callbackRequest)
 
 	if err != nil {
 		statusCode = http.StatusInternalServerError
@@ -258,7 +252,7 @@ func (client *Client) Callback(w http.ResponseWriter, r *http.Request) {
 	headers := internal.WithDefaultJsonHeader()
 
 	responseOpts = append(responseOpts, headers, internal.WithResponseError(err))
-	response = internal.NewResponse(statusCode, callbackResponse, internal.JsonPayload, responseOpts...)
+	response := internal.NewResponse(statusCode, callbackResponse, internal.JsonPayload, responseOpts...)
 
 	client.Reply("callback response", response, w)
 

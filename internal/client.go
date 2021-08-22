@@ -58,7 +58,7 @@ type (
 func NewBaseClient(opts ...ClientOption) *BaseClient {
 
 	cl := &http.Client{
-		Timeout:       60 * time.Second,
+		Timeout: 60 * time.Second,
 	}
 	client := &BaseClient{
 		HTTP:      cl,

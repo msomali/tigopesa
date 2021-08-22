@@ -112,8 +112,6 @@ func TestBaseClient_Send(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			client := &BaseClient{
 				HTTP:      tt.fields.Http,
-				Ctx:       tt.fields.Ctx,
-				Timeout:   tt.fields.Timeout,
 				Logger:    tt.fields.Logger,
 				DebugMode: tt.fields.DebugMode,
 			}

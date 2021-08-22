@@ -28,9 +28,9 @@ package main
 import (
 	"context"
 	"github.com/gorilla/mux"
+	"github.com/techcraftlabs/tigopesa/internal/term"
 	"github.com/techcraftlabs/tigopesa/ussd"
 	"net/http"
-	"os"
 	"time"
 )
 
@@ -61,16 +61,14 @@ func (p payHandler) PaymentRequest(ctx context.Context, request ussd.PayRequest)
 func main() {
 
 	timeout := 60 * time.Second
-	ctx, cancel := context.WithTimeout(context.TODO(), timeout)
+	_, cancel := context.WithTimeout(context.TODO(), timeout)
 	defer cancel()
 
 	var opts []ussd.ClientOption
 	debugOption := ussd.WithDebugMode(true)
-	timeOutOption := ussd.WithTimeout(timeout)
-	loggerOption := ussd.WithLogger(os.Stderr)
-	contextOption := ussd.WithContext(ctx)
+	loggerOption := ussd.WithLogger(term.Stderr)
 	httpOption := ussd.WithHTTPClient(http.DefaultClient)
-	opts = append(opts, debugOption, timeOutOption, loggerOption, contextOption, httpOption)
+	opts = append(opts, debugOption, loggerOption, httpOption)
 
 	config := &ussd.Config{
 		AccountName:   "",

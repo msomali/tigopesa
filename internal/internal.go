@@ -52,7 +52,6 @@ type (
 
 // MarshalPayload returns the JSON/XML encoding of payload.
 func MarshalPayload(payloadType PayloadType, payload interface{}) (buffer *bytes.Buffer, err error) {
-
 	switch payloadType {
 	case JsonPayload:
 		buf, err := json.Marshal(payload)

@@ -26,34 +26,13 @@
 package internal
 
 import (
-	"context"
 	"io"
 	"net/http"
-	"time"
 )
 
 // ClientOption is a setter func to set BaseClient details like
 // Timeout, context, Http and Logger
 type ClientOption func(client *BaseClient)
-
-// WithContext set the context to be used by Client in its ops
-// this unset the default value which is context.TODO()
-// This context value is mostly used by Handlers
-func WithContext(ctx context.Context) ClientOption {
-	return func(client *BaseClient) {
-		client.Ctx = ctx
-	}
-}
-
-// WithTimeout used to set the Timeout used by handlers like sending requests to
-// Tigo Gateway and back in case of DisburseRequest or to set the max time for
-// handlers QuerySubscriberFunc and WalletToAccountFunc while handling requests from tigo
-// the default value is 1 minute
-func WithTimeout(timeout time.Duration) ClientOption {
-	return func(client *BaseClient) {
-		client.Timeout = timeout
-	}
-}
 
 // WithDebugMode set debug mode to true or false
 func WithDebugMode(debugMode bool) ClientOption {

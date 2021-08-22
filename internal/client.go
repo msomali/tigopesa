@@ -32,17 +32,15 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"github.com/techcraftlabs/tigopesa/term"
+	"github.com/techcraftlabs/tigopesa/internal/term"
 	"io"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"strings"
-	"time"
 )
 
 const (
-	defaultTimeout          = 60 * time.Second
 	jsonContentTypeString   = "application/json"
 	xmlContentTypeString    = "text/xml"
 	appXMLContentTypeString = "application/xml"
@@ -51,8 +49,6 @@ const (
 type (
 	BaseClient struct {
 		HTTP      *http.Client
-		Ctx       context.Context
-		Timeout   time.Duration
 		Logger    io.Writer // for logging purposes
 		DebugMode bool
 	}
@@ -62,8 +58,6 @@ func NewBaseClient(opts ...ClientOption) *BaseClient {
 	client := &BaseClient{
 		HTTP:      http.DefaultClient,
 		Logger:    term.Stderr,
-		Timeout:   defaultTimeout,
-		Ctx:       context.TODO(),
 		DebugMode: false,
 	}
 
@@ -121,11 +115,6 @@ func (client *BaseClient) logOut(name string, request *http.Request, response *h
 }
 
 func (client *BaseClient) Send(ctx context.Context, rn RequestName, request *Request, v interface{}) error {
-	var (
-		_, cancel = context.WithTimeout(ctx, client.Timeout)
-	)
-
-	defer cancel()
 	var req *http.Request
 	var res *http.Response
 

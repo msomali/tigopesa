@@ -28,7 +28,7 @@ package push
 import (
 	"context"
 	"github.com/techcraftlabs/tigopesa/internal"
-	"github.com/techcraftlabs/tigopesa/term"
+	"github.com/techcraftlabs/tigopesa/internal/term"
 	"net/http"
 	"reflect"
 	"testing"

@@ -70,8 +70,6 @@ func NewClient(config *config.Overall, handler ussd.NameQueryHandler, paymentHan
 
 	base := &internal.BaseClient{
 		HTTP:      client.HTTP,
-		Ctx:       client.Ctx,
-		Timeout:   client.Timeout,
 		Logger:    client.Logger,
 		DebugMode: client.DebugMode,
 	}

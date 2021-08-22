@@ -44,17 +44,15 @@ func (h handler) Respond(ctx context.Context, request push.CallbackRequest) (pus
 
 func main() {
 	timeout := 60 * time.Second
-	ctx, cancel := context.WithTimeout(context.TODO(), timeout)
+	_, cancel := context.WithTimeout(context.TODO(), timeout)
 	defer cancel()
 
 	var opts []push.ClientOption
 	debugOption := push.WithDebugMode(true)
-	timeOutOption := push.WithTimeout(timeout)
 	loggerOption := push.WithLogger(os.Stderr)
-	contextOption := push.WithContext(ctx)
 	httpOption := push.WithHTTPClient(http.DefaultClient)
 
-	opts = append(opts, debugOption, timeOutOption, loggerOption, contextOption, httpOption)
+	opts = append(opts, debugOption, loggerOption, httpOption)
 
 	config := &push.Config{
 		Username:              "",

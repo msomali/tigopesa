@@ -198,7 +198,7 @@ func (client *Client) Pay(ctx context.Context, request PayRequest) (response Pay
 	//Add Auth Header
 	if client.token != "" {
 		if !client.tokenExpires.IsZero() && time.Until(client.tokenExpires) < (60*time.Second) {
-			if _, err := client.Token(client.Ctx); err != nil {
+			if _, err := client.Token(ctx); err != nil {
 				return response, err
 			}
 		}
@@ -246,7 +246,7 @@ func (client *Client) Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	callbackResponse, err = client.CallbackHandler.Respond(client.Ctx, callbackRequest)
+	callbackResponse, err = client.CallbackHandler.Respond(context.TODO(), callbackRequest)
 
 	if err != nil {
 		statusCode = http.StatusInternalServerError

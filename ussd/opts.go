@@ -26,34 +26,13 @@
 package ussd
 
 import (
-	"context"
 	"io"
 	"net/http"
-	"time"
 )
 
 // ClientOption is a setter func to set Client details like
 // Timeout, context, Http and Logger
 type ClientOption func(client *Client)
-
-// WithContext set the context to be used by Client in its ops
-// this unset the default value which is context.TODO()
-// This context value is mostly used by Handlers
-func WithContext(ctx context.Context) ClientOption {
-	return func(client *Client) {
-		client.Ctx = ctx
-	}
-}
-
-// WithTimeout used to set the Timeout used by handlers like sending requests to
-// Tigo Gateway and back in case of DISBURSE_REQUEST or to set the max time for
-// handlers QuerySubscriberFunc and WalletToAccountFunc while handling requests from tigo
-// the default value is 1 minute
-func WithTimeout(timeout time.Duration) ClientOption {
-	return func(client *Client) {
-		client.Timeout = timeout
-	}
-}
 
 // WithDebugMode set debug mode to true or false
 func WithDebugMode(debugMode bool) ClientOption {

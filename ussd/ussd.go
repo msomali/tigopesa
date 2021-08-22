@@ -30,6 +30,7 @@ import (
 	"encoding/xml"
 	"github.com/techcraftlabs/tigopesa/internal"
 	"net/http"
+	"time"
 )
 
 const (
@@ -172,7 +173,7 @@ func (handler NameQueryFunc) NameQuery(ctx context.Context, request NameRequest)
 
 func (client *Client) HandleNameQuery(writer http.ResponseWriter, request *http.Request) {
 
-	ctx, cancel := context.WithTimeout(client.Ctx, client.Timeout)
+	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
 	defer cancel()
 	var req NameRequest
 
@@ -195,7 +196,7 @@ func (client *Client) HandleNameQuery(writer http.ResponseWriter, request *http.
 
 func (client *Client) HandlePayment(writer http.ResponseWriter, request *http.Request) {
 
-	ctx, cancel := context.WithTimeout(client.Ctx, client.Timeout)
+	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
 	defer cancel()
 
 	var req PayRequest

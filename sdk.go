@@ -74,13 +74,13 @@ func NewClient(config *config.Overall, handler ussd.NameQueryHandler, paymentHan
 		DebugMode: client.DebugMode,
 	}
 	pushBase := base
-	pushClient := makePushClient(pushConf,callbackHandler,pushBase)
+	pushClient := makePushClient(pushConf, callbackHandler, pushBase)
 
 	ussdBase := base
-	payClient := makeUSSDClient(payConf,paymentHandler,handler,ussdBase)
+	payClient := makeUSSDClient(payConf, paymentHandler, handler, ussdBase)
 
 	disburseBase := base
-	disburseClient := makeDisburseClient(disburseConf,disburseBase)
+	disburseClient := makeDisburseClient(disburseConf, disburseBase)
 
 	client.push = pushClient
 	client.ussd = payClient
@@ -89,7 +89,7 @@ func NewClient(config *config.Overall, handler ussd.NameQueryHandler, paymentHan
 	return client
 }
 
-func makePushClient(conf *push.Config, handler push.CallbackHandler,client *internal.BaseClient) *push.Client {
+func makePushClient(conf *push.Config, handler push.CallbackHandler, client *internal.BaseClient) *push.Client {
 	logger := client.Logger
 	debug := client.DebugMode
 	c := client.HTTP
@@ -97,35 +97,35 @@ func makePushClient(conf *push.Config, handler push.CallbackHandler,client *inte
 	loggerOpt := push.WithLogger(logger)
 	debugOpt := push.WithDebugMode(debug)
 	httpClient := push.WithHTTPClient(c)
-	opts = append(opts,loggerOpt,debugOpt,httpClient)
+	opts = append(opts, loggerOpt, debugOpt, httpClient)
 
 	return push.NewClient(conf, handler, opts...)
 }
 
-func makeDisburseClient(conf *disburse.Config,client *internal.BaseClient) *disburse.Client {
+func makeDisburseClient(conf *disburse.Config, client *internal.BaseClient) *disburse.Client {
 	logger := client.Logger
 	debug := client.DebugMode
 	c := client.HTTP
 	var opts []disburse.ClientOption
 	loggerOpt := disburse.WithLogger(logger)
-	debugOpt :=disburse.WithDebugMode(debug)
+	debugOpt := disburse.WithDebugMode(debug)
 	httpClient := disburse.WithHTTPClient(c)
-	opts = append(opts,loggerOpt,debugOpt,httpClient)
+	opts = append(opts, loggerOpt, debugOpt, httpClient)
 
 	return disburse.NewClient(conf, opts...)
 }
 
-func makeUSSDClient(conf *ussd.Config,payHandler ussd.PaymentHandler, nameHandler ussd.NameQueryHandler,client *internal.BaseClient) *ussd.Client {
+func makeUSSDClient(conf *ussd.Config, payHandler ussd.PaymentHandler, nameHandler ussd.NameQueryHandler, client *internal.BaseClient) *ussd.Client {
 	logger := client.Logger
 	debug := client.DebugMode
 	c := client.HTTP
 	var opts []ussd.ClientOption
 	loggerOpt := ussd.WithLogger(logger)
-	debugOpt :=ussd.WithDebugMode(debug)
+	debugOpt := ussd.WithDebugMode(debug)
 	httpClient := ussd.WithHTTPClient(c)
-	opts = append(opts,loggerOpt,debugOpt,httpClient)
+	opts = append(opts, loggerOpt, debugOpt, httpClient)
 
-	return ussd.NewClient(conf, payHandler,nameHandler,opts...)
+	return ussd.NewClient(conf, payHandler, nameHandler, opts...)
 }
 
 func (client *Client) Disburse(ctx context.Context, request disburse.Request) (disburse.Response, error) {
@@ -159,4 +159,3 @@ func (client *Client) Refund(ctx context.Context, request push.RefundRequest) (p
 func (client *Client) HeartBeat(ctx context.Context, request push.HealthCheckRequest) (push.HealthCheckResponse, error) {
 	return client.push.HeartBeat(ctx, request)
 }
-

@@ -138,7 +138,7 @@ type (
 	//Client is the client for making push pay requests
 	Client struct {
 		*Config
-		base *internal.BaseClient
+		base            *internal.BaseClient
 		CallbackHandler CallbackHandler
 		token           string
 		tokenExpires    time.Time
@@ -163,7 +163,7 @@ func NewClient(config *Config, handler CallbackHandler, opts ...ClientOption) *C
 		CallbackHandler: handler,
 		token:           "",
 		tokenExpires:    time.Now(),
-		base:      internal.NewBaseClient(),
+		base:            internal.NewBaseClient(),
 	}
 
 	for _, opt := range opts {
@@ -221,7 +221,6 @@ func (client *Client) Pay(ctx context.Context, request PayRequest) (response Pay
 	)
 
 	err = client.base.Send(context.TODO(), internal.PushPayRequest, tigoRequest, &response)
-
 
 	if err != nil {
 		return response, err

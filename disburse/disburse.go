@@ -100,8 +100,8 @@ type (
 
 func NewClient(config *Config, opts ...ClientOption) *Client {
 	client := &Client{
-		Config:     config,
-		base: internal.NewBaseClient(),
+		Config: config,
+		base:   internal.NewBaseClient(),
 	}
 
 	for _, opt := range opts {
@@ -141,4 +141,3 @@ func (client *Client) Disburse(ctx context.Context, request Request) (response R
 
 	return
 }
-

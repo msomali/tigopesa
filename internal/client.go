@@ -184,3 +184,4 @@ func (client *BaseClient) Send(ctx context.Context, rn RequestName, request *Req
 	}
 	return nil
 }
+

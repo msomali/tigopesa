@@ -73,24 +73,14 @@ func NewClient(config *config.Overall, handler ussd.NameQueryHandler, paymentHan
 		Logger:    client.Logger,
 		DebugMode: client.DebugMode,
 	}
+	pushBase := base
+	pushClient := makePushClient(pushConf,callbackHandler,pushBase)
 
-	pushClient := &push.Client{
-		Config:          pushConf,
-		BaseClient:      base,
-		CallbackHandler: callbackHandler,
-	}
+	ussdBase := base
+	payClient := makeUSSDClient(payConf,paymentHandler,handler,ussdBase)
 
-	payClient := &ussd.Client{
-		BaseClient:       base,
-		Config:           payConf,
-		PaymentHandler:   paymentHandler,
-		NameQueryHandler: handler,
-	}
-
-	disburseClient := &disburse.Client{
-		Config:     disburseConf,
-		BaseClient: base,
-	}
+	disburseBase := base
+	disburseClient := makeDisburseClient(disburseConf,disburseBase)
 
 	client.push = pushClient
 	client.ussd = payClient
@@ -99,8 +89,47 @@ func NewClient(config *config.Overall, handler ussd.NameQueryHandler, paymentHan
 	return client
 }
 
-func (client *Client) Disburse(ctx context.Context, referenceId, msisdn string, amount float64) (disburse.Response, error) {
-	return client.disburse.Disburse(ctx, referenceId, msisdn, amount)
+func makePushClient(conf *push.Config, handler push.CallbackHandler,client *internal.BaseClient) *push.Client {
+	logger := client.Logger
+	debug := client.DebugMode
+	c := client.HTTP
+	var opts []push.ClientOption
+	loggerOpt := push.WithLogger(logger)
+	debugOpt := push.WithDebugMode(debug)
+	httpClient := push.WithHTTPClient(c)
+	opts = append(opts,loggerOpt,debugOpt,httpClient)
+
+	return push.NewClient(conf, handler, opts...)
+}
+
+func makeDisburseClient(conf *disburse.Config,client *internal.BaseClient) *disburse.Client {
+	logger := client.Logger
+	debug := client.DebugMode
+	c := client.HTTP
+	var opts []disburse.ClientOption
+	loggerOpt := disburse.WithLogger(logger)
+	debugOpt :=disburse.WithDebugMode(debug)
+	httpClient := disburse.WithHTTPClient(c)
+	opts = append(opts,loggerOpt,debugOpt,httpClient)
+
+	return disburse.NewClient(conf, opts...)
+}
+
+func makeUSSDClient(conf *ussd.Config,payHandler ussd.PaymentHandler, nameHandler ussd.NameQueryHandler,client *internal.BaseClient) *ussd.Client {
+	logger := client.Logger
+	debug := client.DebugMode
+	c := client.HTTP
+	var opts []ussd.ClientOption
+	loggerOpt := ussd.WithLogger(logger)
+	debugOpt :=ussd.WithDebugMode(debug)
+	httpClient := ussd.WithHTTPClient(c)
+	opts = append(opts,loggerOpt,debugOpt,httpClient)
+
+	return ussd.NewClient(conf, payHandler,nameHandler,opts...)
+}
+
+func (client *Client) Disburse(ctx context.Context, request disburse.Request) (disburse.Response, error) {
+	return client.disburse.Disburse(ctx, request)
 }
 
 func (client *Client) HandleNameQuery(writer http.ResponseWriter, request *http.Request) {
@@ -131,72 +160,3 @@ func (client *Client) HeartBeat(ctx context.Context, request push.HealthCheckReq
 	return client.push.HeartBeat(ctx, request)
 }
 
-//// handleRequest is experimental no guarantees
-//func (client *Client) handleRequest(ctx context.Context, requestName internal.RequestName) http.HandlerFunc {
-//	ctx, cancel := context.WithTimeout(ctx, client.Timeout)
-//	defer cancel()
-//	return func(writer http.ResponseWriter, request *http.Request) {
-//		switch requestName {
-//		case internal.NameQueryRequest:
-//			client.ussd.HandleNameQuery(writer, request)
-//		case internal.PaymentRequest:
-//			client.ussd.HandlePayment(writer, request)
-//		case internal.CallbackRequest:
-//			client.push.Callback(writer, request)
-//		default:
-//			http.Error(writer, "unknown request type", http.StatusInternalServerError)
-//		}
-//	}
-//}
-
-////sendRequest like handleRequest is experimental for neat and short API
-////the problem with this API is type checking and conversion that you have
-////to deal with while using it
-//func (client *Client) sendRequest(ctx context.Context, requestName internal.RequestName,
-//	request interface{}) (response interface{}, err error) {
-//
-//	if request == nil && requestName != internal.GetTokenRequest {
-//		return nil, fmt.Errorf("request can not be nil")
-//	}
-//
-//	ctx, cancel := context.WithTimeout(ctx, client.Timeout)
-//	defer cancel()
-//	switch requestName {
-//	case internal.RefundRequest:
-//		refundReq, ok := request.(push.RefundRequest)
-//		if !ok {
-//			err = fmt.Errorf("invalid refund request")
-//			return nil, err
-//		}
-//		return client.push.Refund(ctx, refundReq)
-//
-//	case internal.DISBURSE_REQUEST:
-//		disburseReq, ok := request.(disburse.Request)
-//		if !ok {
-//			err = fmt.Errorf("invalid disburse request")
-//			return nil, err
-//		}
-//		return client.disburse.Disburse(ctx, disburseReq.ReferenceID, disburseReq.MSISDN, disburseReq.Amount)
-//
-//	case internal.PushPayRequest:
-//		payReq, ok := request.(push.PayRequest)
-//		if !ok {
-//			err = fmt.Errorf("invalid push pay request")
-//			return nil, err
-//		}
-//		return client.push.Pay(ctx, payReq)
-//
-//	case internal.HealthCheckRequest:
-//		healthReq, ok := request.(push.HealthCheckRequest)
-//		if !ok {
-//			err = fmt.Errorf("invalid health check request")
-//			return nil, err
-//		}
-//		return client.push.HeartBeat(ctx, healthReq)
-//
-//	case internal.GetTokenRequest:
-//		return client.push.Token(ctx)
-//	}
-//
-//	return nil, fmt.Errorf("unsupported request type")
-//}

@@ -51,12 +51,8 @@ const (
 
 type (
 	Service interface {
-		Disburse(ctx context.Context, referenceID, msisdn string, amount float64) (Response, error)
+		Disburse(ctx context.Context, request Request) (Response, error)
 	}
-
-	ClientX internal.BaseClient
-
-	HandlerFunc func(ctx context.Context, referenceId, msisdn string, amount float64) (Response, error)
 
 	Config struct {
 		AccountName   string
@@ -98,14 +94,14 @@ type (
 
 	Client struct {
 		*Config
-		*internal.BaseClient
+		base *internal.BaseClient
 	}
 )
 
 func NewClient(config *Config, opts ...ClientOption) *Client {
 	client := &Client{
 		Config:     config,
-		BaseClient: internal.NewBaseClient(),
+		base: internal.NewBaseClient(),
 	}
 
 	for _, opt := range opts {
@@ -115,7 +111,7 @@ func NewClient(config *Config, opts ...ClientOption) *Client {
 	return client
 }
 
-func (client *Client) Disburse(ctx context.Context, referenceId, msisdn string, amount float64) (response Response, err error) {
+func (client *Client) Disburse(ctx context.Context, request Request) (response Response, err error) {
 	var reqOpts []internal.RequestOption
 	ctxOpt := internal.WithRequestContext(ctx)
 	headers := map[string]string{
@@ -123,21 +119,21 @@ func (client *Client) Disburse(ctx context.Context, referenceId, msisdn string, 
 	}
 	headersOpt := internal.WithRequestHeaders(headers)
 	reqOpts = append(reqOpts, ctxOpt, headersOpt)
-	request := disburseRequest{
+	r := disburseRequest{
 		Type:        requestType,
-		ReferenceID: referenceId,
+		ReferenceID: request.ReferenceID,
 		Msisdn:      client.Config.AccountMSISDN,
 		PIN:         client.Config.PIN,
-		Msisdn1:     msisdn,
-		Amount:      amount,
+		Msisdn1:     request.MSISDN,
+		Amount:      request.Amount,
 		SenderName:  client.Config.AccountName,
 		Language1:   senderLanguage,
 		BrandID:     client.Config.BrandID,
 	}
 
-	req := internal.NewRequest(ctx, http.MethodPost, client.RequestURL, internal.XmlPayload, request, reqOpts...)
+	req := internal.NewRequest(ctx, http.MethodPost, client.RequestURL, internal.XmlPayload, r, reqOpts...)
 
-	err = client.Send(ctx, internal.DisburseRequest, req, &response)
+	err = client.base.Send(ctx, internal.DisburseRequest, req, &response)
 
 	if err != nil {
 		return
@@ -146,6 +142,3 @@ func (client *Client) Disburse(ctx context.Context, referenceId, msisdn string, 
 	return
 }
 
-func (handler HandlerFunc) Disburse(ctx context.Context, referenceId, msisdn string, amount float64) (Response, error) {
-	return handler(ctx, referenceId, msisdn, amount)
-}

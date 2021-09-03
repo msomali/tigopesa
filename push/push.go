@@ -138,7 +138,7 @@ type (
 	//Client is the client for making push pay requests
 	Client struct {
 		*Config
-		*internal.BaseClient
+		base *internal.BaseClient
 		CallbackHandler CallbackHandler
 		token           string
 		tokenExpires    time.Time
@@ -163,7 +163,7 @@ func NewClient(config *Config, handler CallbackHandler, opts ...ClientOption) *C
 		CallbackHandler: handler,
 		token:           "",
 		tokenExpires:    time.Now(),
-		BaseClient:      internal.NewBaseClient(),
+		base:      internal.NewBaseClient(),
 	}
 
 	for _, opt := range opts {
@@ -220,7 +220,8 @@ func (client *Client) Pay(ctx context.Context, request PayRequest) (response Pay
 		requestOpts...,
 	)
 
-	err = client.Send(context.TODO(), internal.PushPayRequest, tigoRequest, &response)
+	err = client.base.Send(context.TODO(), internal.PushPayRequest, tigoRequest, &response)
+
 
 	if err != nil {
 		return response, err
@@ -232,7 +233,7 @@ func (client *Client) Pay(ctx context.Context, request PayRequest) (response Pay
 func (client *Client) Callback(w http.ResponseWriter, r *http.Request) {
 	callbackRequest := CallbackRequest{}
 	statusCode := 200
-	err := client.Receive(r, internal.CallbackRequest, internal.JsonPayload, &callbackRequest)
+	err := client.base.Receive(r, internal.CallbackRequest, internal.JsonPayload, &callbackRequest)
 
 	if err != nil {
 		statusCode = http.StatusInternalServerError
@@ -254,7 +255,7 @@ func (client *Client) Callback(w http.ResponseWriter, r *http.Request) {
 	responseOpts = append(responseOpts, headers, internal.WithResponseError(err))
 	response := internal.NewResponse(statusCode, callbackResponse, internal.JsonPayload, responseOpts...)
 
-	client.Reply("callback response", response, w)
+	client.base.Reply("callback response", response, w)
 
 }
 
@@ -271,7 +272,7 @@ func (client *Client) Refund(ctx context.Context, refundReq RefundRequest) (Refu
 		requestOptions...,
 	)
 
-	if err := client.Send(ctx, internal.RefundRequest, request, refundPaymentResp); err != nil {
+	if err := client.base.Send(ctx, internal.RefundRequest, request, refundPaymentResp); err != nil {
 		return RefundResponse{}, err
 	}
 
@@ -288,7 +289,7 @@ func (client *Client) HeartBeat(ctx context.Context, request HealthCheckRequest)
 	req := internal.NewRequest(ctx, http.MethodPost, client.HealthCheckURL,
 		internal.JsonPayload, request, requestOptions...)
 
-	if err := client.Send(ctx, internal.HealthCheckRequest, req, healthCheckResp); err != nil {
+	if err := client.base.Send(ctx, internal.HealthCheckRequest, req, healthCheckResp); err != nil {
 		return HealthCheckResponse{}, err
 	}
 
@@ -324,7 +325,7 @@ func (client *Client) Token(ctx context.Context) (TokenResponse, error) {
 
 	var tokenResponse TokenResponse
 
-	err := client.Send(context.TODO(), internal.GetTokenRequest, request, &tokenResponse)
+	err := client.base.Send(context.TODO(), internal.GetTokenRequest, request, &tokenResponse)
 
 	if err != nil {
 		return TokenResponse{}, err

@@ -69,7 +69,7 @@ func NewClient(config *config.Overall, handler ussd.NameQueryHandler, paymentHan
 	pushConf, payConf, disburseConf := config.Split()
 
 	base := &internal.BaseClient{
-		HTTP:      client.HTTP,
+		Http:      client.Http,
 		Logger:    client.Logger,
 		DebugMode: client.DebugMode,
 	}
@@ -92,7 +92,7 @@ func NewClient(config *config.Overall, handler ussd.NameQueryHandler, paymentHan
 func makePushClient(conf *push.Config, handler push.CallbackHandler, client *internal.BaseClient) *push.Client {
 	logger := client.Logger
 	debug := client.DebugMode
-	c := client.HTTP
+	c := client.Http
 	var opts []push.ClientOption
 	loggerOpt := push.WithLogger(logger)
 	debugOpt := push.WithDebugMode(debug)
@@ -105,7 +105,7 @@ func makePushClient(conf *push.Config, handler push.CallbackHandler, client *int
 func makeDisburseClient(conf *disburse.Config, client *internal.BaseClient) *disburse.Client {
 	logger := client.Logger
 	debug := client.DebugMode
-	c := client.HTTP
+	c := client.Http
 	var opts []disburse.ClientOption
 	loggerOpt := disburse.WithLogger(logger)
 	debugOpt := disburse.WithDebugMode(debug)
@@ -118,7 +118,7 @@ func makeDisburseClient(conf *disburse.Config, client *internal.BaseClient) *dis
 func makeUSSDClient(conf *ussd.Config, payHandler ussd.PaymentHandler, nameHandler ussd.NameQueryHandler, client *internal.BaseClient) *ussd.Client {
 	logger := client.Logger
 	debug := client.DebugMode
-	c := client.HTTP
+	c := client.Http
 	var opts []ussd.ClientOption
 	loggerOpt := ussd.WithLogger(logger)
 	debugOpt := ussd.WithDebugMode(debug)
@@ -128,16 +128,16 @@ func makeUSSDClient(conf *ussd.Config, payHandler ussd.PaymentHandler, nameHandl
 	return ussd.NewClient(conf, payHandler, nameHandler, opts...)
 }
 
-func (client *Client) Disburse(ctx context.Context, request disburse.Request) (disburse.response, error) {
+func (client *Client) Disburse(ctx context.Context, request disburse.Request) (disburse.Response, error) {
 	return client.disburse.Disburse(ctx, request)
 }
 
-func (client *Client) HandleNameQuery(writer http.ResponseWriter, request *http.Request) {
-	client.ussd.HandleNameQuery(writer, request)
+func (client *Client) NameQueryServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	client.ussd.NameQueryServeHTTP(writer, request)
 }
 
-func (client *Client) HandlePayment(writer http.ResponseWriter, request *http.Request) {
-	client.ussd.HandlePayment(writer, request)
+func (client *Client) PaymentServerHTTP(writer http.ResponseWriter, request *http.Request) {
+	client.ussd.PaymentServerHTTP(writer, request)
 }
 
 func (client *Client) Token(ctx context.Context) (push.TokenResponse, error) {
@@ -152,10 +152,3 @@ func (client *Client) Callback(writer http.ResponseWriter, r *http.Request) {
 	client.push.Callback(writer, r)
 }
 
-//func (client *Client) Refund(ctx context.Context, request push.RefundRequest) (push.RefundResponse, error) {
-//	return client.push.Refund(ctx, request)
-//}
-//
-//func (client *Client) HeartBeat(ctx context.Context, request push.HealthCheckRequest) (push.HealthCheckResponse, error) {
-//	return client.push.HeartBeat(ctx, request)
-//}

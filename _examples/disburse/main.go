@@ -40,7 +40,7 @@ func main() {
 		AccountMSISDN: "",
 		BrandID:       "",
 		PIN:           "",
-		RequestURL:    "",
+		RequestURL:    "https://google.com",
 	}
 	var opts []disburse.ClientOption
 	loggerOpt := disburse.WithLogger(os.Stderr)
@@ -48,7 +48,12 @@ func main() {
 	httpClient := disburse.WithHTTPClient(&http.Client{Timeout: time.Minute})
 	opts = append(opts,loggerOpt,debugOpt,httpClient)
 	client := disburse.NewClient(config,opts...)
-	response, err := client.Disburse(context.TODO(), "", "07XXXXXBBBB", 100000)
+	req := disburse.Request{
+		ReferenceID: "",
+		MSISDN:      "",
+		Amount:      0,
+	}
+	response, err := client.Disburse(context.TODO(),req)
 	if err != nil {
 		return
 	}

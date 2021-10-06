@@ -83,6 +83,13 @@ type (
 	}
 
 	Response struct {
+		ReferenceID string   `son:"reference,omitempty"`
+		TxnID       string   `json:"id,omitempty"`
+		TxnStatus   string   `son:"status,omitempty"`
+		Message     string   `json:"message,omitempty"`
+	}
+
+	response struct {
 		XMLName     xml.Name `xml:"COMMAND" json:"-"`
 		Text        string   `xml:",chardata" json:"-"`
 		Type        string   `xml:"TYPE" json:"type"`
@@ -112,13 +119,15 @@ func NewClient(config *Config, opts ...ClientOption) *Client {
 }
 
 func (client *Client) Disburse(ctx context.Context, request Request) (response Response, err error) {
-	var reqOpts []internal.RequestOption
-	ctxOpt := internal.WithRequestContext(ctx)
-	headers := map[string]string{
-		"Content-Type": "application/xml",
+	req := client.requestAdapt(request)
+	res,err := client.disburse(ctx,req)
+	if err != nil{
+		return Response{}, err
 	}
-	headersOpt := internal.WithRequestHeaders(headers)
-	reqOpts = append(reqOpts, ctxOpt, headersOpt)
+	return client.responseAdapt(res),nil
+}
+
+func (client *Client)requestAdapt(request Request)disburseRequest{
 	r := disburseRequest{
 		Type:        requestType,
 		ReferenceID: request.ReferenceID,
@@ -131,13 +140,36 @@ func (client *Client) Disburse(ctx context.Context, request Request) (response R
 		BrandID:     client.Config.BrandID,
 	}
 
-	req := internal.NewRequest(ctx, http.MethodPost, client.RequestURL, internal.XmlPayload, r, reqOpts...)
+	return r
+}
 
-	err = client.base.Send(ctx, internal.DisburseRequest, req, &response)
+func (client *Client)responseAdapt(re response)Response{
+	return Response{
+		ReferenceID: re.ReferenceID,
+		TxnID:       re.TxnID,
+		TxnStatus:   re.TxnStatus,
+		Message:     re.Message,
+	}
+}
 
+func (client *Client) disburse(ctx context.Context, request disburseRequest) (response,error) {
+	var reqOpts []internal.RequestOption
+	headers := map[string]string{
+		"Content-Type": "application/xml",
+	}
+	headersOpt := internal.WithRequestHeaders(headers)
+	reqOpts = append(reqOpts,headersOpt)
+
+	ir := internal.NewRequest(http.MethodPost,client.RequestURL,request,reqOpts...)
+	res := new(response)
+	do, err := client.base.Do(ctx, "disburse", ir, res)
 	if err != nil {
-		return
+		return response{}, err
 	}
 
-	return
+	if do.Error != nil{
+		return response{},do.Error
+	}
+
+	return *res,nil
 }

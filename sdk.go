@@ -128,7 +128,7 @@ func makeUSSDClient(conf *ussd.Config, payHandler ussd.PaymentHandler, nameHandl
 	return ussd.NewClient(conf, payHandler, nameHandler, opts...)
 }
 
-func (client *Client) Disburse(ctx context.Context, request disburse.Request) (disburse.Response, error) {
+func (client *Client) Disburse(ctx context.Context, request disburse.Request) (disburse.response, error) {
 	return client.disburse.Disburse(ctx, request)
 }
 

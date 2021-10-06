@@ -23,7 +23,7 @@
  *
  */
 
-package term
+package io
 
 // https://dave.cheney.net/2017/06/11/go-without-package-scoped-variables
 import (

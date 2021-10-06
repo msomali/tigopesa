@@ -152,10 +152,10 @@ func (client *Client) Callback(writer http.ResponseWriter, r *http.Request) {
 	client.push.Callback(writer, r)
 }
 
-func (client *Client) Refund(ctx context.Context, request push.RefundRequest) (push.RefundResponse, error) {
-	return client.push.Refund(ctx, request)
-}
-
-func (client *Client) HeartBeat(ctx context.Context, request push.HealthCheckRequest) (push.HealthCheckResponse, error) {
-	return client.push.HeartBeat(ctx, request)
-}
+//func (client *Client) Refund(ctx context.Context, request push.RefundRequest) (push.RefundResponse, error) {
+//	return client.push.Refund(ctx, request)
+//}
+//
+//func (client *Client) HeartBeat(ctx context.Context, request push.HealthCheckRequest) (push.HealthCheckResponse, error) {
+//	return client.push.HeartBeat(ctx, request)
+//}

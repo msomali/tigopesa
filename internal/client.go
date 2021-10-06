@@ -32,8 +32,8 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"github.com/techcraftlabs/tigopesa/internal/term"
-	"io"
+	"github.com/techcraftlabs/tigopesa/internal/io"
+	stdio "io"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -50,7 +50,7 @@ const (
 type (
 	BaseClient struct {
 		HTTP      *http.Client
-		Logger    io.Writer // for logging purposes
+		Logger    stdio.Writer // for logging purposes
 		DebugMode bool
 	}
 )
@@ -62,7 +62,7 @@ func NewBaseClient(opts ...ClientOption) *BaseClient {
 	}
 	client := &BaseClient{
 		HTTP:      cl,
-		Logger:    term.Stderr,
+		Logger:    io.Stderr,
 		DebugMode: false,
 	}
 
@@ -127,13 +127,13 @@ func (client *BaseClient) Send(ctx context.Context, rn RequestName, request *Req
 	var resBodyBytes []byte
 	defer func(debug bool) {
 		if debug {
-			req.Body = io.NopCloser(bytes.NewBuffer(reqBodyBytes))
+			req.Body = stdio.NopCloser(bytes.NewBuffer(reqBodyBytes))
 			name := strings.ToUpper(rn.String())
 			if res == nil {
 				client.logOut(name, req, nil)
 				return
 			}
-			res.Body = io.NopCloser(bytes.NewBuffer(resBodyBytes))
+			res.Body = stdio.NopCloser(bytes.NewBuffer(resBodyBytes))
 			client.logOut(name, req, res)
 
 		}
@@ -147,14 +147,14 @@ func (client *BaseClient) Send(ctx context.Context, rn RequestName, request *Req
 	}
 
 	if req.Body != nil {
-		reqBodyBytes, _ = io.ReadAll(req.Body)
+		reqBodyBytes, _ = stdio.ReadAll(req.Body)
 	}
 
 	if v == nil {
 		return errors.New("v interface can not be empty")
 	}
 
-	req.Body = io.NopCloser(bytes.NewBuffer(reqBodyBytes))
+	req.Body = stdio.NopCloser(bytes.NewBuffer(reqBodyBytes))
 	res, err = client.HTTP.Do(req)
 
 	if err != nil {
@@ -162,13 +162,13 @@ func (client *BaseClient) Send(ctx context.Context, rn RequestName, request *Req
 	}
 
 	if res.Body != nil {
-		resBodyBytes, _ = io.ReadAll(res.Body)
+		resBodyBytes, _ = stdio.ReadAll(res.Body)
 	}
 
 	contentType := res.Header.Get("Content-Type")
 	if strings.Contains(contentType, jsonContentTypeString) {
 		if err := json.NewDecoder(bytes.NewBuffer(resBodyBytes)).Decode(v); err != nil {
-			if err != io.EOF {
+			if err != stdio.EOF {
 				return err
 			}
 		}
@@ -177,7 +177,7 @@ func (client *BaseClient) Send(ctx context.Context, rn RequestName, request *Req
 	if strings.Contains(contentType, xmlContentTypeString) ||
 		strings.Contains(contentType, appXMLContentTypeString) {
 		if err := xml.NewDecoder(bytes.NewBuffer(resBodyBytes)).Decode(v); err != nil {
-			if err != io.EOF {
+			if err != stdio.EOF {
 				return err
 			}
 		}

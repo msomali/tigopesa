@@ -151,9 +151,9 @@ type (
 
 		Callback(writer http.ResponseWriter, r *http.Request)
 
-		Refund(ctx context.Context, request RefundRequest) (RefundResponse, error)
-
-		HeartBeat(ctx context.Context, request HealthCheckRequest) (HealthCheckResponse, error)
+		//Refund(ctx context.Context, request RefundRequest) (RefundResponse, error)
+		//
+		//HeartBeat(ctx context.Context, request HealthCheckRequest) (HealthCheckResponse, error)
 	}
 )
 
@@ -258,42 +258,42 @@ func (client *Client) Callback(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (client *Client) Refund(ctx context.Context, refundReq RefundRequest) (RefundResponse, error) {
-	var refundPaymentResp = &RefundResponse{}
-
-	var requestOptions []internal.RequestOption
-	ctxOption := internal.WithRequestContext(ctx)
-	requestOptions = append(requestOptions, ctxOption)
-
-	request := internal.NewRequest(ctx, http.MethodPost,
-		client.ApiBaseURL+client.GetTokenURL,
-		internal.JsonPayload, refundReq,
-		requestOptions...,
-	)
-
-	if err := client.base.Send(ctx, internal.RefundRequest, request, refundPaymentResp); err != nil {
-		return RefundResponse{}, err
-	}
-
-	return *refundPaymentResp, nil
-}
-
-func (client *Client) HeartBeat(ctx context.Context, request HealthCheckRequest) (HealthCheckResponse, error) {
-	var healthCheckResp = &HealthCheckResponse{}
-
-	var requestOptions []internal.RequestOption
-	ctxOption := internal.WithRequestContext(ctx)
-	requestOptions = append(requestOptions, ctxOption)
-
-	req := internal.NewRequest(ctx, http.MethodPost, client.HealthCheckURL,
-		internal.JsonPayload, request, requestOptions...)
-
-	if err := client.base.Send(ctx, internal.HealthCheckRequest, req, healthCheckResp); err != nil {
-		return HealthCheckResponse{}, err
-	}
-
-	return *healthCheckResp, nil
-}
+//func (client *Client) Refund(ctx context.Context, refundReq RefundRequest) (RefundResponse, error) {
+//	var refundPaymentResp = &RefundResponse{}
+//
+//	var requestOptions []internal.RequestOption
+//	ctxOption := internal.WithRequestContext(ctx)
+//	requestOptions = append(requestOptions, ctxOption)
+//
+//	request := internal.NewRequest(ctx, http.MethodPost,
+//		client.ApiBaseURL+client.GetTokenURL,
+//		internal.JsonPayload, refundReq,
+//		requestOptions...,
+//	)
+//
+//	if err := client.base.Send(ctx, internal.RefundRequest, request, refundPaymentResp); err != nil {
+//		return RefundResponse{}, err
+//	}
+//
+//	return *refundPaymentResp, nil
+//}
+//
+//func (client *Client) HeartBeat(ctx context.Context, request HealthCheckRequest) (HealthCheckResponse, error) {
+//	var healthCheckResp = &HealthCheckResponse{}
+//
+//	var requestOptions []internal.RequestOption
+//	ctxOption := internal.WithRequestContext(ctx)
+//	requestOptions = append(requestOptions, ctxOption)
+//
+//	req := internal.NewRequest(ctx, http.MethodPost, client.HealthCheckURL,
+//		internal.JsonPayload, request, requestOptions...)
+//
+//	if err := client.base.Send(ctx, internal.HealthCheckRequest, req, healthCheckResp); err != nil {
+//		return HealthCheckResponse{}, err
+//	}
+//
+//	return *healthCheckResp, nil
+//}
 
 func (client *Client) Token(ctx context.Context) (TokenResponse, error) {
 	var form = url.Values{}

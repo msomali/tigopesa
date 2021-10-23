@@ -28,7 +28,7 @@ package disburse
 import (
 	"context"
 	"encoding/xml"
-	"github.com/techcraftlabs/tigopesa/internal"
+	"github.com/techcraftlabs/base"
 	"net/http"
 )
 
@@ -101,14 +101,14 @@ type (
 
 	Client struct {
 		*Config
-		base *internal.BaseClient
+		base *base.Client
 	}
 )
 
 func NewClient(config *Config, opts ...ClientOption) *Client {
 	client := &Client{
 		Config: config,
-		base:   internal.NewBaseClient(),
+		base:   base.NewClient(),
 	}
 
 	for _, opt := range opts {
@@ -153,14 +153,14 @@ func (client *Client)responseAdapt(re response)Response{
 }
 
 func (client *Client) disburse(ctx context.Context, request disburseRequest) (response,error) {
-	var reqOpts []internal.RequestOption
+	var reqOpts []base.RequestOption
 	headers := map[string]string{
 		"Content-Type": "application/xml",
 	}
-	headersOpt := internal.WithRequestHeaders(headers)
+	headersOpt := base.WithRequestHeaders(headers)
 	reqOpts = append(reqOpts,headersOpt)
 
-	ir := internal.NewRequest(http.MethodPost,client.RequestURL,request,reqOpts...)
+	ir := base.NewRequest(http.MethodPost,client.RequestURL,request,reqOpts...)
 	res := new(response)
 	do, err := client.base.Do(ctx, "disburse", ir, res)
 	if err != nil {

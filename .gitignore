@@ -18,3 +18,5 @@ build
 .env
 tigo.env
 *.env
+playground
+vendor

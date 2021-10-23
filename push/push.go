@@ -28,11 +28,16 @@ package push
 import (
 	"context"
 	"fmt"
+	"math"
 	"net/http"
 	"net/url"
 	"time"
 
-	"github.com/techcraftlabs/tigopesa/internal"
+	"github.com/techcraftlabs/base"
+)
+
+var (
+	_ base.RequestInformer = (*requestType)(nil)
 )
 
 const (
@@ -40,7 +45,16 @@ const (
 	FailureCode = "BILLER-30-3030-E"
 )
 
+
+
 type (
+	
+	requestType int
+	Service interface {
+		Token(ctx context.Context) (TokenResponse, error)
+		Push(ctx context.Context, request Request) (PayResponse, error)
+		CallbackServeHTTP(writer http.ResponseWriter, r *http.Request)
+	}
 	TokenResponse struct {
 		AccessToken string `json:"access_token"`
 		TokenType   string `json:"token_type"`
@@ -49,7 +63,7 @@ type (
 
 	PayRequest struct {
 		CustomerMSISDN string `json:"CustomerMSISDN"`
-		Amount         int    `json:"Amount"`
+		Amount         int64    `json:"Amount"`
 		Remarks        string `json:"Remarks,omitempty"`
 		ReferenceID    string `json:"ReferenceID"`
 	}
@@ -60,7 +74,7 @@ type (
 	payRequest struct {
 		CustomerMSISDN string `json:"CustomerMSISDN"`
 		BillerMSISDN   string `json:"BillerMSISDN"`
-		Amount         int    `json:"Amount"`
+		Amount         float64   `json:"Amount"`
 		Remarks        string `json:"Remarks,omitempty"`
 		ReferenceID    string `json:"ReferenceID"`
 	}
@@ -88,49 +102,27 @@ type (
 		ReferenceID         string `json:"ReferenceID"`
 	}
 
-	RefundRequest struct {
-		CustomerMSISDN      string `json:"CustomerMSISDN"`
-		ChannelMSISDN       string `json:"ChannelMSISDN"`
-		ChannelPIN          string `json:"ChannelPIN"`
-		Amount              int    `json:"Amount"`
-		MFSTransactionID    string `json:"MFSTransactionID"`
-		ReferenceID         string `json:"ReferenceID"`
-		PurchaseReferenceID string `json:"PurchaseReferenceID"`
+	Request struct {
+		MSISDN      string  `json:"msisdn"`
+		Amount      float64 `json:"amount"`
+		Remarks     string  `json:"remarks,omitempty"`
+		ReferenceID string  `json:"referenceID"`
 	}
 
-	RefundResponse struct {
-		ResponseCode        string `json:"ResponseCode"`
-		ResponseStatus      bool   `json:"ResponseStatus"`
-		ResponseDescription string `json:"ResponseDescription"`
-		DMReferenceID       string `json:"DMReferenceID"`
-		ReferenceID         string `json:"ReferenceID"`
-		MFSTransactionID    string `json:"MFSTransactionID,omitempty"`
-		Message             string `json:"Message,omitempty"`
-	}
-
-	HealthCheckResponse struct {
-		ReferenceID string `json:"ReferenceID"`
-		Description string `json:"Description"`
-	}
-	HealthCheckRequest struct {
-		ReferenceID string `json:"ReferenceID"`
-	}
 
 	Config struct {
 		Username              string
 		Password              string
 		PasswordGrantType     string
-		ApiBaseURL            string
-		GetTokenURL           string
+		BaseURL            string
+		TokenEndpoint          string
 		BillerMSISDN          string
 		BillerCode            string
-		PushPayURL            string
-		ReverseTransactionURL string
-		HealthCheckURL        string
+		PushPayEndpoint          string
 	}
 
 	CallbackHandler interface {
-		Respond(ctx context.Context, request CallbackRequest) (CallbackResponse, error)
+		Handle(ctx context.Context, request CallbackRequest) (CallbackResponse, error)
 	}
 
 	CallbackHandlerFunc func(context.Context, CallbackRequest) (CallbackResponse, error)
@@ -138,89 +130,76 @@ type (
 	//Client is the client for making push pay requests
 	Client struct {
 		*Config
-		base            *internal.BaseClient
+		base            *base.Client
 		CallbackHandler CallbackHandler
-		token           string
+		token           *string
 		tokenExpires    time.Time
+		rv base.Receiver
+		rp base.Replier
 	}
-
-	Service interface {
-		Token(ctx context.Context) (TokenResponse, error)
-
-		Pay(ctx context.Context, request PayRequest) (PayResponse, error)
-
-		Callback(writer http.ResponseWriter, r *http.Request)
-
-		//Refund(ctx context.Context, request RefundRequest) (RefundResponse, error)
-		//
-		//HeartBeat(ctx context.Context, request HealthCheckRequest) (HealthCheckResponse, error)
-	}
+	
 )
+
+
 
 func NewClient(config *Config, handler CallbackHandler, opts ...ClientOption) *Client {
 	client := &Client{
 		Config:          config,
 		CallbackHandler: handler,
-		token:           "",
+		token:           new(string),
 		tokenExpires:    time.Now(),
-		base:            internal.NewBaseClient(),
+		base:            base.NewClient(),
 	}
 
 	for _, opt := range opts {
 		opt(client)
 	}
 
+	lg, dm := client.base.Logger,client.base.DebugMode
+
+	client.rp = base.NewReplier(lg,dm)
+	client.rv = base.NewReceiver(lg,dm)
+
 	return client
 }
 
-func (handler CallbackHandlerFunc) Respond(ctx context.Context, request CallbackRequest) (CallbackResponse, error) {
+func (c *Client) SetCallbackHandler(handler CallbackHandler) {
+	c.CallbackHandler = handler
+}
+
+func (handler CallbackHandlerFunc) Handle(ctx context.Context, request CallbackRequest) (CallbackResponse, error) {
 	return handler(ctx, request)
 }
 
-func (client *Client) Pay(ctx context.Context, request PayRequest) (response PayResponse, err error) {
+func (c *Client) Push(ctx context.Context, request Request) (response PayResponse, err error) {
+	amount := math.Floor(request.Amount * 100 / 100)
 	var billPayReq = payRequest{
-		CustomerMSISDN: request.CustomerMSISDN,
-		BillerMSISDN:   client.BillerMSISDN,
-		Amount:         request.Amount,
+		CustomerMSISDN: request.MSISDN,
+		BillerMSISDN:   c.BillerMSISDN,
+		Amount:         amount,
 		Remarks:        request.Remarks,
-		ReferenceID:    request.ReferenceID,
+		ReferenceID:    fmt.Sprintf("%s%s", c.Config.BillerCode, request.ReferenceID),
 	}
 
-	var tokenStr string
-
-	if client.token == "" {
-		str, err := client.Token(ctx)
-		if err != nil {
-			return PayResponse{}, err
-		}
-		tokenStr = fmt.Sprintf("bearer %s", str.AccessToken)
-	}
-	//Add Auth Header
-	if client.token != "" {
-		if !client.tokenExpires.IsZero() && time.Until(client.tokenExpires) < (60*time.Second) {
-			if _, err := client.Token(ctx); err != nil {
-				return response, err
-			}
-		}
-		tokenStr = fmt.Sprintf("bearer %s", client.token)
+	token, err := c.checkToken(ctx)
+	if err != nil {
+		return PayResponse{}, err
 	}
 
 	authHeader := map[string]string{
-		"Authorization": tokenStr,
+		"Authorization": fmt.Sprintf("bearer %s", token),
+		"Username":      c.Config.Username,
+		"Password":      c.Config.Password,
 	}
-	var requestOpts []internal.RequestOption
-	moreHeaderOpt := internal.WithMoreHeaders(authHeader)
-	basicAuth := internal.WithAuthHeaders(client.Username, client.Password)
-	ctxOpt := internal.WithRequestContext(ctx)
-	requestOpts = append(requestOpts, ctxOpt, basicAuth, moreHeaderOpt)
+	var requestOpts []base.RequestOption
+	moreHeaderOpt := base.WithMoreHeaders(authHeader)
+	//basicAuth := base.WithBasicAuth(c.PushConfig.Username, c.PushConfig.Password)
+	requestOpts = append(requestOpts, moreHeaderOpt)
 
-	tigoRequest := internal.NewRequest(ctx, http.MethodPost,
-		client.ApiBaseURL+client.PushPayURL,
-		internal.JsonPayload, billPayReq,
-		requestOpts...,
-	)
+	req := base.MakeInternalRequest(c.BaseURL, c.Config.PushPayEndpoint, push, billPayReq, requestOpts...)
 
-	err = client.base.Send(context.TODO(), internal.PushPayRequest, tigoRequest, &response)
+	rn := push.String()
+	_, err = c.base.Do(context.TODO(), rn, req, &response)
 
 	if err != nil {
 		return response, err
@@ -229,10 +208,24 @@ func (client *Client) Pay(ctx context.Context, request PayRequest) (response Pay
 	return response, nil
 }
 
-func (client *Client) Callback(w http.ResponseWriter, r *http.Request) {
-	callbackRequest := CallbackRequest{}
+func (c *Client) CallbackServeHTTP(w http.ResponseWriter, r *http.Request) {
+
+	var(
+		callbackRequest CallbackRequest
+	)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	//callbackRequest := new(CallbackRequest)
 	statusCode := 200
-	err := client.base.Receive(r, internal.CallbackRequest, internal.JsonPayload, &callbackRequest)
+
+	_,err := c.rv.Receive(ctx,callback.String(),r,&callbackRequest)
+	if err != nil {
+		statusCode = http.StatusInternalServerError
+		http.Error(w, err.Error(), statusCode)
+		return
+	}
+
+	callbackResponse, err := c.CallbackHandler.Handle(ctx, callbackRequest)
 
 	if err != nil {
 		statusCode = http.StatusInternalServerError
@@ -240,66 +233,45 @@ func (client *Client) Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	callbackResponse, err := client.CallbackHandler.Respond(context.TODO(), callbackRequest)
-
-	if err != nil {
-		statusCode = http.StatusInternalServerError
-		http.Error(w, err.Error(), statusCode)
-		return
+	var responseOpts []base.ResponseOption
+	headers := map[string]string{
+		"Content-Type": "application/json",
 	}
+	headersOpt := base.WithMoreResponseHeaders(headers)
 
-	var responseOpts []internal.ResponseOption
-	headers := internal.WithDefaultJsonHeader()
-
-	responseOpts = append(responseOpts, headers, internal.WithResponseError(err))
-	response := internal.NewResponse(statusCode, callbackResponse, internal.JsonPayload, responseOpts...)
-
-	client.base.Reply("callback response", response, w)
+	responseOpts = append(responseOpts, headersOpt, base.WithResponseError(err))
+	response := base.NewResponse(statusCode, callbackResponse, responseOpts...)
+	c.rp.Reply(w, response)
 
 }
 
-//func (client *Client) Refund(ctx context.Context, refundReq RefundRequest) (RefundResponse, error) {
-//	var refundPaymentResp = &RefundResponse{}
-//
-//	var requestOptions []internal.RequestOption
-//	ctxOption := internal.WithRequestContext(ctx)
-//	requestOptions = append(requestOptions, ctxOption)
-//
-//	request := internal.NewRequest(ctx, http.MethodPost,
-//		client.ApiBaseURL+client.GetTokenURL,
-//		internal.JsonPayload, refundReq,
-//		requestOptions...,
-//	)
-//
-//	if err := client.base.Send(ctx, internal.RefundRequest, request, refundPaymentResp); err != nil {
-//		return RefundResponse{}, err
-//	}
-//
-//	return *refundPaymentResp, nil
-//}
-//
-//func (client *Client) HeartBeat(ctx context.Context, request HealthCheckRequest) (HealthCheckResponse, error) {
-//	var healthCheckResp = &HealthCheckResponse{}
-//
-//	var requestOptions []internal.RequestOption
-//	ctxOption := internal.WithRequestContext(ctx)
-//	requestOptions = append(requestOptions, ctxOption)
-//
-//	req := internal.NewRequest(ctx, http.MethodPost, client.HealthCheckURL,
-//		internal.JsonPayload, request, requestOptions...)
-//
-//	if err := client.base.Send(ctx, internal.HealthCheckRequest, req, healthCheckResp); err != nil {
-//		return HealthCheckResponse{}, err
-//	}
-//
-//	return *healthCheckResp, nil
-//}
+func (c *Client) checkToken(ctx context.Context) (string, error) {
+	var token string
+	if *c.token == "" {
+		str, err := c.Token(ctx)
+		if err != nil {
+			return "", err
+		}
+		token = fmt.Sprintf("%s", str.AccessToken)
+	}
+	//Add Auth Header
+	if *c.token != "" {
+		if !c.tokenExpires.IsZero() && time.Until(c.tokenExpires) < (60*time.Second) {
+			if _, err := c.Token(ctx); err != nil {
+				return "", err
+			}
+		}
+		token = *c.token
+	}
 
-func (client *Client) Token(ctx context.Context) (TokenResponse, error) {
+	return token, nil
+}
+
+func (c *Client) Token(ctx context.Context) (TokenResponse, error) {
 	var form = url.Values{}
-	form.Set("username", client.Username)
-	form.Set("password", client.Password)
-	form.Set("grant_type", client.PasswordGrantType)
+	form.Set("username", c.Username)
+	form.Set("password", c.Password)
+	form.Set("grant_type", c.PasswordGrantType)
 
 	ctx, cancel := context.WithTimeout(ctx, time.Minute)
 	defer cancel()
@@ -309,22 +281,17 @@ func (client *Client) Token(ctx context.Context) (TokenResponse, error) {
 		"Cache-Control": "no-cache",
 	}
 
-	payloadType := internal.FormPayload
+	var requestOptions []base.RequestOption
+	headersOption := base.WithRequestHeaders(headers)
+	requestOptions = append(requestOptions, headersOption)
 
-	var requestOptions []internal.RequestOption
-	ctxOption := internal.WithRequestContext(ctx)
-	headersOption := internal.WithRequestHeaders(headers)
-	requestOptions = append(requestOptions, ctxOption, headersOption)
-
-	request := internal.NewRequest(ctx, http.MethodPost,
-		client.ApiBaseURL+client.GetTokenURL,
-		payloadType, form,
-		requestOptions...,
-	)
+	request := base.MakeInternalRequest(c.Config.BaseURL, c.Config.TokenEndpoint, token, form, requestOptions...)
 
 	var tokenResponse TokenResponse
 
-	err := client.base.Send(context.TODO(), internal.GetTokenRequest, request, &tokenResponse)
+	rn := token.String()
+
+	_, err := c.base.Do(context.TODO(), rn, request, &tokenResponse)
 
 	if err != nil {
 		return TokenResponse{}, err
@@ -332,12 +299,12 @@ func (client *Client) Token(ctx context.Context) (TokenResponse, error) {
 
 	token := tokenResponse.AccessToken
 
-	client.token = token
+	c.token = &token
 
 	//This set the value to when a new token will set above will be expired
 	//the minus 10 is an overhead a margin for error.
 	tokenExpiresAt := time.Now().Add(time.Duration(tokenResponse.ExpiresIn-10) * time.Second)
-	client.tokenExpires = tokenExpiresAt
+	c.tokenExpires = tokenExpiresAt
 
 	return tokenResponse, nil
 

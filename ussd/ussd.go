@@ -28,23 +28,20 @@ package ussd
 import (
 	"context"
 	"encoding/xml"
-	"github.com/techcraftlabs/tigopesa/internal"
+	"github.com/techcraftlabs/base"
 	"net/http"
 	"time"
 )
 
 const (
-	syncLookupResponse  = "SYNC_LOOKUP_RESPONSE"
-	syncBillPayResponse = "SYNC_BILLPAY_RESPONSE"
+	syncLookupResponse          = "SYNC_LOOKUP_RESPONSE"
+	syncBillPayResponse         = "SYNC_BILLPAY_RESPONSE"
 
-	//NameQuery Error Codes
+	ErrNameNotRegistered        = "error010"
+	ErrNameInvalidFormat        = "error030"
+	ErrNameUserSuspended        = "error030"
+	NoNamecheckErr              = "error000"
 
-	ErrNameNotRegistered = "error010"
-	ErrNameInvalidFormat = "error030"
-	ErrNameUserSuspended = "error030"
-	NoNamecheckErr       = "error000"
-
-	//WalletToAccount error codes
 
 	ErrSuccessTxn               = "error000"
 	ErrServiceNotAvailable      = "error001"
@@ -68,17 +65,17 @@ var (
 type (
 	Service interface {
 		NameQueryServeHTTP(writer http.ResponseWriter, request *http.Request)
-		PaymentServerHTTP(writer http.ResponseWriter, request *http.Request)
+		PaymentServeHTTP(writer http.ResponseWriter, request *http.Request)
 	}
 
 	PaymentHandler interface {
-		PaymentRequest(ctx context.Context, request PayRequest) (PayResponse, error)
+		HandlePayRequest(ctx context.Context, request PayRequest) (PayResponse, error)
 	}
 
 	PaymentHandleFunc func(ctx context.Context, request PayRequest) (PayResponse, error)
 
 	NameQueryHandler interface {
-		NameQuery(ctx context.Context, request NameRequest) (NameResponse, error)
+		HandleNameQuery(ctx context.Context, request NameRequest) (NameResponse, error)
 	}
 
 	NameQueryFunc func(ctx context.Context, request NameRequest) (NameResponse, error)
@@ -93,18 +90,18 @@ type (
 	}
 
 	NameRequest struct {
-		Msisdn              string   `xml:"MSISDN"`
-		CompanyName         string   `xml:"COMPANYNAME"`
-		CustomerReferenceID string   `xml:"CUSTOMERREFERENCEID"`
+		Msisdn              string `xml:"MSISDN"`
+		CompanyName         string `xml:"COMPANYNAME"`
+		CustomerReferenceID string `xml:"CUSTOMERREFERENCEID"`
 	}
 
 	NameResponse struct {
-		Result    string   `xml:"RESULT"`
-		ErrorCode string   `xml:"ERRORCODE"`
-		ErrorDesc string   `xml:"ERRORDESC"`
-		Msisdn    string   `xml:"MSISDN"`
-		Flag      string   `xml:"FLAG"`
-		Content   string   `xml:"CONTENT"`
+		Result    string `xml:"RESULT"`
+		ErrorCode string `xml:"ERRORCODE"`
+		ErrorDesc string `xml:"ERRORDESC"`
+		Msisdn    string `xml:"MSISDN"`
+		Flag      string `xml:"FLAG"`
+		Content   string `xml:"CONTENT"`
 	}
 
 	nameResponse struct {
@@ -120,12 +117,12 @@ type (
 	}
 
 	PayRequest struct {
-		TxnID               string   `xml:"TXNID"`
-		Msisdn              string   `xml:"MSISDN"`
-		Amount              float64  `xml:"AMOUNT"`
-		CompanyName         string   `xml:"COMPANYNAME"`
-		CustomerReferenceID string   `xml:"CUSTOMERREFERENCEID"`
-		SenderName          string   `xml:"SENDERNAME"`
+		TxnID               string  `xml:"TXNID"`
+		Msisdn              string  `xml:"MSISDN"`
+		Amount              float64 `xml:"AMOUNT"`
+		CompanyName         string  `xml:"COMPANYNAME"`
+		CustomerReferenceID string  `xml:"CUSTOMERREFERENCEID"`
+		SenderName          string  `xml:"SENDERNAME"`
 	}
 
 	payRequest struct {
@@ -141,14 +138,14 @@ type (
 	}
 
 	PayResponse struct {
-		TxnID            string   `xml:"TXNID"`
-		RefID            string   `xml:"REFID"`
-		Result           string   `xml:"RESULT"`
-		ErrorCode        string   `xml:"ERRORCODE"`
-		ErrorDescription string   `xml:"ERRORDESCRIPTION"`
-		Msisdn           string   `xml:"MSISDN"`
-		Flag             string   `xml:"FLAG"`
-		Content          string   `xml:"CONTENT"`
+		TxnID            string `xml:"TXNID"`
+		RefID            string `xml:"REFID"`
+		Result           string `xml:"RESULT"`
+		ErrorCode        string `xml:"ERRORCODE"`
+		ErrorDescription string `xml:"ERRORDESCRIPTION"`
+		Msisdn           string `xml:"MSISDN"`
+		Flag             string `xml:"FLAG"`
+		Content          string `xml:"CONTENT"`
 	}
 
 	payResponse struct {
@@ -174,14 +171,16 @@ type (
 	}
 
 	Client struct {
-		base *internal.BaseClient
+		rv base.Receiver
+		rp base.Replier
+		base *base.Client
 		*Config
-		PaymentHandler   PaymentHandler
-		NameQueryHandler NameQueryHandler
+		ph PaymentHandler
+		nh NameQueryHandler
 	}
 )
 
-func transformNameRequest(request nameRequest)NameRequest{
+func transformNameRequest(request nameRequest) NameRequest {
 	return NameRequest{
 		Msisdn:              request.Msisdn,
 		CompanyName:         request.CompanyName,
@@ -189,7 +188,7 @@ func transformNameRequest(request nameRequest)NameRequest{
 	}
 }
 
-func transformPayRequest(request payRequest)PayRequest{
+func transformPayRequest(request payRequest) PayRequest {
 	return PayRequest{
 		TxnID:               request.TxnID,
 		Msisdn:              request.Msisdn,
@@ -200,7 +199,7 @@ func transformPayRequest(request payRequest)PayRequest{
 	}
 }
 
-func transformToXMLNameResponse(response NameResponse)nameResponse{
+func transformToXMLNameResponse(response NameResponse) nameResponse {
 	return nameResponse{
 		Type:      syncLookupResponse,
 		Result:    response.Result,
@@ -212,7 +211,7 @@ func transformToXMLNameResponse(response NameResponse)nameResponse{
 	}
 }
 
-func transformToXMLPayResponse(response PayResponse)payResponse{
+func transformToXMLPayResponse(response PayResponse) payResponse {
 	return payResponse{
 		Type:             syncBillPayResponse,
 		TxnID:            response.TxnID,
@@ -229,86 +228,99 @@ func transformToXMLPayResponse(response PayResponse)payResponse{
 func NewClient(config *Config, handler PaymentHandler, queryHandler NameQueryHandler, opts ...ClientOption) *Client {
 	client := &Client{
 
-		Config:           config,
-		PaymentHandler:   handler,
-		NameQueryHandler: queryHandler,
-		base:             internal.NewBaseClient(),
+		Config: config,
+		ph:     handler,
+		nh:     queryHandler,
+		base:   base.NewClient(),
 	}
 
 	for _, opt := range opts {
 		opt(client)
 	}
 
+	lg, dm := client.base.Logger,client.base.DebugMode
+
+	client.rp = base.NewReplier(lg,dm)
+	client.rv = base.NewReceiver(lg,dm)
+
 	return client
 }
 
-func (handler PaymentHandleFunc) PaymentRequest(ctx context.Context, request PayRequest) (PayResponse, error) {
+func (c *Client)SetNameQueryHandler(nh NameQueryHandler){
+	c.nh = nh
+}
+
+func (c *Client)SetPaymentRequestHandler(ph PaymentHandler){
+	c.ph =ph
+}
+
+func (handler PaymentHandleFunc) HandlePayRequest(ctx context.Context, request PayRequest) (PayResponse, error) {
 	return handler(ctx, request)
 }
 
-func (handler NameQueryFunc) NameQuery(ctx context.Context, request NameRequest) (NameResponse, error) {
+func (handler NameQueryFunc) HandleNameQuery(ctx context.Context, request NameRequest) (NameResponse, error) {
 	return handler(ctx, request)
 }
 
-func (client *Client) NameQueryServeHTTP(writer http.ResponseWriter, request *http.Request) {
+func (c *Client) NameQueryServeHTTP(writer http.ResponseWriter, request *http.Request) {
 
 	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
 	defer cancel()
 	var req nameRequest
 
-	err :=internal.ReceivePayload(request,&req)
+	_,err := c.rv.Receive(ctx,"name query",request, &req)
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
 
-	response, err := client.NameQueryHandler.NameQuery(ctx, transformNameRequest(req))
+	response, err := c.nh.HandleNameQuery(ctx, transformNameRequest(req))
 
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
 
-	var opts []internal.ResponseOption
+	var opts []base.ResponseOption
 	headers := map[string]string{
 		"Content-Type": "application/xml",
 	}
-	headersOpts := internal.WithResponseHeaders(headers)
-	opts = append(opts,headersOpts)
+	headersOpts := base.WithResponseHeaders(headers)
+	opts = append(opts, headersOpts)
 
 	payload := transformToXMLNameResponse(response)
-	res := internal.NewResponse(200,payload,opts...)
+	res := base.NewResponse(200, payload, opts...)
 
-	internal.Reply(res,writer)
+	c.rp.Reply(writer,res)
 
 }
 
-func (client *Client) PaymentServerHTTP(writer http.ResponseWriter, request *http.Request) {
+func (c *Client) PaymentServeHTTP(writer http.ResponseWriter, request *http.Request) {
 
 	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
 	defer cancel()
 
 	var req payRequest
 
-	err := internal.ReceivePayload(request, &req)
+	_,err := c.rv.Receive(ctx,"payment request",request, &req)
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	response, err := client.PaymentHandler.PaymentRequest(ctx, transformPayRequest(req))
+	response, err := c.ph.HandlePayRequest(ctx, transformPayRequest(req))
 
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
 
-	var opts []internal.ResponseOption
+	var opts []base.ResponseOption
 	headers := map[string]string{
 		"Content-Type": "application/xml",
 	}
-	headersOpts := internal.WithResponseHeaders(headers)
-	opts = append(opts,headersOpts)
+	headersOpts := base.WithResponseHeaders(headers)
+	opts = append(opts, headersOpts)
 	payload := transformToXMLPayResponse(response)
-	res := internal.NewResponse(200,payload,opts...)
+	res := base.NewResponse(200, payload, opts...)
 
-	internal.Reply(res,writer)
+	c.rp.Reply(writer,res)
 
 }

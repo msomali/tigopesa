@@ -29,6 +29,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/techcraftlabs/tigopesa/push"
 	"net/http"
 	"net/http/httptest"
@@ -42,9 +43,12 @@ type (
 	testHandler int
 )
 
-func (t testHandler) Respond(ctx context.Context, request push.CallbackRequest) (push.CallbackResponse, error) {
+func (t testHandler) Handle(ctx context.Context, request push.CallbackRequest) (push.CallbackResponse, error) {
 	_, cancel := context.WithTimeout(ctx, time.Minute)
 	defer cancel()
+
+	fmt.Printf("request received: status %t,amount: %s, description %s, transacion id %s description %s\n",
+		request.Status, request.Amount, request.Description, request.MFSTransactionID, request.Description)
 
 	return push.CallbackResponse{
 		ResponseCode:        push.SuccessCode,
@@ -59,13 +63,11 @@ func TestHealthCheckHandler(t *testing.T) {
 		Username:              "",
 		Password:              "",
 		PasswordGrantType:     "",
-		ApiBaseURL:            "",
-		GetTokenURL:           "",
+		BaseURL:            "",
+		TokenEndpoint:           "",
 		BillerMSISDN:          "",
 		BillerCode:            "",
-		PushPayURL:            "",
-		ReverseTransactionURL: "",
-		HealthCheckURL:        "",
+		PushPayEndpoint:            "",
 	}
 	cHandler := testHandler(1)
 	client := push.NewClient(conf, cHandler, push.WithDebugMode(true))
@@ -83,9 +85,11 @@ func TestHealthCheckHandler(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	req.Header.Add("Content-Type","application/json")
+
 	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(client.Callback)
+	handler := http.HandlerFunc(client.CallbackServeHTTP)
 
 	// Our handlers satisfy http.Handler, so we can call their ServeHTTP method
 	// directly and pass in our Request and ResponseRecorder.

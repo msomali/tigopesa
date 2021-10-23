@@ -61,8 +61,8 @@ func main() {
 
 	client := ussd.NewClient(config,PayHandler(), NameQueerer(),opts...)
 
-	//client.PaymentServerHTTP(payer)
-	//client.PaymentServerHTTP(namer)
+	//client.PaymentServeHTTP(payer)
+	//client.PaymentServeHTTP(namer)
 
 	fmt.Printf("client: %v\n",client)
 }

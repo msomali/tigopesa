@@ -37,7 +37,7 @@ type ClientOption func(client *Client)
 // WithDebugMode set debug mode to true or false
 func WithDebugMode(debugMode bool) ClientOption {
 	return func(client *Client) {
-		client.DebugMode = debugMode
+		client.debugMode = debugMode
 
 	}
 }
@@ -51,7 +51,7 @@ func WithLogger(out io.Writer) ClientOption {
 		if out == nil {
 			return
 		}
-		client.Logger = out
+		client.logger = out
 	}
 }
 
@@ -69,6 +69,6 @@ func WithHTTPClient(httpClient *http.Client) ClientOption {
 			return
 		}
 
-		client.HTTP = httpClient
+		client.base = httpClient
 	}
 }

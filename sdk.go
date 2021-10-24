@@ -22,6 +22,7 @@ type (
 		ussd.Service
 	}
 	Client struct {
+		Config *Config
 		logger stdio.Writer
 		debugMode bool
 		base *http.Client
@@ -63,7 +64,7 @@ func (c *Client) PaymentServeHTTP(writer http.ResponseWriter, request *http.Requ
 
 func NewClient(config *Config,handler push.CallbackHandler,paymentHandler ussd.PaymentHandler, queryHandler ussd.NameQueryHandler,opts...ClientOption) *Client {
 	client := new(Client)
-	
+	client.Config = config
 	client = &Client{
 		base: &http.Client{
 			Timeout: time.Minute,

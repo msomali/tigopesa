@@ -83,9 +83,9 @@ type (
 	}
 
 	Response struct {
-		ReferenceID string   `son:"reference,omitempty"`
+		ReferenceID string   `json:"reference,omitempty"`
 		TxnID       string   `json:"id,omitempty"`
-		TxnStatus   string   `son:"status,omitempty"`
+		TxnStatus   string   `json:"status,omitempty"`
 		Message     string   `json:"message,omitempty"`
 	}
 

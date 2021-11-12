@@ -197,9 +197,7 @@ func (c *Client) Push(ctx context.Context, request Request) (response PayRespons
 	requestOpts = append(requestOpts, moreHeaderOpt)
 
 	req := base.MakeInternalRequest(c.BaseURL, c.Config.PushPayEndpoint, push, billPayReq, requestOpts...)
-
-	rn := push.String()
-	_, err = c.base.Do(context.TODO(), rn, req, &response)
+	_, err = c.base.Do(context.TODO(), req, &response)
 
 	if err != nil {
 		return response, err
@@ -289,9 +287,7 @@ func (c *Client) Token(ctx context.Context) (TokenResponse, error) {
 
 	var tokenResponse TokenResponse
 
-	rn := token.String()
-
-	_, err := c.base.Do(context.TODO(), rn, request, &tokenResponse)
+	_, err := c.base.Do(context.TODO(), request, &tokenResponse)
 
 	if err != nil {
 		return TokenResponse{}, err

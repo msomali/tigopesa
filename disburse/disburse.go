@@ -160,9 +160,9 @@ func (client *Client) disburse(ctx context.Context, request disburseRequest) (re
 	headersOpt := base.WithRequestHeaders(headers)
 	reqOpts = append(reqOpts,headersOpt)
 
-	ir := base.NewRequest(http.MethodPost,client.RequestURL,request,reqOpts...)
+	ir := base.NewRequest("disburse",http.MethodPost,client.RequestURL,request,reqOpts...)
 	res := new(response)
-	do, err := client.base.Do(ctx, "disburse", ir, res)
+	do, err := client.base.Do(ctx, ir, res)
 	if err != nil {
 		return response{}, err
 	}

@@ -83,10 +83,10 @@ type (
 	}
 
 	Response struct {
-		ReferenceID string   `json:"reference,omitempty"`
-		TxnID       string   `json:"id,omitempty"`
-		TxnStatus   string   `json:"status,omitempty"`
-		Message     string   `json:"message,omitempty"`
+		ReferenceID string `json:"reference,omitempty"`
+		TxnID       string `json:"id,omitempty"`
+		TxnStatus   string `json:"status,omitempty"`
+		Message     string `json:"message,omitempty"`
 	}
 
 	response struct {
@@ -120,14 +120,14 @@ func NewClient(config *Config, opts ...ClientOption) *Client {
 
 func (client *Client) Disburse(ctx context.Context, request Request) (response Response, err error) {
 	req := client.requestAdapt(request)
-	res,err := client.disburse(ctx,req)
-	if err != nil{
+	res, err := client.disburse(ctx, req)
+	if err != nil {
 		return Response{}, err
 	}
-	return client.responseAdapt(res),nil
+	return client.responseAdapt(res), nil
 }
 
-func (client *Client)requestAdapt(request Request)disburseRequest{
+func (client *Client) requestAdapt(request Request) disburseRequest {
 	r := disburseRequest{
 		Type:        requestType,
 		ReferenceID: request.ReferenceID,
@@ -143,7 +143,7 @@ func (client *Client)requestAdapt(request Request)disburseRequest{
 	return r
 }
 
-func (client *Client)responseAdapt(re response)Response{
+func (client *Client) responseAdapt(re response) Response {
 	return Response{
 		ReferenceID: re.ReferenceID,
 		TxnID:       re.TxnID,
@@ -152,24 +152,24 @@ func (client *Client)responseAdapt(re response)Response{
 	}
 }
 
-func (client *Client) disburse(ctx context.Context, request disburseRequest) (response,error) {
+func (client *Client) disburse(ctx context.Context, request disburseRequest) (response, error) {
 	var reqOpts []base.RequestOption
 	headers := map[string]string{
 		"Content-Type": "application/xml",
 	}
 	headersOpt := base.WithRequestHeaders(headers)
-	reqOpts = append(reqOpts,headersOpt)
+	reqOpts = append(reqOpts, headersOpt)
 
-	ir := base.NewRequest("disburse",http.MethodPost,client.RequestURL,request,reqOpts...)
+	ir := base.NewRequest("disburse", http.MethodPost, client.RequestURL, request, reqOpts...)
 	res := new(response)
 	do, err := client.base.Do(ctx, ir, res)
 	if err != nil {
 		return response{}, err
 	}
 
-	if do.Error != nil{
-		return response{},do.Error
+	if do.Error != nil {
+		return response{}, do.Error
 	}
 
-	return *res,nil
+	return *res, nil
 }

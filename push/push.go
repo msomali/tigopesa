@@ -45,12 +45,9 @@ const (
 	FailureCode = "BILLER-30-3030-E"
 )
 
-
-
 type (
-	
 	requestType int
-	Service interface {
+	Service     interface {
 		Token(ctx context.Context) (TokenResponse, error)
 		Push(ctx context.Context, request Request) (PayResponse, error)
 		CallbackServeHTTP(writer http.ResponseWriter, r *http.Request)
@@ -63,7 +60,7 @@ type (
 
 	PayRequest struct {
 		CustomerMSISDN string `json:"CustomerMSISDN"`
-		Amount         int64    `json:"Amount"`
+		Amount         int64  `json:"Amount"`
 		Remarks        string `json:"Remarks,omitempty"`
 		ReferenceID    string `json:"ReferenceID"`
 	}
@@ -72,11 +69,11 @@ type (
 	// from Config
 	// PayRequest is used by Client without the need to specify BillerMSISDN
 	payRequest struct {
-		CustomerMSISDN string `json:"CustomerMSISDN"`
-		BillerMSISDN   string `json:"BillerMSISDN"`
-		Amount         float64   `json:"Amount"`
-		Remarks        string `json:"Remarks,omitempty"`
-		ReferenceID    string `json:"ReferenceID"`
+		CustomerMSISDN string  `json:"CustomerMSISDN"`
+		BillerMSISDN   string  `json:"BillerMSISDN"`
+		Amount         float64 `json:"Amount"`
+		Remarks        string  `json:"Remarks,omitempty"`
+		ReferenceID    string  `json:"ReferenceID"`
 	}
 
 	PayResponse struct {
@@ -109,16 +106,15 @@ type (
 		ReferenceID string  `json:"referenceID"`
 	}
 
-
 	Config struct {
-		Username              string
-		Password              string
-		PasswordGrantType     string
-		BaseURL            string
-		TokenEndpoint          string
-		BillerMSISDN          string
-		BillerCode            string
-		PushPayEndpoint          string
+		Username          string
+		Password          string
+		PasswordGrantType string
+		BaseURL           string
+		TokenEndpoint     string
+		BillerMSISDN      string
+		BillerCode        string
+		PushPayEndpoint   string
 	}
 
 	CallbackHandler interface {
@@ -134,13 +130,10 @@ type (
 		CallbackHandler CallbackHandler
 		token           *string
 		tokenExpires    time.Time
-		rv base.Receiver
-		rp base.Replier
+		rv              base.Receiver
+		rp              base.Replier
 	}
-	
 )
-
-
 
 func NewClient(config *Config, handler CallbackHandler, opts ...ClientOption) *Client {
 	client := &Client{
@@ -155,10 +148,10 @@ func NewClient(config *Config, handler CallbackHandler, opts ...ClientOption) *C
 		opt(client)
 	}
 
-	lg, dm := client.base.Logger,client.base.DebugMode
+	lg, dm := client.base.Logger, client.base.DebugMode
 
-	client.rp = base.NewReplier(lg,dm)
-	client.rv = base.NewReceiver(lg,dm)
+	client.rp = base.NewReplier(lg, dm)
+	client.rv = base.NewReceiver(lg, dm)
 
 	return client
 }
@@ -208,7 +201,7 @@ func (c *Client) Push(ctx context.Context, request Request) (response PayRespons
 
 func (c *Client) CallbackServeHTTP(w http.ResponseWriter, r *http.Request) {
 
-	var(
+	var (
 		callbackRequest CallbackRequest
 	)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
@@ -216,7 +209,7 @@ func (c *Client) CallbackServeHTTP(w http.ResponseWriter, r *http.Request) {
 	//callbackRequest := new(CallbackRequest)
 	statusCode := 200
 
-	_,err := c.rv.Receive(ctx,callback.String(),r,&callbackRequest)
+	_, err := c.rv.Receive(ctx, callback.String(), r, &callbackRequest)
 	if err != nil {
 		statusCode = http.StatusInternalServerError
 		http.Error(w, err.Error(), statusCode)

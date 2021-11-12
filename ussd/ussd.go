@@ -34,14 +34,13 @@ import (
 )
 
 const (
-	syncLookupResponse          = "SYNC_LOOKUP_RESPONSE"
-	syncBillPayResponse         = "SYNC_BILLPAY_RESPONSE"
+	syncLookupResponse  = "SYNC_LOOKUP_RESPONSE"
+	syncBillPayResponse = "SYNC_BILLPAY_RESPONSE"
 
-	ErrNameNotRegistered        = "error010"
-	ErrNameInvalidFormat        = "error030"
-	ErrNameUserSuspended        = "error030"
-	NoNamecheckErr              = "error000"
-
+	ErrNameNotRegistered = "error010"
+	ErrNameInvalidFormat = "error030"
+	ErrNameUserSuspended = "error030"
+	NoNamecheckErr       = "error000"
 
 	ErrSuccessTxn               = "error000"
 	ErrServiceNotAvailable      = "error001"
@@ -171,8 +170,8 @@ type (
 	}
 
 	Client struct {
-		rv base.Receiver
-		rp base.Replier
+		rv   base.Receiver
+		rp   base.Replier
 		base *base.Client
 		*Config
 		ph PaymentHandler
@@ -238,20 +237,20 @@ func NewClient(config *Config, handler PaymentHandler, queryHandler NameQueryHan
 		opt(client)
 	}
 
-	lg, dm := client.base.Logger,client.base.DebugMode
+	lg, dm := client.base.Logger, client.base.DebugMode
 
-	client.rp = base.NewReplier(lg,dm)
-	client.rv = base.NewReceiver(lg,dm)
+	client.rp = base.NewReplier(lg, dm)
+	client.rv = base.NewReceiver(lg, dm)
 
 	return client
 }
 
-func (c *Client)SetNameQueryHandler(nh NameQueryHandler){
+func (c *Client) SetNameQueryHandler(nh NameQueryHandler) {
 	c.nh = nh
 }
 
-func (c *Client)SetPaymentRequestHandler(ph PaymentHandler){
-	c.ph =ph
+func (c *Client) SetPaymentRequestHandler(ph PaymentHandler) {
+	c.ph = ph
 }
 
 func (handler PaymentHandleFunc) HandlePayRequest(ctx context.Context, request PayRequest) (PayResponse, error) {
@@ -268,7 +267,7 @@ func (c *Client) NameQueryServeHTTP(writer http.ResponseWriter, request *http.Re
 	defer cancel()
 	var req nameRequest
 
-	_,err := c.rv.Receive(ctx,"name query",request, &req)
+	_, err := c.rv.Receive(ctx, "name query", request, &req)
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
@@ -289,7 +288,7 @@ func (c *Client) NameQueryServeHTTP(writer http.ResponseWriter, request *http.Re
 	payload := transformToXMLNameResponse(response)
 	res := base.NewResponse(200, payload, opts...)
 
-	c.rp.Reply(writer,res)
+	c.rp.Reply(writer, res)
 
 }
 
@@ -300,7 +299,7 @@ func (c *Client) PaymentServeHTTP(writer http.ResponseWriter, request *http.Requ
 
 	var req payRequest
 
-	_,err := c.rv.Receive(ctx,"payment request",request, &req)
+	_, err := c.rv.Receive(ctx, "payment request", request, &req)
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 		return
@@ -321,6 +320,6 @@ func (c *Client) PaymentServeHTTP(writer http.ResponseWriter, request *http.Requ
 	payload := transformToXMLPayResponse(response)
 	res := base.NewResponse(200, payload, opts...)
 
-	c.rp.Reply(writer,res)
+	c.rp.Reply(writer, res)
 
 }

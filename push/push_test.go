@@ -60,14 +60,14 @@ func (t testHandler) Handle(ctx context.Context, request push.CallbackRequest) (
 
 func TestHealthCheckHandler(t *testing.T) {
 	conf := &push.Config{
-		Username:              "",
-		Password:              "",
-		PasswordGrantType:     "",
-		BaseURL:            "",
-		TokenEndpoint:           "",
-		BillerMSISDN:          "",
-		BillerCode:            "",
-		PushPayEndpoint:            "",
+		Username:          "",
+		Password:          "",
+		PasswordGrantType: "",
+		BaseURL:           "",
+		TokenEndpoint:     "",
+		BillerMSISDN:      "",
+		BillerCode:        "",
+		PushPayEndpoint:   "",
 	}
 	cHandler := testHandler(1)
 	client := push.NewClient(conf, cHandler, push.WithDebugMode(true))
@@ -85,7 +85,7 @@ func TestHealthCheckHandler(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	req.Header.Add("Content-Type","application/json")
+	req.Header.Add("Content-Type", "application/json")
 
 	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
 	rr := httptest.NewRecorder()

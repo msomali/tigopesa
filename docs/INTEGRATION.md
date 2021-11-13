@@ -18,7 +18,7 @@ Integration information given to business by tigo during integration
 - Biller MSISDN
 - Biller Code
 - Get Token URL - use this to ask token from TigoPesa gateway
-- Push URL - post to this URL to initiate push pay request
+- Pay URL - post to this URL to initiate push pay request
 
 
 Information required by Tigo

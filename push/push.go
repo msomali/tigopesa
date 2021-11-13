@@ -49,20 +49,13 @@ type (
 	requestType int
 	Service     interface {
 		Token(ctx context.Context) (TokenResponse, error)
-		Push(ctx context.Context, request Request) (PayResponse, error)
+		Pay(ctx context.Context, request Request) (PayResponse, error)
 		CallbackServeHTTP(writer http.ResponseWriter, r *http.Request)
 	}
 	TokenResponse struct {
 		AccessToken string `json:"access_token"`
 		TokenType   string `json:"token_type"`
 		ExpiresIn   int    `json:"expires_in"`
-	}
-
-	PayRequest struct {
-		CustomerMSISDN string `json:"CustomerMSISDN"`
-		Amount         int64  `json:"Amount"`
-		Remarks        string `json:"Remarks,omitempty"`
-		ReferenceID    string `json:"ReferenceID"`
 	}
 
 	// payRequest This is the request expected by tigo with BillerMSISDN hooked up
@@ -164,7 +157,7 @@ func (handler CallbackHandlerFunc) Handle(ctx context.Context, request CallbackR
 	return handler(ctx, request)
 }
 
-func (c *Client) Push(ctx context.Context, request Request) (response PayResponse, err error) {
+func (c *Client) Pay(ctx context.Context, request Request) (response PayResponse, err error) {
 	amount := math.Floor(request.Amount * 100 / 100)
 	var billPayReq = payRequest{
 		CustomerMSISDN: request.MSISDN,

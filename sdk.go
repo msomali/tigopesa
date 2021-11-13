@@ -42,8 +42,8 @@ func (c *Client) Token(ctx context.Context) (push.TokenResponse, error) {
 	return c.p.Token(ctx)
 }
 
-func (c *Client) Push(ctx context.Context, request push.Request) (push.PayResponse, error) {
-	return c.p.Push(ctx, request)
+func (c *Client) Pay(ctx context.Context, request push.Request) (push.PayResponse, error) {
+	return c.p.Pay(ctx, request)
 }
 
 func (c *Client) CallbackServeHTTP(writer http.ResponseWriter, r *http.Request) {

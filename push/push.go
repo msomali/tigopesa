@@ -158,7 +158,7 @@ func (handler CallbackHandlerFunc) Handle(ctx context.Context, request CallbackR
 }
 
 func (c *Client) Pay(ctx context.Context, request Request) (response PayResponse, err error) {
-	amount := math.Floor(request.Amount * 100 / 100)
+	amount := math.Round(request.Amount*100)/100
 	var billPayReq = payRequest{
 		CustomerMSISDN: request.MSISDN,
 		BillerMSISDN:   c.BillerMSISDN,

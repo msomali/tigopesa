@@ -29,6 +29,7 @@ import (
 	"context"
 	"encoding/xml"
 	"github.com/techcraftlabs/base"
+	"math"
 	"net/http"
 )
 
@@ -128,13 +129,14 @@ func (client *Client) Disburse(ctx context.Context, request Request) (response R
 }
 
 func (client *Client) requestAdapt(request Request) disburseRequest {
+	amount := math.Floor(request.Amount*100)/100
 	r := disburseRequest{
 		Type:        requestType,
 		ReferenceID: request.ReferenceID,
 		Msisdn:      client.Config.AccountMSISDN,
 		PIN:         client.Config.PIN,
 		Msisdn1:     request.MSISDN,
-		Amount:      request.Amount,
+		Amount:      amount,
 		SenderName:  client.Config.AccountName,
 		Language1:   senderLanguage,
 		BrandID:     client.Config.BrandID,

@@ -12,11 +12,11 @@ import (
 )
 
 var (
-	_ Service = (*Client)(nil)
+	_ service = (*Client)(nil)
 )
 
 type (
-	Service interface {
+	service interface {
 		push.Service
 		disburse.Service
 		ussd.Service
@@ -64,25 +64,32 @@ func (c *Client) PaymentServeHTTP(writer http.ResponseWriter, request *http.Requ
 
 func NewClient(config *Config, handler push.CallbackHandler, paymentHandler ussd.PaymentHandler, queryHandler ussd.NameQueryHandler, opts ...ClientOption) *Client {
 	client := new(Client)
-	client.Config = config
 	client = &Client{
+		Config:    config,
+		logger:    io.Stderr,
+		debugMode: true,
 		base: &http.Client{
 			Timeout: time.Minute,
 		},
-		logger:    io.Stderr,
-		debugMode: true,
+		p: nil,
+		u: nil,
+		d: nil,
 	}
 
 	for _, opt := range opts {
 		opt(client)
 	}
-	client.d = disburse.NewClient(config.Disburse, disburse.WithLogger(client.logger),
+
+	disburseConfig := config.Disburse
+	pushConfig := config.Push
+	ussdConfig := config.Ussd
+	client.d = disburse.NewClient(disburseConfig, disburse.WithLogger(client.logger),
 		disburse.WithDebugMode(client.debugMode), disburse.WithHTTPClient(client.base))
-	client.u = ussd.NewClient(config.Ussd, paymentHandler, queryHandler,
+	client.u = ussd.NewClient(ussdConfig, paymentHandler, queryHandler,
 		ussd.WithDebugMode(client.debugMode),
 		ussd.WithLogger(client.logger),
 		ussd.WithHTTPClient(client.base))
-	client.p = push.NewClient(config.Push, handler, push.WithLogger(client.logger),
+	client.p = push.NewClient(pushConfig, handler, push.WithLogger(client.logger),
 		push.WithDebugMode(client.debugMode), push.WithHTTPClient(client.base))
 	return client
 }

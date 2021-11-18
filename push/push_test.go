@@ -47,7 +47,7 @@ func (t testHandler) Handle(ctx context.Context, request push.CallbackRequest) (
 	_, cancel := context.WithTimeout(ctx, time.Minute)
 	defer cancel()
 
-	fmt.Printf("request received: status %t,amount: %f, description %s, transacion id %s description %s\n",
+	fmt.Printf("request received: status %t,amount: %s, description %s, transacion id %s description %s\n",
 		request.Status, request.Amount, request.Description, request.MFSTransactionID, request.Description)
 
 	return push.CallbackResponse{
@@ -76,7 +76,7 @@ func TestHealthCheckHandler(t *testing.T) {
 		Description:      "this is test",
 		MFSTransactionID: "TWTSVBSVBSGFSYA",
 		ReferenceID:      "WWTYTYW6W67WTW",
-		Amount:           10000,
+		Amount:           "10000",
 	}
 
 	buf, _ := json.Marshal(reqPayload)

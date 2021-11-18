@@ -82,7 +82,7 @@ type (
 		Description      string `json:"Description"`
 		MFSTransactionID string `json:"MFSTransactionID,omitempty"`
 		ReferenceID      string `json:"ReferenceID"`
-		Amount           float64 `json:"Amount"`
+		Amount           string `json:"Amount"`
 	}
 
 	CallbackResponse struct {
